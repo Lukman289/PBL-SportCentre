@@ -24,8 +24,9 @@ export interface UserWithToken {
   token: string;
 }
 
+// Interface untuk login yang mendukung email atau nomor telepon
 export interface LoginRequest {
-  email: string;
+  identifier: string; // Bisa berisi email atau nomor telepon
   password: string;
 }
 

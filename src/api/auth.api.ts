@@ -12,12 +12,19 @@ interface AxiosErrorResponse {
 
 class AuthApi {
   /**
-   * Login user dengan email dan password
-   * @param data - Data login berupa email dan password
+   * Login user dengan email/nomor telepon dan password
+   * @param data - Data login berupa identifier (email/telepon) dan password
    * @returns Promise dengan data user dan token
    */
   async login(data: LoginRequest): Promise<UserWithToken> {
-    const response = await axiosInstance.post<UserWithToken>('/auth/login', data, {
+    // Menyesuaikan payload agar kompatibel dengan backend
+    // Backend masih menggunakan field "email" meskipun bisa berisi email atau nomor telepon
+    const payload = {
+      email: data.identifier,
+      password: data.password
+    };
+    
+    const response = await axiosInstance.post<UserWithToken>('/auth/login', payload, {
       headers: {
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache'

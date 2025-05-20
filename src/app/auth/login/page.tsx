@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import useAuth from '@/hooks/useAuth.hook';
 
 const loginSchema = z.object({
-  email: z.string().email('Email tidak valid'),
+  identifier: z.string().min(1, 'Email atau nomor telepon wajib diisi'),
   password: z.string().min(6, 'Password minimal 6 karakter'),
 });
 
@@ -28,7 +28,7 @@ export default function LoginPage() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
+      identifier: '',
       password: '',
     },
   });
@@ -38,11 +38,11 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      await login(data.email, data.password);
+      await login(data.identifier, data.password);
       router.push('/');
     } catch (error) {
       console.error('Login error:', error);
-      setError('Email atau password salah. Silakan coba lagi.');
+      setError('Kredensial tidak valid. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
     }
@@ -63,12 +63,12 @@ export default function LoginPage() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="email"
+              name="identifier"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Email atau Nomor Telepon</FormLabel>
                   <FormControl>
-                    <Input placeholder="nama@gmail.com" type="email" {...field} />
+                    <Input placeholder="Email atau Nomor Telepon" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

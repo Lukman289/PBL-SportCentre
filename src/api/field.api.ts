@@ -34,7 +34,44 @@ interface FieldReviewResponseWithMeta {
     hasPrevPage: boolean;
   }
 }
+interface StandardResponse {
+  status: boolean;
+  message: string;
+  data: Field;
+}
 
+interface LegacyFieldResponse {
+  field: Field;
+}
+
+// Union type for all possible response formats
+type FieldCreateResponse = StandardResponse | LegacyFieldResponse | Field;
+
+interface FieldUpdateResponse {
+  status?: boolean;
+  message?: string;
+  data?: Field;
+  field?: Field;
+}
+// Type guards for better type checking
+function isStandardResponse(response: any): response is { status: boolean; message: string; data: Field } {
+  return 'status' in response && 'message' in response && 'data' in response;
+}
+
+function isLegacyResponse(response: any): response is { field: Field } {
+  return 'field' in response;
+}
+
+function isField(response: any): response is Field {
+  return (
+    'id' in response &&
+    'name' in response &&
+    'branchId' in response &&
+    'typeId' in response &&
+    'priceDay' in response &&
+    'priceNight' in response
+  );
+}
 class FieldApi {
   /**
    * Dapatkan semua lapangan
@@ -400,6 +437,65 @@ class FieldApi {
       return {};
     }
   }
+  async createFieldWithImage(formData: FormData): Promise<Field> {
+    try {
+      const response = await axiosInstance.post<FieldCreateResponse>('/fields', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // Handle berbagai format respons yang mungkin
+      const responseData = response.data;
+
+      // Format API baru: { status, message, data }
+      if ('status' in responseData && 'data' in responseData) {
+        return responseData.data;
+      }
+      // Format lama: { field: {...} }
+      else if ('field' in responseData) {
+        return responseData.field;
+      }
+      // Field object directly returned
+      else if ('id' in responseData) {
+        return responseData;
+      }
+      
+      throw new Error('Unexpected response format');
+    } catch (error) {
+      console.error('Error creating field with image:', error);
+      throw error;
+    }
+  }
+  async updateFieldWithImage(fieldId: number, formData: FormData): Promise<Field> {
+  try {
+    const response = await axiosInstance.put(`/fields/${fieldId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    // Gunakan penanganan response yang sama dengan create
+    const responseData = response.data;
+    
+    if (isStandardResponse(responseData)) {
+      return responseData.data;
+    }
+    if (isLegacyResponse(responseData)) {
+      return responseData.field;
+    }
+    if (isField(responseData)) {
+      return responseData;
+    }
+    
+    throw new Error('Unexpected response format');
+  } catch (error) {
+    console.error('Error updating field:', error);
+    throw error;
+  }
 }
+}
+
+
 
 export const fieldApi = new FieldApi(); 

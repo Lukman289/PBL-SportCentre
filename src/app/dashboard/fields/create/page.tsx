@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -37,7 +37,6 @@ const createFieldSchema = z.object({
   priceDay: z.string().min(1, 'Harga siang harus diisi').regex(/^\d+$/, 'Harga harus berupa angka'),
   priceNight: z.string().min(1, 'Harga malam harus diisi').regex(/^\d+$/, 'Harga harus berupa angka'),
   status: z.string().min(1, 'Status harus dipilih'),
-  imageUrl: z.string().url('URL gambar tidak valid').optional().or(z.literal('')),
 });
 
 type CreateFieldFormValues = z.infer<typeof createFieldSchema>;
@@ -52,6 +51,16 @@ export default function CreateFieldPage() {
   const [fieldTypes, setFieldTypes] = useState<FieldType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const defaultBranchId = searchParams.get('branchId');
+  
+  // For file handling
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Determine if branch selection should be disabled
+  const [isBranchSelectionDisabled, setIsBranchSelectionDisabled] = useState(!!defaultBranchId);
+  const [userBranches, setUserBranches] = useState<Branch[]>([]);
+  const [singleAdminBranch, setSingleAdminBranch] = useState<string | null>(null);
 
   const form = useForm<CreateFieldFormValues>({
     resolver: zodResolver(createFieldSchema),
@@ -62,7 +71,6 @@ export default function CreateFieldPage() {
       priceDay: '',
       priceNight: '',
       status: 'available',
-      imageUrl: '',
     },
   });
 
@@ -70,9 +78,28 @@ export default function CreateFieldPage() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // Dapatkan daftar cabang
-        const branchResponse = await branchApi.getBranches();
-        setBranches(branchResponse.data || []);
+        let branchesToUse: Branch[] = [];
+        
+        // If user is admin_cabang, get their specific branches
+        if (user && user.role === Role.ADMIN_CABANG) {
+          const userBranchResponse = await branchApi.getUserBranches();
+          setUserBranches(userBranchResponse.data || []);
+          branchesToUse = userBranchResponse.data || [];
+          
+          // If admin only has one branch, auto-select it
+          if (branchesToUse.length === 1) {
+            const branchId = branchesToUse[0].id.toString();
+            setSingleAdminBranch(branchId);
+            form.setValue('branchId', branchId);
+            setIsBranchSelectionDisabled(true);
+          }
+        } else {
+          // For super_admin, get all branches
+          const branchResponse = await branchApi.getBranches();
+          branchesToUse = branchResponse.data || [];
+        }
+        
+        setBranches(branchesToUse);
 
         // Dapatkan daftar tipe lapangan
         const fieldTypeResponse = await fieldApi.getFieldTypes();
@@ -86,9 +113,36 @@ export default function CreateFieldPage() {
     };
 
     fetchData();
-  }, []);
+  }, [user, form]);
 
-  // Redirect jika bukan admin cabang
+  // Effect to handle defaultBranchId or singleAdminBranch
+  useEffect(() => {
+    if (defaultBranchId) {
+      form.setValue('branchId', defaultBranchId);
+    } else if (singleAdminBranch) {
+      form.setValue('branchId', singleAdminBranch);
+    }
+  }, [defaultBranchId, singleAdminBranch, form]);
+
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setSelectedImage(null);
+      setPreviewUrl(null);
+    }
+  };
+
+  // Redirect jika bukan admin cabang atau super admin
   if (user && user.role !== Role.ADMIN_CABANG && user.role !== Role.SUPER_ADMIN) {
     router.push('/dashboard');
     return null;
@@ -119,14 +173,37 @@ export default function CreateFieldPage() {
           id: selectedTypeId,
           name: selectedType.name
         },
-        imageUrl: data.imageUrl || undefined,
       };
 
-      await fieldApi.createField(submitData);
+      if (selectedImage) {
+        // Kirim data dengan gambar
+        const formData = new FormData();
+        
+        // Tambahkan semua properti dari submitData ke formData
+        Object.entries(submitData).forEach(([key, value]) => {
+          if (key === 'type') {
+            // Handle nested object 'type'
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, String(value));
+          }
+        });
+        
+        // Tambahkan file gambar dengan nama 'imageUrl' sesuai yang diharapkan oleh backend
+        formData.append('imageUrl', selectedImage);
+        
+        // Kirim formData ke API
+        await fieldApi.createFieldWithImage(formData);
+      } else {
+        // Kirim data tanpa gambar
+        await fieldApi.createField(submitData);
+      }
       
       // Redirect ke halaman daftar lapangan atau detail cabang
       if (defaultBranchId) {
         router.push(`/dashboard/branches/${defaultBranchId}`);
+      } else if (singleAdminBranch) {
+        router.push(`/dashboard/branches/${singleAdminBranch}`);
       } else {
         router.push('/dashboard/fields');
       }
@@ -188,7 +265,7 @@ export default function CreateFieldPage() {
                     <Select 
                       onValueChange={field.onChange} 
                       defaultValue={field.value}
-                      disabled={!!defaultBranchId}
+                      disabled={isBranchSelectionDisabled}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -292,27 +369,91 @@ export default function CreateFieldPage() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="imageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>URL Gambar (Opsional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://example.com/image.jpg" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* File Upload Component */}
+              <div className="space-y-2">
+                <FormLabel>Gambar Lapangan</FormLabel>
+                <div className="flex flex-col items-center space-y-4 border-2 border-dashed border-gray-300 rounded-md p-6">
+                  {previewUrl ? (
+                    <div className="relative w-full max-w-xs">
+                      <img 
+                        src={previewUrl} 
+                        alt="Preview" 
+                        className="w-full h-auto rounded-md" 
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() => {
+                          setSelectedImage(null);
+                          setPreviewUrl(null);
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                          }
+                        }}
+                      >
+                        Hapus
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-center">
+                        <svg
+                          className="mx-auto h-12 w-12 text-gray-400"
+                          stroke="currentColor"
+                          fill="none"
+                          viewBox="0 0 48 48"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M8 14v20c0 4.418 7.163 8 16 8 1.381 0 2.721-.087 4-.252M8 14c0 4.418 7.163 8 16 8s16-3.582 16-8M8 14c0-4.418 7.163-8 16-8s16 3.582 16 8m0 0v14m0-4c0 4.418-7.163 8-16 8S8 28.418 8 24m32 10v6m0 0v6m0-6h6m-6 0h-6"
+                          />
+                        </svg>
+                        <p className="mt-1 text-sm text-gray-600">
+                          Klik untuk mengunggah gambar atau seret dan lepas di sini
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500">
+                          PNG, JPG, JPEG maksimal 5MB
+                        </p>
+                      </div>
+                      
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        Pilih Gambar
+                      </Button>
+                    </>
+                  )}
+                  
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png, image/jpeg, image/jpg"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                </div>
+              </div>
 
               <div className="flex gap-4">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => defaultBranchId ? 
-                    router.push(`/dashboard/branches/${defaultBranchId}`) : 
-                    router.push('/dashboard/fields')}
+                  onClick={() => {
+                    if (defaultBranchId) {
+                      router.push(`/dashboard/branches/${defaultBranchId}`);
+                    } else if (singleAdminBranch) {
+                      router.push(`/dashboard/branches/${singleAdminBranch}`);
+                    } else {
+                      router.push('/dashboard/fields');
+                    }
+                  }}
                 >
                   Batal
                 </Button>
@@ -326,4 +467,4 @@ export default function CreateFieldPage() {
       </Card>
     </div>
   );
-} 
+}

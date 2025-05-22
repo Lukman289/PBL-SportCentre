@@ -1,4 +1,5 @@
 import { Field } from './field.types';
+import { User } from './user.types';
 
 export interface Booking {
   id: number;
@@ -9,6 +10,7 @@ export interface Booking {
   endTime: string;
   createdAt: string;
   field?: Field;
+  user?: User;
   payment?: Payment & { paymentUrl?: string };
 }
 

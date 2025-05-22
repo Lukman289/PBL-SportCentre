@@ -1,4 +1,4 @@
-import { useDashboardStats, AdminCabangStats } from '@/hooks/useDashboardStats';
+import { useDashboardStats, AdminCabangStats } from '@/hooks/useDashboardStats.hook';
 import { Role } from '@/types';
 import { StatCard } from './StatCard';
 import { Icons } from './DashboardIcons';

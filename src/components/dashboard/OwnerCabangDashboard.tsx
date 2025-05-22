@@ -1,4 +1,4 @@
-import { useDashboardStats, OwnerCabangStats } from '@/hooks/useDashboardStats';
+import { useDashboardStats, OwnerCabangStats } from '@/hooks/useDashboardStats.hook';
 import { Role, BranchAdminView, BranchView } from '@/types';
 import { StatCard } from './StatCard';
 import { Icons } from './DashboardIcons';

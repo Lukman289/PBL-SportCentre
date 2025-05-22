@@ -1,79 +1,70 @@
-"use client";
-
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { 
+  Card, 
+  CardContent 
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { 
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { CalendarIcon, Search } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Branch } from "@/types";
 import { PaymentStatus } from "@/types/booking.types";
-import { BookingFilters as BookingFiltersType } from "@/hooks/useBookingFilters.hook";
+import { BookingFilters } from "@/hooks/useBookingFilters.hook";
 
-interface BookingFiltersProps {
-  onFilterChange: (filters: Partial<BookingFiltersType>) => void;
-  branches?: Branch[];
+interface BookingFilterUIProps {
+  onApplyFilter: (filters: Partial<BookingFilters>) => void;
+  onResetFilter: () => void;
+  branches?: Branch[]; 
   showBranchFilter?: boolean;
 }
 
-export default function BookingFilters({ 
-  onFilterChange, 
+export default function BookingFilterUI({ 
+  onApplyFilter, 
+  onResetFilter,
   branches = [], 
   showBranchFilter = false 
-}: BookingFiltersProps) {
+}: BookingFilterUIProps) {
   const [status, setStatus] = useState("all");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [search, setSearch] = useState("");
   const [branchId, setBranchId] = useState("all");
 
-  const applyFilter = () => {
-    onFilterChange({
+  const handleApplyFilter = () => {
+    const selectedBranchId = branchId === "all" ? undefined : Number(branchId);
+    
+    onApplyFilter({
       status: status === "all" ? undefined : status as PaymentStatus,
       startDate: startDate ? format(startDate, "yyyy-MM-dd") : "",
       endDate: endDate ? format(endDate, "yyyy-MM-dd") : "",
       search,
-      branchId: branchId === "all" ? undefined : Number(branchId),
+      branchId: selectedBranchId,
     });
   };
 
-  const resetFilter = () => {
+  const handleResetFilter = () => {
     setStatus("all");
     setStartDate(undefined);
     setEndDate(undefined);
     setSearch("");
     setBranchId("all");
-    
-    onFilterChange({
-      status: undefined,
-      startDate: "",
-      endDate: "",
-      search: "",
-      branchId: undefined,
-    });
+    onResetFilter();
   };
-
-  const renderDateButton = (
-    buttonId: string, 
-    value: Date | undefined, 
-    placeholder: string
-  ) => (
-    <Button
-      variant="outline"
-      className="w-full justify-start text-left font-normal"
-      id={buttonId}
-    >
-      <CalendarIcon className="mr-2 h-4 w-4" />
-      {value ? format(value, "PPP", { locale: id }) : <span>{placeholder}</span>}
-    </Button>
-  );
 
   return (
     <Card className="mb-6">
@@ -81,7 +72,10 @@ export default function BookingFilters({
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
             <Label htmlFor="status">Status</Label>
-            <Select value={status} onValueChange={setStatus}>
+            <Select
+              value={status}
+              onValueChange={(value) => setStatus(value)}
+            >
               <SelectTrigger id="status">
                 <SelectValue placeholder="Semua Status" />
               </SelectTrigger>
@@ -100,7 +94,10 @@ export default function BookingFilters({
           {showBranchFilter && branches.length > 0 && (
             <div>
               <Label htmlFor="branch">Cabang</Label>
-              <Select value={branchId} onValueChange={setBranchId}>
+              <Select
+                value={branchId}
+                onValueChange={(value) => setBranchId(value)}
+              >
                 <SelectTrigger id="branch">
                   <SelectValue placeholder="Semua Cabang" />
                 </SelectTrigger>
@@ -120,7 +117,18 @@ export default function BookingFilters({
             <Label htmlFor="startDate">Tanggal Mulai</Label>
             <Popover>
               <PopoverTrigger asChild>
-                {renderDateButton("startDate", startDate, "Pilih tanggal")}
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal"
+                  id="startDate"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {startDate ? (
+                    format(startDate, "PPP", { locale: id })
+                  ) : (
+                    <span>Pilih tanggal</span>
+                  )}
+                </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
                 <Calendar
@@ -137,7 +145,18 @@ export default function BookingFilters({
             <Label htmlFor="endDate">Tanggal Selesai</Label>
             <Popover>
               <PopoverTrigger asChild>
-                {renderDateButton("endDate", endDate, "Pilih tanggal")}
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal"
+                  id="endDate"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {endDate ? (
+                    format(endDate, "PPP", { locale: id })
+                  ) : (
+                    <span>Pilih tanggal</span>
+                  )}
+                </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
                 <Calendar
@@ -145,7 +164,9 @@ export default function BookingFilters({
                   selected={endDate}
                   onSelect={setEndDate}
                   initialFocus
-                  disabled={(date) => startDate ? date < startDate : false}
+                  disabled={(date) =>
+                    startDate ? date < startDate : false
+                  }
                 />
               </PopoverContent>
             </Popover>
@@ -166,12 +187,12 @@ export default function BookingFilters({
           </div>
 
           <div className="flex items-end gap-2 md:col-span-5">
-            <Button onClick={applyFilter} className="flex-1">
+            <Button onClick={handleApplyFilter} className="flex-1">
               Terapkan Filter
             </Button>
             <Button
               variant="outline"
-              onClick={resetFilter}
+              onClick={handleResetFilter}
               className="flex-1"
             >
               Reset

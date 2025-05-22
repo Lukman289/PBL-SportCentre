@@ -6,7 +6,7 @@ import {
   OwnerCabangStats, 
   AdminCabangStats,
   UserStats
-} from '@/hooks/useDashboardStats';
+} from '@/hooks/useDashboardStats.hook';
 
 // Type untuk hasil respons API
 type DashboardStatsResponse = 

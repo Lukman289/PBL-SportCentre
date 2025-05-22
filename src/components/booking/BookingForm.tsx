@@ -1,20 +1,33 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useBooking } from "@/hooks/useBooking.hook";
+import { useBookingContext } from "@/context/booking/booking.context";
+import { useAdminBooking } from "@/hooks/useAdminBooking.hook";
 import { useDurationCalculator } from "@/hooks/useDurationCalculator.hook";
+import { PaymentMethod, PaymentStatus } from "@/types";
+import { BookingFormValues } from "@/context/booking/booking.context";
 
-export default function BookingForm() {
-  // Menggunakan hook context
+interface BookingFormProps {
+  isAdminBooking?: boolean;
+}
+
+export default function BookingForm({ isAdminBooking = false }: BookingFormProps) {
+  // Menggunakan hook context sesuai dengan jenis user
+  const regularBooking = useBookingContext();
+  const adminBooking = useAdminBooking();
+  
+  // Pilih context berdasarkan jenis booking
   const {
     selectedFieldName,
     selectedBranchName,
     selectedStartTime,
     selectedEndTime,
+    selectedField,
+    selectedDate,
     form,
     onSubmit,
     loading
-  } = useBooking();
+  } = isAdminBooking ? adminBooking : regularBooking;
 
   // Menggunakan custom hook untuk menghitung durasi
   const { durationInHours } = useDurationCalculator();
@@ -22,10 +35,51 @@ export default function BookingForm() {
   // Pastikan format waktu yang ditampilkan sesuai dengan timezone lokal
   const formattedStartTime = selectedStartTime === "-" ? "" : selectedStartTime;
   const formattedEndTime = selectedEndTime || "";
+  
+  // Fungsi untuk menangani submit form
+  const handleSubmit = async (data: BookingFormValues) => {
+    if (isAdminBooking) {
+      // Untuk admin cabang, gunakan createManualBooking dengan status PAID dan metode CASH
+      try {
+        console.log("Data yang akan dikirim:", {
+          fieldId: selectedField,
+          userId: adminBooking.user?.id || 0,
+          bookingDate: selectedDate,
+          startTime: selectedStartTime,
+          endTime: selectedEndTime
+        });
+        
+        const bookingData = {
+          fieldId: selectedField,
+          userId: adminBooking.user?.id || 0,
+          bookingDate: selectedDate,
+          startTime: selectedStartTime,
+          endTime: selectedEndTime,
+          paymentStatus: PaymentStatus.PAID,
+          paymentMethod: PaymentMethod.CASH,
+          branchId: adminBooking.selectedBranch
+        };
+        
+        console.log("Mengirim data booking manual:", bookingData);
+        
+        const result = await adminBooking.createManualBooking(bookingData);
+        if (result) {
+          console.log("Booking manual berhasil dibuat:", result);
+        }
+      } catch (error) {
+        console.error("Error saat membuat manual booking:", error);
+      }
+    } else {
+      // Untuk user biasa, gunakan onSubmit dari context
+      await onSubmit(data);
+    }
+  };
 
   return (
     <div className="max-w-xl mx-auto bg-white shadow rounded-lg p-6 border border-gray-200">
-      <h2 className="text-xl font-bold text-center mb-6">Pesanan Anda</h2>
+      <h2 className="text-xl font-bold text-center mb-6">
+        {isAdminBooking ? "Booking Manual" : "Pesanan Anda"}
+      </h2>
       
       {loading ? (
         <div className="flex flex-col items-center py-10">
@@ -34,7 +88,7 @@ export default function BookingForm() {
           <p className="text-sm text-gray-500">Mohon tunggu sebentar</p>
         </div>
       ) : (
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600">Lapangan:</span>
@@ -95,7 +149,7 @@ export default function BookingForm() {
             className="w-full py-3 bg-black hover:bg-black/90 text-white font-medium rounded transition-all"
             disabled={selectedStartTime === "-" || !selectedEndTime}
           >
-            Booking & Bayar Sekarang
+            {isAdminBooking ? "Buat Booking Manual" : "Booking & Bayar Sekarang"}
           </Button>
         </div>
       </form>

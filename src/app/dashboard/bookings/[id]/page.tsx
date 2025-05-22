@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth/auth.context";
-import { Booking, PaymentStatus } from "@/types/booking.types";
+import { Booking, PaymentMethod, PaymentStatus } from "@/types/booking.types";
 import { bookingApi } from "@/api/booking.api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, ArrowLeft, XCircle, Printer, CreditCard } from "lucide-react";
+import { Check, ArrowLeft, XCircle, Printer, CreditCard, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -186,6 +186,10 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
     window.print();
   };
 
+  // Tentukan apakah booking adalah booking manual (cash)
+  const isManualBooking = booking?.payment?.paymentMethod === PaymentMethod.CASH && 
+                         booking?.payment?.status === PaymentStatus.PAID;
+
   if (loading) {
     return (
       <div className="container flex items-center justify-center h-[calc(100vh-200px)]">
@@ -222,7 +226,15 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle className="flex justify-between items-center">
-              <span>Booking #{booking.id}</span>
+              <div className="flex items-center gap-2">
+                <span>Booking #{booking.id}</span>
+                {isManualBooking && (
+                  <Badge className="bg-blue-600">
+                    <Info className="h-3 w-3 mr-1" />
+                    Booking Manual
+                  </Badge>
+                )}
+              </div>
               {getPaymentStatusBadge(booking.payment?.status)}
             </CardTitle>
             <CardDescription>
@@ -313,7 +325,10 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Metode</span>
-                    <span className="font-medium capitalize">{booking.payment.paymentMethod.replace("_", " ")}</span>
+                    <span className="font-medium capitalize">
+                      {booking.payment.paymentMethod.replace("_", " ")}
+                      {isManualBooking && " (Booking Manual)"}
+                    </span>
                   </div>
                   {booking.payment.transactionId && (
                     <div className="flex justify-between">
@@ -339,6 +354,14 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
                         Bayar Sekarang
                       </a>
                     </Button>
+                  </div>
+                )}
+                
+                {isManualBooking && (
+                  <div className="p-3 bg-muted rounded-md mt-2">
+                    <p className="text-sm text-muted-foreground">
+                      Booking ini dibuat secara manual oleh admin cabang dengan pembayaran tunai (cash).
+                    </p>
                   </div>
                 )}
               </div>

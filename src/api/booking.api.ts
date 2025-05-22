@@ -1,6 +1,7 @@
 import axiosInstance from '../config/axios.config';
 import { Booking, BookingRequest, Payment, PaymentMethod, PaymentStatus } from '../types';
 import { combineDateAndTime } from '@/utils/date.utils';
+import { BookingRequest as BookingRequestContext } from '@/context/booking/booking.context';
 
 // Interface untuk format respons dengan data dan meta
 interface BookingResponseWithMeta {
@@ -185,7 +186,9 @@ class BookingApi {
       const requestData = {
         ...data,
         // Format tanggal tetap YYYY-MM-DD
-        bookingDate: data.bookingDate
+        bookingDate: data.bookingDate,
+        // Tambahkan userId dari localStorage jika tidak ada
+        userId: data.userId || JSON.parse(localStorage.getItem('user') || '{}').id
       };
       
       console.log('Sending booking data to server:', requestData);
@@ -225,24 +228,6 @@ class BookingApi {
       throw error;
     }
   }
-
-  /**
-   * Cek ketersediaan lapangan
-   * @param fieldId - ID lapangan
-   * @param date - Tanggal booking (format: YYYY-MM-DD)
-   * @returns Promise dengan array jam yang tersedia
-   */
-  async checkFieldAvailability(
-    fieldId: number,
-    date: string
-  ): Promise<{ availableSlots: { startTime: string; endTime: string }[] }> {
-    const response = await axiosInstance.get<{ availableSlots: { startTime: string; endTime: string }[] }>(
-      `/fields/${fieldId}/availability`,
-      { params: { date } }
-    );
-    return response.data;
-  }
-
   /**
    * Buat pembayaran untuk booking
    * @param bookingId - ID booking
@@ -311,24 +296,26 @@ class BookingApi {
   }
 
   /**
-   * Buat booking manual (untuk admin)
+   * Buat booking manual (untuk admin cabang)
    * @param data - Data booking manual
    * @returns Promise dengan data booking yang berhasil dibuat
    */
   async createManualBooking(data: {
     userId: number;
     fieldId: number;
-    branchId: number;
     bookingDate: string;
     startTime: string;
     endTime: string;
-    paymentStatus: PaymentStatus;
-    paymentMethod: PaymentMethod;
+    branchId: number;
   }): Promise<Booking> {
     try {
+      const { branchId, ...bookingData } = data;
+      
+      console.log(`Creating manual booking for branch ID ${branchId}:`, bookingData);
+      
       const response = await axiosInstance.post<
         { data: Booking } | { booking: Booking } | Booking
-      >('/bookings/admin/manual', data);
+      >(`/bookings/branches/${branchId}/bookings/manual`, bookingData);
 
       // Handle berbagai format respon
       if ('data' in response.data) {

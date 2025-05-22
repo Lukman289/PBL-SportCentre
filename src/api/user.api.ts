@@ -20,6 +20,14 @@ class UserApi {
   }
 
   /**
+   * Mendapatkan daftar cabang untuk admin cabang
+   */
+  async getBranchesForAdmin(userId: number): Promise<BranchAdmin[]> {
+    const response = await axiosInstance.get<{ data: BranchAdmin[] }>(`/users/${userId}/branches`);
+    return response.data.data;
+  }
+
+  /**
    * Mendapatkan profil user yang sedang login
    */
   async getUserProfile(): Promise<User> {

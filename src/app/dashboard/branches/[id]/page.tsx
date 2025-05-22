@@ -17,17 +17,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/context/auth/auth.context';
 import { branchApi } from '@/api/branch.api';
 import { fieldApi } from '@/api/field.api';
-import { Branch, Field, Role } from '@/types';
+import { Branch, BranchAdmin, Field, Role } from '@/types';
 
-// Definisikan interface untuk admin
-interface BranchAdmin {
-  userId: number;
-  user: {
-    id: number;
-    name: string;
-    email: string;
-  };
-}
 
 export default function BranchDetailPage() {
   const router = useRouter();
@@ -305,8 +296,8 @@ export default function BranchDetailPage() {
                     {admins.map((admin) => (
                       <TableRow key={admin.userId}>
                         <TableCell>{admin.userId}</TableCell>
-                        <TableCell>{admin.user.name}</TableCell>
-                        <TableCell>{admin.user.email}</TableCell>
+                        <TableCell>{admin.user?.name}</TableCell>
+                        <TableCell>{admin.user?.email}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

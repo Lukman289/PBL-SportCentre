@@ -7,6 +7,7 @@ export interface Booking {
   bookingDate: string;
   startTime: string;
   endTime: string;
+  status?: string; // Status booking (pending, approved, completed, cancelled, rejected)
   createdAt: string;
   field?: Field;
   payment?: Payment & { paymentUrl?: string };

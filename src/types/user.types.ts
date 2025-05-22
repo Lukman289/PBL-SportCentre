@@ -1,3 +1,5 @@
+import { BranchAdmin } from './branch.types';
+
 export enum Role {
   SUPER_ADMIN = 'super_admin',
   ADMIN_CABANG = 'admin_cabang',
@@ -16,6 +18,7 @@ export interface User {
   email: string;
   phone?: string;
   role: Role;
+  branches?: BranchAdmin[]; // Relasi dengan cabang (sesuai schema)
   createdAt: string;
 }
 
@@ -36,4 +39,4 @@ export interface RegisterRequest {
   password: string;
   phone?: string;
   role?: Role;
-} 
+}

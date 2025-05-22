@@ -29,7 +29,7 @@ export default function BookingsPage() {
 
   // Main render
   return (
-    <div className="w-full max-w-full xl:max-w-none py-6 px-4 sm:px-6">
+    <div className="w-full max-w-full mt-8 xl:max-w-none py-6 px-4 sm:px-6">
       <div className="mb-6">
         <div className="bg-black py-8 px-6 rounded-t-xl">
           <h1 className="text-3xl sm:text-4xl text-center font-bold text-white mb-2">

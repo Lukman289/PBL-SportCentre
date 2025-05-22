@@ -13,13 +13,13 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { branchApi } from "@/api";
+import { branchApi, fieldApi } from "@/api";
 import { Branch } from "@/types";
 import {
   ArrowRight,
-  Calendar,
   CheckCircle,
   Clock,
+  LayoutGrid,
   MapPin,
   Star,
 } from "lucide-react";
@@ -27,13 +27,15 @@ import {
 export default function HomePage() {
   const [featuredBranches, setFeaturedBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [totalBranches, setTotalBranches] = useState(0);
+  const [totalFields, setTotalFields] = useState(0);
 
   useEffect(() => {
     const fetchBranches = async () => {
       try {
         const response = await branchApi.getBranches();
         const branches = response.data || [];
-        console.log(branches);
+        setTotalBranches(response.meta?.totalItems || 0);
         if (Array.isArray(branches)) {
           setFeaturedBranches(branches.slice(0, 4));
         } else {
@@ -48,6 +50,16 @@ export default function HomePage() {
       }
     };
 
+    const fetchTotalFields = async () => {
+      try {
+        const response = await fieldApi.getAllFields();
+        setTotalFields(response.length || 0);
+      } catch (error) {
+        console.error("Error fetching total fields:", error);
+      }
+    }
+    
+    fetchTotalFields();
     fetchBranches();
   }, []);
 
@@ -81,12 +93,8 @@ export default function HomePage() {
 
   return (
     <HomeLayout>
-      {/* Hero Section */}
       <section className="relative py-24 overflow-hidden w-full h-screen flex items-center justify-center">
-        {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary/60 z-10"></div>
-        
-        {/* Background image */}
         <div className="absolute inset-0">
           <Image
             src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1936&q=80"
@@ -136,16 +144,16 @@ export default function HomePage() {
               <div className="bg-primary/10 p-3 rounded-full mb-4">
                 <MapPin className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-2xl font-bold mb-1">{featuredBranches.length} Cabang</h3>
+              <h3 className="text-2xl font-bold mb-1">{totalBranches} Cabang</h3>
               <p className="text-muted-foreground">Tersebar di berbagai kota</p>
             </div>
             
             <div className="bg-primary/5 p-6 rounded-xl flex flex-col items-center text-center">
               <div className="bg-primary/10 p-3 rounded-full mb-4">
-                <Calendar className="w-6 h-6 text-primary" />
+                <LayoutGrid className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-2xl font-bold mb-1">1000+ Booking</h3>
-              <p className="text-muted-foreground">Setiap bulan</p>
+              <h3 className="text-2xl font-bold mb-1">{totalFields} Lapangan</h3>
+              <p className="text-muted-foreground">Tersedia</p>
             </div>
             
             <div className="bg-primary/5 p-6 rounded-xl flex flex-col items-center text-center">

@@ -9,11 +9,13 @@ import { Branch, Field } from '@/types';
 import { fieldApi } from '@/api';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { se } from 'date-fns/locale';
 
 export default function FieldPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searched, setSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [debug, setDebug] = useState<string>('');
   const [selectedBranch, setSelectedBranch] = useState<number>(0);
@@ -22,16 +24,16 @@ export default function FieldPage() {
   const [filteredFields, setFilteredFields] = useState<Field[]>([]);
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  // const limit = 20;
   const [limit, setLimit] = useState(20);
 
-  const fetchFields = async (currenPage = 1) => {
+  const fetchFields = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fieldApi.getAllFields({limit, page: currenPage});
-      setFields(response.data || []);
-      setTotalItems(response.meta?.totalItems || 0);
+      const response = await fieldApi.getAllFields();
+      setFields(response || []);
+      setTotalItems(response.length || 0);
+      setFilteredFields(response.slice((page - 1) * limit, page * limit) || []);
     } catch (error) {
       console.error("Error fetching fields:", error);
       setError("Gagal memuat lapangan. Silakan coba lagi nanti.");
@@ -40,79 +42,59 @@ export default function FieldPage() {
     }
   };
 
-  const fetchAllFields = async () => {
-  try {
-    const response = await fieldApi.getAllFields({ limit: 10000, page: 1 }); // anggap 10.000 cukup untuk semua data
-    setFields(response.data || []);
-    setTotalItems(response.meta?.totalItems || 0);
-  } catch (error) {
-    console.error("Error fetching all fields:", error);
-    setError("Gagal memuat semua data lapangan untuk pencarian.");
-  }
-};
-
-  useEffect(() => {
-    const fetchBranches = async () => {
-      try {
-        const response = await branchApi.getBranches();
-        const branches = response.data || [];
-        console.log("branches: ",branches);
-        if (Array.isArray(branches)) {
-          setBranches(branches);
-        } else {
-          console.error("branches is not an array:", branches);
-          setBranches([]);
-        }
-      } catch (error) {
-        console.error("Error fetching branches:", error);
+  const fetchBranches = async () => {
+    try {
+      const response = await branchApi.getBranches();
+      const branches = response.data || [];
+      if (Array.isArray(branches)) {
+        setBranches(branches);
+      } else {
+        console.error("branches is not an array:", branches);
         setBranches([]);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+      setBranches([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // Fetch branches dan fields ketika pertama kali dimuat 
+  useEffect(() => {
     fetchBranches();
-    fetchFields(page);
-  }, [page, selectedBranch]);
+    fetchFields();
+  }, []);
+
+  // Fetch fields ketika page berubah
+  useEffect(() => {
+    setFilteredFields(fields.slice((page - 1) * limit, page * limit));
+  }, [page]);
 
   useEffect(() => {
-    const query = searchQuery.toLowerCase();
+  const query = searchQuery.toLowerCase();
 
-    // const filtered = fields.filter((field) => {
-    //   const matchesBranch = selectedBranch === 0 || field.branchId === selectedBranch;
-    //   const matchesSearch = query === '' || field.name.toLowerCase().includes(query) || field.type.name.toLowerCase().includes(query);
-    //   return matchesBranch && matchesSearch;
-    // });
-
-    // setFilteredFields(filtered);
-
-    const performFiltering = () => {
+  if (query !== '' || selectedBranch !== 0) {
+    setSearched(true);
     const filtered = fields.filter((field) => {
       const matchesBranch = selectedBranch === 0 || field.branchId === selectedBranch;
       const matchesSearch =
-        query === '' ||
         field.name.toLowerCase().includes(query) ||
-        field.type.name.toLowerCase().includes(query);
+        field.type?.name.toLowerCase().includes(query);
       return matchesBranch && matchesSearch;
     });
 
     setFilteredFields(filtered);
-  };
-
-  if (query !== '') {
-    // jika ada pencarian, ambil semua data dulu
-    fetchAllFields().then(() => {
-      performFiltering();
-    });
   } else {
-    performFiltering();
+    setFilteredFields(fields.slice((page - 1) * limit, page * limit));
+    setSearched(false);
   }
-  }, [searchQuery, selectedBranch, fields]);
+  }, [searchQuery, selectedBranch]);
 
   const handleRefresh = async () => {
-    fetchFields(page);
+    // fetchFields();
+    setFilteredFields(filteredFields);
   };
-  
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -124,11 +106,6 @@ export default function FieldPage() {
   
   const branchChanged = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const branchId = Number(e.target.value);
-    if (branchId !== 0) {
-      setLimit(1000)
-    } else if (branchId === 0) {
-      setLimit(20)
-    }
     setSelectedBranch(branchId);
 
     const branch = branches.find((branch) => branch.id === branchId);
@@ -261,7 +238,7 @@ export default function FieldPage() {
               </Card>
             ))}
           </div>
-          {totalItems > limit && (
+          {totalItems > limit && selectedBranch === 0 && !searched && (
             <div className="flex justify-between items-center gap-4 mt-8">
               <Button 
                 variant="outline" 

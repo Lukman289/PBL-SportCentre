@@ -14,6 +14,7 @@ export default function BranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [filteredBranches, setFilteredBranches] = useState<Branch[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [debug, setDebug] = useState<string>('');
@@ -22,12 +23,17 @@ export default function BranchesPage() {
   const limit = 15;
 
   useEffect(() => {
-    fetchBranches(page);
+    fetchBranches();
+  }, []);
+
+  useEffect(() => {
+    setFilteredBranches(branches.slice((page - 1) * limit, page * limit));
   }, [page]);
 
   useEffect(() => {
     if (searchQuery.trim() === '') {
-      setFilteredBranches(branches);
+      setFilteredBranches(branches.slice((page - 1) * limit, page * limit));
+      setSearched(false);
     } else {
       const query = searchQuery.toLowerCase();
       const filtered = branches.filter(
@@ -36,40 +42,41 @@ export default function BranchesPage() {
           branch.location.toLowerCase().includes(query)
       );
       setFilteredBranches(filtered);
+      setSearched(true);
     }
-  }, [searchQuery, branches]);
+  }, [searchQuery]);
 
-  const fetchBranches = async (currenPage = 1) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await branchApi.getBranches({ limit, page: currenPage });
-        
-        if (response && response.data) {
-          const data = response.data;
-          setBranches(data);
-          setFilteredBranches(data);
-          setTotalItems(response.meta?.totalItems || 0);
-          setDebug(`Jumlah data: ${data.length}, Total: ${response.meta?.totalItems || 0}`);
-        } else {
-          setBranches([]);
-          setFilteredBranches([]);
-          setDebug("Tidak ada data yang diterima dari API");
-        }
-      } catch (error) {
-        setError('Gagal memuat daftar cabang. Silakan coba lagi nanti.');
-        setDebug(`Error: ${error instanceof Error ? error.message : String(error)}`);
-      } finally {
-        setLoading(false);
+  const fetchBranches = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await branchApi.getBranches();
+      
+      if (response && response.data) {
+        const data = response.data;
+        setBranches(data);
+        setFilteredBranches(data.slice((page - 1) * limit, page * limit));
+        setTotalItems(response.meta?.totalItems || 0);
+        setDebug(`Jumlah data: ${data.length}, Total: ${response.meta?.totalItems || 0}`);
+      } else {
+        setBranches([]);
+        setFilteredBranches([]);
+        setDebug("Tidak ada data yang diterima dari API");
       }
-    };
+    } catch (error) {
+      setError('Gagal memuat daftar cabang. Silakan coba lagi nanti.');
+      setDebug(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
   };
 
   const handleRefresh = async () => {
-    fetchBranches(page);
+    setFilteredBranches(filteredBranches);
   };
 
   if (loading) {
@@ -174,7 +181,7 @@ export default function BranchesPage() {
               </Card>
             ))}
           </div>
-          {totalItems > limit && (
+          {totalItems > limit && !searched &&(
             <div className="flex justify-between items-center gap-4 mt-8">
               <Button 
                 variant="outline" 

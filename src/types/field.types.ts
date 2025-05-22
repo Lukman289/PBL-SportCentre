@@ -1,3 +1,5 @@
+import { Branch } from "./branch.types";
+
 export enum FieldStatus {
   AVAILABLE = 'available',
   BOOKED = 'booked',
@@ -12,15 +14,16 @@ export interface FieldType {
 
 export interface Field {
   id: number;
-  branchId: number;
-  typeId: number;
-  type: FieldType;
   name: string;
+  branchId: number;
+  branch?: Branch;
+  typeId: number;
+  type?: FieldType;
   priceDay: number;
   priceNight: number;
-  status: FieldStatus;
+  status?: string;
   imageUrl?: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 export interface FieldReview {

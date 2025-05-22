@@ -77,10 +77,21 @@ class FieldApi {
    * Dapatkan semua lapangan
    * @returns Promise dengan array data lapangan
    */
-  async getAllFields(params?: FieldListParams): Promise<FieldResponseWithMeta> {
-    const response = await axiosInstance.get<FieldResponseWithMeta>('/fields', {params});
-    console.log("fields data: ", response.data);
-    return response.data;
+  async getAllFields(): Promise<Field[]> {
+    try {
+      const response = await axiosInstance.get<{ data: Field[] } | Field[]>('/fields');
+      
+      if (Array.isArray(response.data)) {
+        return response.data;
+      } else if ('data' in response.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('Error fetching all fields:', error);
+      return [];
+    }
   }
 
   /**
@@ -88,61 +99,36 @@ class FieldApi {
    * @param id - ID lapangan
    * @returns Promise dengan data lapangan
    */
-  async getFieldById(id: number): Promise<Field> {
+  async getFieldById(id: number): Promise<Field | null> {
     try {
-      const response = await axiosInstance.get<
-        { data: Field } | 
-        { field: Field } | 
-        Field | 
-        { status: boolean; message: string; data: Field }
-      >(`/fields/${id}`);
-
-      if (response.data && typeof response.data === 'object') {
-        if ('data' in response.data && !('status' in response.data)) {
-          return response.data.data;
-        } else if ('field' in response.data) {
-          return response.data.field;
-        } else if ('id' in response.data && 'name' in response.data) {
-          return response.data as Field;
-        } else if ('status' in response.data && 'message' in response.data && 'data' in response.data) {
-          return response.data.data as Field;
-        }
+      const response = await axiosInstance.get<{ data: Field } | Field>(`/fields/${id}`);
+      
+      if ('data' in response.data) {
+        return response.data.data;
+      } else {
+        return response.data;
       }
-
-      throw new Error('Unexpected response format');
     } catch (error) {
       console.error(`Error fetching field with ID ${id}:`, error);
-      throw error;
+      return null;
     }
   }
 
   /**
-   * Dapatkan lapangan berdasarkan ID cabang
+   * Dapatkan lapangan berdasarkan cabang
    * @param branchId - ID cabang
    * @returns Promise dengan array data lapangan
    */
-  async getFieldsByBranchId(branchId: number): Promise<Field[]> {
+  async getBranchFields(branchId: number): Promise<Field[]> {
     try {
-      const response = await axiosInstance.get<FieldResponseWithMeta | { fields: Field[] } | Field[]>(`/branches/${branchId}/fields`);
+      const response = await axiosInstance.get<{ data: Field[] } | Field[]>(`/branches/${branchId}/fields`);
       
-      // Handle format respons yang berbeda-beda
-      if (response.data && typeof response.data === 'object') {
-        // Format 1: { data: [...], meta: {...} }
-        if ('data' in response.data && Array.isArray(response.data.data)) {
-          return response.data.data;
-        }
-        // Format 2: { fields: [...] }
-        else if ('fields' in response.data && Array.isArray(response.data.fields)) {
-          return response.data.fields;
-        }
-        // Format 3: Array langsung [...]
-        else if (Array.isArray(response.data)) {
-          return response.data;
-        }
+      if (Array.isArray(response.data)) {
+        return response.data;
+      } else if ('data' in response.data && Array.isArray(response.data.data)) {
+        return response.data.data;
       }
       
-      // Jika format tidak dikenali, kembalikan array kosong
-      console.error('Unexpected response format:', response.data);
       return [];
     } catch (error) {
       console.error(`Error fetching fields for branch ID ${branchId}:`, error);
@@ -495,7 +481,5 @@ class FieldApi {
   }
 }
 }
-
-
 
 export const fieldApi = new FieldApi(); 

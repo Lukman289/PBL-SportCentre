@@ -42,6 +42,47 @@ class UserApi {
     const response = await axiosInstance.put<{ data: User }>('/users/profile', data);
     return response.data.data;
   }
+
+  /**
+   * Dapatkan semua user (untuk admin)
+   * @returns Promise dengan array data user
+   */
+  async getAllUsers(): Promise<User[]> {
+    try {
+      const response = await axiosInstance.get<{ data: User[] } | User[]>('/users');
+      
+      if (Array.isArray(response.data)) {
+        return response.data;
+      } else if ('data' in response.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('Error fetching all users:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Dapatkan user berdasarkan ID
+   * @param id - ID user
+   * @returns Promise dengan data user
+   */
+  async getUserById(id: number): Promise<User | null> {
+    try {
+      const response = await axiosInstance.get<{ data: User } | User>(`/users/${id}`);
+      
+      if ('data' in response.data) {
+        return response.data.data;
+      } else {
+        return response.data;
+      }
+    } catch (error) {
+      console.error(`Error fetching user with ID ${id}:`, error);
+      return null;
+    }
+  }
 }
 
 export const userApi = new UserApi(); 

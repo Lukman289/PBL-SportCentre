@@ -1,5 +1,5 @@
 import axiosInstance from '../config/axios.config';
-import { Booking, BookingRequest, Payment, PaymentMethod } from '../types';
+import { Booking, BookingRequest, Payment, PaymentMethod, PaymentStatus } from '../types';
 import { combineDateAndTime } from '@/utils/date.utils';
 
 // Interface untuk format respons dengan data dan meta
@@ -267,13 +267,81 @@ class BookingApi {
   }
 
   /**
-   * Tandai pembayaran sebagai dibayar (untuk admin/owner)
+   * Tandai pembayaran sebagai lunas
    * @param paymentId - ID pembayaran
-   * @returns Promise dengan data pembayaran yang diupdate
+   * @returns Promise dengan data pembayaran yang diperbarui
    */
   async markPaymentAsPaid(paymentId: number): Promise<Payment> {
-    const response = await axiosInstance.put<{ payment: Payment }>(`/payments/${paymentId}/mark-paid`);
-    return response.data.payment;
+    try {
+      const response = await axiosInstance.post<{ data: Payment } | Payment>(`/payments/${paymentId}/mark-paid`);
+      
+      if ('data' in response.data) {
+        return response.data.data;
+      } else {
+        return response.data as Payment;
+      }
+    } catch (error) {
+      console.error(`Error marking payment ${paymentId} as paid:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Memperbarui status pembayaran
+   * @param paymentId - ID pembayaran
+   * @param status - Status pembayaran baru
+   * @returns Promise dengan data pembayaran yang diperbarui
+   */
+  async updatePaymentStatus(paymentId: number, status: PaymentStatus): Promise<Payment> {
+    try {
+      const response = await axiosInstance.post<{ data: Payment } | Payment>(
+        `/payments/${paymentId}/update-status`,
+        { status }
+      );
+      
+      if ('data' in response.data) {
+        return response.data.data;
+      } else {
+        return response.data as Payment;
+      }
+    } catch (error) {
+      console.error(`Error updating payment ${paymentId} status:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Buat booking manual (untuk admin)
+   * @param data - Data booking manual
+   * @returns Promise dengan data booking yang berhasil dibuat
+   */
+  async createManualBooking(data: {
+    userId: number;
+    fieldId: number;
+    branchId: number;
+    bookingDate: string;
+    startTime: string;
+    endTime: string;
+    paymentStatus: PaymentStatus;
+    paymentMethod: PaymentMethod;
+  }): Promise<Booking> {
+    try {
+      const response = await axiosInstance.post<
+        { data: Booking } | { booking: Booking } | Booking
+      >('/bookings/admin/manual', data);
+
+      // Handle berbagai format respon
+      if ('data' in response.data) {
+        return response.data.data;
+      } else if ('booking' in response.data) {
+        return response.data.booking;
+      } else {
+        return response.data as Booking;
+      }
+    } catch (error) {
+      console.error('Error creating manual booking:', error);
+      throw error;
+    }
   }
 }
 

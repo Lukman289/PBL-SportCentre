@@ -2,16 +2,17 @@
 
 import { Button } from "@/components/ui/button";
 import { useBookingContext } from "@/context/booking/booking.context";
-import { useAdminBooking } from "@/hooks/useAdminBooking.hook";
+import { useAdminBooking } from "@/hooks/bookings/useAdminBooking.hook";
 import { useDurationCalculator } from "@/hooks/useDurationCalculator.hook";
 import { PaymentMethod, PaymentStatus } from "@/types";
 import { BookingFormValues } from "@/context/booking/booking.context";
 
 interface BookingFormProps {
   isAdminBooking?: boolean;
+  onSuccess?: () => void;
 }
 
-export default function BookingForm({ isAdminBooking = false }: BookingFormProps) {
+export default function BookingForm({ isAdminBooking = false, onSuccess }: BookingFormProps) {
   // Menggunakan hook context sesuai dengan jenis user
   const regularBooking = useBookingContext();
   const adminBooking = useAdminBooking();
@@ -65,13 +66,18 @@ export default function BookingForm({ isAdminBooking = false }: BookingFormProps
         const result = await adminBooking.createManualBooking(bookingData);
         if (result) {
           console.log("Booking manual berhasil dibuat:", result);
+          if (onSuccess) {
+            onSuccess();
+          }
         }
       } catch (error) {
         console.error("Error saat membuat manual booking:", error);
       }
     } else {
-      // Untuk user biasa, gunakan onSubmit dari context
       await onSubmit(data);
+      if (onSuccess) {
+        onSuccess();
+      }
     }
   };
 

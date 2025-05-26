@@ -34,6 +34,7 @@ import { bookingApi } from "@/api/booking.api";
 import EmptyState from "@/components/ui/EmptyState";
 import { Role } from "@/types";
 import { getDetailLink, getPaymentStatusBadge } from "./BookingTableUtils";
+import { formatTimeRange } from "@/utils/date.utils";
 
 interface BookingsTableProps {
   bookings: Booking[];
@@ -104,6 +105,7 @@ export default function BookingsTable({ bookings, userRole }: BookingsTableProps
             <TableRow>
               <TableHead>ID</TableHead>
               <TableHead>Lapangan</TableHead>
+              <TableHead>Cabang</TableHead>
               <TableHead>Tanggal</TableHead>
               <TableHead>Waktu</TableHead>
               <TableHead>Pembayaran</TableHead>
@@ -115,13 +117,14 @@ export default function BookingsTable({ bookings, userRole }: BookingsTableProps
               <TableRow key={booking.id}>
                 <TableCell className="font-medium">#{booking.id}</TableCell>
                 <TableCell>{booking.field?.name || "-"}</TableCell>
+                <TableCell>{booking.field?.branch?.name || "-"}</TableCell>
                 <TableCell>
                   {booking.bookingDate
                     ? format(new Date(booking.bookingDate), "dd MMM yyyy", { locale: id })
                     : "-"}
                 </TableCell>
                 <TableCell>
-                  {booking.startTime} - {booking.endTime}
+                  {formatTimeRange(booking.startTime, booking.endTime)}
                 </TableCell>
                 <TableCell>
                   {getPaymentStatusBadge(booking.payment?.status)}

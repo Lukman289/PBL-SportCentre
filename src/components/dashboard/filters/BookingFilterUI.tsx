@@ -24,7 +24,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Branch } from "@/types";
 import { PaymentStatus } from "@/types/booking.types";
-import { BookingFilters } from "@/hooks/useBookingFilters.hook";
+import { BookingFilters } from "@/hooks/bookings/useBookingFilters.hook";
 
 interface BookingFilterUIProps {
   onApplyFilter: (filters: Partial<BookingFilters>) => void;

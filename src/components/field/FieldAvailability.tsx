@@ -1,6 +1,6 @@
 "use client";
 
-import { useBooking } from "@/hooks/useBooking.hook";
+import { useBooking } from "@/hooks/bookings/useBooking.hook";
 import { useTimeSlot } from "@/hooks/useTimeSlot.hook";
 import { id } from "date-fns/locale";
 import { format } from "date-fns";

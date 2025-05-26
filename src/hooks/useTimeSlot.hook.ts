@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Field } from "@/types";
-import { useBooking } from "./useBooking.hook";
+import { useBooking } from "./bookings/useBooking.hook";
 
 export const useTimeSlot = () => {
   const { 
@@ -21,6 +21,37 @@ export const useTimeSlot = () => {
   const filteredFields = useMemo(() => {
     return fields.filter((field) => field.branchId === selectedBranch);
   }, [fields, selectedBranch]);
+
+  // Reset seleksi jika slot yang dipilih sudah terpesan
+  useEffect(() => {
+    if (selectedStartTime && selectedFieldId) {
+      const isStartTimeBooked = bookedTimeSlots[selectedFieldId]?.includes(selectedStartTime);
+      
+      if (isStartTimeBooked) {
+        console.log('Resetting selection in useTimeSlot because selected time is now booked:', selectedStartTime);
+        resetSelection();
+      } else if (selectedEndTime) {
+        // Cek apakah ada jam dalam rentang yang dipilih yang sudah terpesan
+        const startIdx = times.indexOf(selectedStartTime);
+        const endIdx = times.indexOf(selectedEndTime);
+        
+        let isAnyTimeInRangeBooked = false;
+        if (startIdx >= 0 && endIdx > startIdx) {
+          for (let i = startIdx; i < endIdx; i++) {
+            if (bookedTimeSlots[selectedFieldId]?.includes(times[i])) {
+              isAnyTimeInRangeBooked = true;
+              break;
+            }
+          }
+        }
+        
+        if (isAnyTimeInRangeBooked) {
+          console.log('Resetting selection because a time in range is now booked');
+          resetSelection();
+        }
+      }
+    }
+  }, [bookedTimeSlots, selectedStartTime, selectedEndTime, selectedFieldId, times]);
 
   useEffect(() => {
     // Fungsi untuk menghitung status konsekutif untuk satu lapangan

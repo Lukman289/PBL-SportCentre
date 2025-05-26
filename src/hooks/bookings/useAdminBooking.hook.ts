@@ -4,6 +4,8 @@ import { bookingApi } from "@/api";
 import { useState, useCallback, useEffect } from "react";
 import { Booking, PaymentMethod, PaymentStatus } from "@/types";
 import { BookingFormValues } from "@/context/booking/booking.context";
+import { subscribeToBookingUpdates } from "@/services/socket/booking.socket";
+import { subscribeToFieldAvailability, joinFieldAvailabilityRoom } from "@/services/socket";
 
 /**
  * Hook untuk admin cabang yang mengelola booking
@@ -13,6 +15,7 @@ import { BookingFormValues } from "@/context/booking/booking.context";
  */
 export const useAdminBooking = (branchId?: number) => {
   const bookingContext = useBookingContext();
+  const { socketInitialized } = bookingContext;
   const { user } = useAuth();
   const [branchBookings, setBranchBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -40,7 +43,6 @@ export const useAdminBooking = (branchId?: number) => {
     }
   }, [adminBranchId]);
 
-  // Fungsi untuk membuat booking manual oleh admin cabang
   const createManualBooking = useCallback(async (data: {
     userId: number;
     fieldId: number;
@@ -70,7 +72,6 @@ export const useAdminBooking = (branchId?: number) => {
     const userId = Number(data.userId || user?.id);
     const branchId = Number(data.branchId);
     
-    // Backend hanya memerlukan fieldId, userId, bookingDate, startTime, endTime
     const bookingData = {
       fieldId,
       userId,
@@ -89,7 +90,6 @@ export const useAdminBooking = (branchId?: number) => {
 
     setLoading(true);
     try {
-      // Log data yang akan dikirim untuk debugging
       console.log("Creating manual booking with data:", JSON.stringify(bookingData, null, 2));
       console.log("API URL yang akan dipanggil:", `/bookings/branches/${branchId}/bookings/manual`);
 
@@ -97,8 +97,16 @@ export const useAdminBooking = (branchId?: number) => {
       
       console.log("Manual booking berhasil dibuat:", booking);
       
-      // Refresh data booking cabang setelah berhasil membuat booking baru
-      await fetchBranchBookings();
+ 
+      setBranchBookings(prevBookings => [...prevBookings, booking]);
+
+      // Refresh ketersediaan lapangan setelah booking berhasil dibuat
+      // Ini akan memperbarui grid ketersediaan lapangan tanpa perlu reload
+      if (bookingContext.refreshAvailability) {
+        console.log("Merefresh ketersediaan lapangan setelah booking manual...");
+        await bookingContext.refreshAvailability();
+      }
+      
       
       return booking;
     } catch (error: unknown) {
@@ -106,9 +114,12 @@ export const useAdminBooking = (branchId?: number) => {
       const err = error as {
         response?: {
           status?: number;
-          data?: any;
+          data?: {
+            message?: string;
+            [key: string]: unknown;
+          };
         };
-        request?: any;
+        request?: unknown;
         message?: string;
       };
       
@@ -126,7 +137,7 @@ export const useAdminBooking = (branchId?: number) => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, fetchBranchBookings]);
+  }, [user?.id, bookingContext]);
 
   // Fungsi untuk mengubah status pembayaran
   const updatePaymentStatus = useCallback(async (paymentId: number, status: PaymentStatus) => {
@@ -147,12 +158,67 @@ export const useAdminBooking = (branchId?: number) => {
     }
   }, [fetchBranchBookings]);
 
-  // Load data booking cabang saat komponen dimount
+  // Subscribe ke socket untuk pembaruan booking real-time
   useEffect(() => {
-    if (adminBranchId) {
-      fetchBranchBookings();
-    }
-  }, [adminBranchId, fetchBranchBookings]);
+    if (!socketInitialized || !adminBranchId) return;
+
+    console.log("Socket initialized, subscribing to booking updates for branch:", adminBranchId);
+
+    // Subscribe ke pembaruan booking melalui socket
+    const unsubscribe = subscribeToBookingUpdates(({ booking }) => {
+      console.log("Received booking update via socket:", booking);
+      
+      // Filter hanya booking yang relevan dengan cabang ini
+      if (booking && booking.field && booking.field.branchId === adminBranchId) {
+        // Update state dengan booking yang diperbarui
+        setBranchBookings(prevBookings => {
+          // Cek apakah booking sudah ada di state
+          const existingBookingIndex = prevBookings.findIndex(b => b.id === booking.id);
+          
+          if (existingBookingIndex >= 0) {
+            const updatedBookings = [...prevBookings];
+            updatedBookings[existingBookingIndex] = booking;
+            return updatedBookings;
+          } else {
+            // Tambahkan booking baru
+            return [...prevBookings, booking];
+          }
+        });
+      }
+    });
+
+    // Load data booking cabang saat komponen dimount
+    fetchBranchBookings();
+
+    // Cleanup: unsubscribe dari socket events
+    return () => {
+      unsubscribe();
+      console.log("Unsubscribed from booking updates for branch:", adminBranchId);
+    };
+  }, [socketInitialized, adminBranchId, fetchBranchBookings]);
+
+  // Subscribe ke socket untuk pembaruan ketersediaan lapangan
+  useEffect(() => {
+    if (!socketInitialized || !adminBranchId || !bookingContext.selectedDate) return;
+
+    console.log("Socket initialized, subscribing to field availability updates for branch:", adminBranchId);
+
+    // Gabung ke room ketersediaan lapangan berdasarkan tanggal dan cabang
+    joinFieldAvailabilityRoom(adminBranchId, bookingContext.selectedDate);
+
+    // Subscribe ke pembaruan ketersediaan lapangan
+    const unsubscribe = subscribeToFieldAvailability((data) => {
+      console.log("Received field availability update via socket:", data);
+      // Tidak perlu melakukan apa-apa di sini karena BookingContext 
+      // sudah meng-handle pembaruan ini
+    });
+
+    // Cleanup: unsubscribe dari socket events
+    return () => {
+      unsubscribe();
+      console.log("Unsubscribed from field availability updates for branch:", adminBranchId);
+    };
+  }, [socketInitialized, adminBranchId, bookingContext.selectedDate]);
 
   // Fungsi untuk membuat booking dengan context yang sama seperti user biasa
   const createBooking = useCallback(async (data: BookingFormValues) => {

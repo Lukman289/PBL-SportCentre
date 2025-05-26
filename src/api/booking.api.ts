@@ -1,7 +1,6 @@
 import axiosInstance from '../config/axios.config';
-import { Booking, BookingRequest, Payment, PaymentMethod, PaymentStatus } from '../types';
+import { Booking, BookingRequest, Payment, PaymentMethod, PaymentStatus, Role } from '../types';
 import { combineDateAndTime } from '@/utils/date.utils';
-import { BookingRequest as BookingRequestContext } from '@/context/booking/booking.context';
 
 // Interface untuk format respons dengan data dan meta
 interface BookingResponseWithMeta {
@@ -34,7 +33,7 @@ class BookingApi {
       let endpoint = '';
       if (userId) {
         // Jika userId ada, ambil booking untuk user tersebut
-        endpoint = `/bookings/users/${userId}/bookings`;
+        endpoint = `/bookings/users/${userId}/bookings?include=field.branch`;
       } else {
         // Jika tidak ada userId, ini adalah admin yang mengakses semua booking (akan ditangani di getAllBookings)
         console.error('User ID tidak ditemukan, gunakan getAllBookings() untuk admin');
@@ -73,11 +72,44 @@ class BookingApi {
    * Dapatkan semua booking (untuk admin)
    * @returns Promise dengan array data booking
    */
-  async getAllBookings(): Promise<Booking[]> {
+  async getAllBookings(filters?: { branchId?: number; status?: string; startDate?: string; endDate?: string; search?: string }): Promise<Booking[]> {
     try {
-      console.log("Fetching all bookings for admin");
+      console.log("Fetching all bookings for admin with filters:", filters);
+      
+      // Buat query parameters jika ada filter
+      let queryParams = '';
+      if (filters) {
+        const params = new URLSearchParams();
+        if (filters.branchId) {
+          params.append('branchId', filters.branchId.toString());
+        }
+        if (filters.status) {
+          params.append('status', filters.status);
+        }
+        if (filters.startDate) {
+          params.append('startDate', filters.startDate);
+        }
+        if (filters.endDate) {
+          params.append('endDate', filters.endDate);
+        }
+        if (filters.search) {
+          params.append('search', filters.search);
+        }
+        
+        // Coba berbagai format parameter include yang mungkin didukung oleh backend
+        params.append('include', 'field.branch');
+        params.append('includes', 'field.branch'); // Alternatif format
+        params.append('_include', 'field.branch'); // Alternatif format
+        params.append('with', 'field.branch'); // Alternatif format
+        
+        queryParams = params.toString() ? `?${params.toString()}` : '';
+      } else {
+        // Jika tidak ada filter, tetap tambahkan parameter include
+        queryParams = '?include=field.branch&includes=field.branch&_include=field.branch&with=field.branch';
+      }
+      
       // Endpoint untuk admin mendapatkan semua booking
-      const response = await axiosInstance.get<BookingResponseWithMeta | BookingResponseVariants | Booking[]>('/bookings/admin/bookings');
+      const response = await axiosInstance.get<BookingResponseWithMeta | BookingResponseVariants | Booking[]>(`/bookings/admin/bookings${queryParams}`);
       
       console.log("Admin bookings response:", response.data);
       
@@ -111,12 +143,43 @@ class BookingApi {
    * @param branchId - ID cabang
    * @returns Promise dengan array data booking
    */
-  async getBranchBookings(branchId: number): Promise<Booking[]> {
+  async getBranchBookings(branchId: number, filters?: { status?: string; startDate?: string; endDate?: string; search?: string }): Promise<Booking[]> {
     try {
-      console.log(`Fetching bookings for branch ID: ${branchId}`);
-      // Endpoint untuk admin cabang
-      const response = await axiosInstance.get<BookingResponseWithMeta | BookingResponseVariants | Booking[]>(`/bookings/branches/${branchId}/bookings`);
+      console.log(`Fetching bookings for branch ID: ${branchId} with filters:`, filters);
       
+      // Buat query parameters jika ada filter
+      let queryParams = '';
+      if (filters) {
+        const params = new URLSearchParams();
+        if (filters.status) {
+          params.append('status', filters.status);
+        }
+        if (filters.startDate) {
+          params.append('startDate', filters.startDate);
+        }
+        if (filters.endDate) {
+          params.append('endDate', filters.endDate);
+        }
+        if (filters.search) {
+          params.append('search', filters.search);
+        }
+        
+        // Tambahkan parameter include untuk memastikan field dan branch diambil
+        params.append('include', 'field.branch');
+        
+        queryParams = params.toString() ? `?${params.toString()}` : '';
+      } else {
+        // Jika tidak ada filter, tetap tambahkan parameter include
+        queryParams = '?include=field.branch';
+      }
+      
+      // Endpoint untuk admin cabang
+      const response = await axiosInstance.get<BookingResponseWithMeta | BookingResponseVariants | Booking[]>(
+        `/bookings/branches/${branchId}/bookings${queryParams}`
+      );
+      
+      console.log(`API Response URL: /bookings/branches/${branchId}/bookings${queryParams}`);
+      console.log("Raw response from API:", response);
       console.log("Branch bookings response:", response.data);
       
       // Handle berbagai format respon
@@ -143,18 +206,41 @@ class BookingApi {
   /**
    * Dapatkan booking berdasarkan ID
    * @param id - ID booking
+   * @param role - Peran pengguna (opsional)
    * @returns Promise dengan data booking
    */
-  async getBookingById(id: number): Promise<Booking> {
+  async getBookingById(id: number, role?: string, branchId?: number): Promise<Booking> {
     try {
-      const response = await axiosInstance.get<{ data: Booking } | { booking: Booking }>(`/bookings/${id}/user`);
+      // Tentukan endpoint yang akan digunakan berdasarkan peran pengguna
+      let endpoint = '';
       
-      if ('data' in response.data) {
-        return response.data.data;
-      } else if ('booking' in response.data) {
-        return response.data.booking;
-      } else if ('id' in response.data && 'bookingDate' in response.data) {
-        return response.data as Booking;
+      const userRole = role || Role.USER;
+
+      // Gunakan endpoint yang sesuai dengan peran pengguna
+      if (userRole === Role.SUPER_ADMIN) {
+        endpoint = `/bookings/admin/${id}?include=field.branch,user,payment`;
+      } else if (userRole === Role.ADMIN_CABANG) {
+        if (!branchId) {
+          throw new Error('BranchId diperlukan untuk admin cabang');
+        }
+        // Admin cabang menggunakan endpoint khusus untuk cabang
+        endpoint = `/bookings/branches/${branchId}/bookings/${id}?include=field.branch,user,payment`;
+      } else {
+        endpoint = `/bookings/${id}/user?include=field.branch,payment`;
+      }
+      
+      console.log(`Fetching booking with ID ${id} using endpoint: ${endpoint}`);
+      
+      const response = await axiosInstance.get<{ data: Booking } | { booking: Booking } | Booking>(endpoint);
+      
+      if (response.data && typeof response.data === 'object') {
+        if ('data' in response.data) {
+          return response.data.data;
+        } else if ('booking' in response.data) {
+          return response.data.booking;
+        } else if ('id' in response.data && 'bookingDate' in response.data) {
+          return response.data as Booking;
+        }
       }
       
       throw new Error('Unexpected response format');

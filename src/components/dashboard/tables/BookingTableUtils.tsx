@@ -6,7 +6,7 @@ export const getDetailLink = (booking: Booking, userRole?: string) => {
   if (userRole === Role.SUPER_ADMIN) {
     return `/dashboard/bookings/${booking.id}`;
   } else if (userRole === Role.ADMIN_CABANG) {
-    return `/dashboard/branches/${booking.field?.branchId}/bookings/${booking.id}`;
+    return `/dashboard/bookings/${booking.id}`;
   } else {
     return `/bookings/${booking.id}`;
   }

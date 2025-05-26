@@ -51,6 +51,7 @@ interface BookingContextType {
   refreshing: boolean;
   form: ReturnType<typeof useForm<BookingFormValues>>;
   times: string[];
+  socketInitialized: boolean;
   setSelectedBranch: (branchId: number) => void;
   setSelectedDate: (date: string) => void;
   refreshAvailability: () => Promise<void>;
@@ -62,8 +63,6 @@ interface BookingContextType {
 }
 
 export const BookingContext = createContext<BookingContextType | undefined>(undefined);
-
-// Struktur tipe data sudah didefinisikan dalam FieldAvailabilityData
 
 export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const [fields, setFields] = useState<Field[]>([]);
@@ -81,6 +80,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const [selectedEndTime, setSelectedEndTime] = useState<string>("");
   const [bookedTimeSlots, setBookedTimeSlots] = useState<{[key: number]: string[]}>({});
   const [refreshing, setRefreshing] = useState(false);
+  const [socketInitialized, setSocketInitialized] = useState(false);
   
   const router = useRouter();
   const { user } = useAuth();
@@ -213,6 +213,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         fieldsId: fieldsSocket?.id,
         notificationId: notificationSocket?.id
       });
+      setSocketInitialized(true);
     } catch (error) {
       console.error('Error initializing sockets:', error);
     }
@@ -251,6 +252,37 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
             }
           });
           
+          // Cek apakah waktu yang dipilih sudah terpesan
+          if (selectedField && selectedStartTime !== "-" && selectedEndTime) {
+            const fieldId = selectedField;
+            const bookedHoursForField = newBookedSlots[fieldId] || [];
+            
+            // Cek apakah waktu mulai atau waktu dalam rentang yang dipilih sudah terpesan
+            const isStartTimeBooked = bookedHoursForField.includes(selectedStartTime);
+            
+            // Cek apakah ada jam dalam rentang yang dipilih yang sudah terpesan
+            let isAnyTimeInRangeBooked = false;
+            const startIdx = times.indexOf(selectedStartTime);
+            const endIdx = times.indexOf(selectedEndTime);
+            
+            if (startIdx >= 0 && endIdx > startIdx) {
+              for (let i = startIdx; i < endIdx; i++) {
+                if (bookedHoursForField.includes(times[i])) {
+                  isAnyTimeInRangeBooked = true;
+                  break;
+                }
+              }
+            }
+            
+            // Jika waktu mulai atau waktu dalam rentang sudah terpesan, reset pemilihan
+            if (isStartTimeBooked || isAnyTimeInRangeBooked) {
+              console.log('Reset selection because selected time slot is now booked:', selectedStartTime, selectedEndTime);
+              setSelectedStartTime("-");
+              setSelectedEndTime("");
+              // Jangan reset field karena user masih melihat lapangan yang sama
+            }
+          }
+          
           setBookedTimeSlots(newBookedSlots);
         }
       });
@@ -266,7 +298,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         clearInterval(refreshInterval);
       };
     }
-  }, [selectedDate, selectedBranch, times]);
+  }, [selectedDate, selectedBranch, times, selectedField, selectedStartTime, selectedEndTime]);
 
   // Ambil data ketersediaan saat pertama kali atau ketika cabang/tanggal berubah
   useEffect(() => {
@@ -436,6 +468,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         refreshing,
         form,
         times,
+        socketInitialized,
         setSelectedBranch,
         setSelectedDate,
         refreshAvailability,

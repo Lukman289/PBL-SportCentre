@@ -1,6 +1,6 @@
 "use client";
 
-import { useBooking } from "@/hooks/useBooking.hook";
+import { useBooking } from "@/hooks/bookings/useBooking.hook";
 
 // Komponen-komponen terpisah untuk halaman booking
 import TimeSlotSelector from "@/components/booking/TimeSlotSelector";

@@ -1,7 +1,7 @@
 // Updated code for fields/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { branchApi } from '@/api/branch.api';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,42 @@ export default function FieldPage() {
   const [filteredFields, setFilteredFields] = useState<Field[]>([]);
   const { toast } = useToast();
   const router = useRouter();
+
+  // Function to fetch fields by branch ID
+  const fetchFields = useCallback(async (branchId: number) => {
+    if (!branchId) {
+      setFields([]);
+      setFilteredFields([]);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const fieldData = await fieldApi.getBranchFields(branchId);
+      
+      if (Array.isArray(fieldData)) {
+        setFields(fieldData);
+        setFilteredFields(searchQuery
+          ? fieldData.filter(field => field.name.toLowerCase().includes(searchQuery.toLowerCase()))
+          : fieldData
+        );
+      } else {
+        console.error("Unexpected field data format:", fieldData);
+        setFields([]);
+        setFilteredFields([]);
+        setError("Format data lapangan tidak sesuai.");
+      }
+    } catch (error) {
+      console.error("Error fetching fields:", error);
+      setFields([]);
+      setFilteredFields([]);
+      setError("Gagal memuat lapangan. Silakan coba lagi nanti.");
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery]);
 
   // Fetch branches when component mounts
   useEffect(() => {
@@ -80,43 +116,7 @@ export default function FieldPage() {
     };
 
     fetchBranches();
-  }, [toast]);
-
-  // Function to fetch fields by branch ID
-  const fetchFields = async (branchId: number) => {
-    if (!branchId) {
-      setFields([]);
-      setFilteredFields([]);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const fieldData = await fieldApi.getFieldsByBranchId(branchId);
-      
-      if (Array.isArray(fieldData)) {
-        setFields(fieldData);
-        setFilteredFields(searchQuery
-          ? fieldData.filter(field => field.name.toLowerCase().includes(searchQuery.toLowerCase()))
-          : fieldData
-        );
-      } else {
-        console.error("Unexpected field data format:", fieldData);
-        setFields([]);
-        setFilteredFields([]);
-        setError("Format data lapangan tidak sesuai.");
-      }
-    } catch (error) {
-      console.error("Error fetching fields:", error);
-      setFields([]);
-      setFilteredFields([]);
-      setError("Gagal memuat lapangan. Silakan coba lagi nanti.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [toast, fetchFields]);
 
   // Apply search filter when search query changes
   useEffect(() => {
@@ -319,9 +319,9 @@ export default function FieldPage() {
                       </TableCell>
                       <TableCell>
                         <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${getStatusClass(field.status)}`}
+                          className={`px-2 py-1 rounded text-xs font-medium ${getStatusClass(field.status || 'unknown')}`}
                         >
-                          {getStatusLabel(field.status)}
+                          {getStatusLabel(field.status || 'unknown')}
                         </span>
                       </TableCell>
                       <TableCell>

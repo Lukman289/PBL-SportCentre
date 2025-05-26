@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { PaymentStatus } from '@/types/booking.types';
 
 export interface BookingFilters {
@@ -17,16 +17,41 @@ const initialFilters: BookingFilters = {
   branchId: undefined,
 };
 
-export function useBookingFilters() {
-  const [filters, setFilters] = useState<BookingFilters>(initialFilters);
+export function useBookingFilters(defaultBranchId?: number) {
+  // Inisialisasi dengan defaultBranchId jika disediakan
+  const [filters, setFilters] = useState<BookingFilters>({
+    ...initialFilters,
+    branchId: defaultBranchId
+  });
 
-  const handleFilterChange = (newFilters: Partial<BookingFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
-  };
+  const handleFilterChange = useCallback((newFilters: Partial<BookingFilters>) => {
+    // Hanya update jika ada perubahan nilai
+    setFilters(prev => {
+      // Periksa apakah ada perubahan nilai sebenarnya
+      const hasChanges = Object.entries(newFilters).some(
+        ([key, value]) => prev[key as keyof BookingFilters] !== value
+      );
+      
+      // Jika tidak ada perubahan, jangan update state
+      if (!hasChanges) {
+        return prev;
+      }
+      
+      console.log("Updating filters:", { ...prev, ...newFilters });
+      return { ...prev, ...newFilters };
+    });
+  }, []);
 
-  const resetFilters = () => {
-    setFilters(initialFilters);
-  };
+  const resetFilters = useCallback((preserveBranchId?: boolean) => {
+    if (preserveBranchId && filters.branchId) {
+      setFilters({
+        ...initialFilters,
+        branchId: filters.branchId
+      });
+    } else {
+      setFilters(initialFilters);
+    }
+  }, [filters.branchId]);
 
   return {
     filters,

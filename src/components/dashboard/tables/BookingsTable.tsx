@@ -104,6 +104,7 @@ export default function BookingsTable({ bookings, userRole }: BookingsTableProps
             <TableRow>
               <TableHead>ID</TableHead>
               <TableHead>Lapangan</TableHead>
+              <TableHead>Cabang</TableHead>
               <TableHead>Tanggal</TableHead>
               <TableHead>Waktu</TableHead>
               <TableHead>Pembayaran</TableHead>
@@ -115,6 +116,7 @@ export default function BookingsTable({ bookings, userRole }: BookingsTableProps
               <TableRow key={booking.id}>
                 <TableCell className="font-medium">#{booking.id}</TableCell>
                 <TableCell>{booking.field?.name || "-"}</TableCell>
+                <TableCell>{booking.field?.branch?.name || "-"}</TableCell>
                 <TableCell>
                   {booking.bookingDate
                     ? format(new Date(booking.bookingDate), "dd MMM yyyy", { locale: id })

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -13,26 +13,54 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Search } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Branch } from "@/types";
-import { PaymentStatus } from "@/types/booking.types";
+import { Branch, PaymentStatus, Role } from "@/types";
 import { BookingFilters as BookingFiltersType } from "@/hooks/useBookingFilters.hook";
+import { useAuth } from "@/context/auth/auth.context";
 
 interface BookingFiltersProps {
   onFilterChange: (filters: Partial<BookingFiltersType>) => void;
   branches?: Branch[];
   showBranchFilter?: boolean;
+  initialBranchId?: number;
 }
 
 export default function BookingFilters({ 
   onFilterChange, 
   branches = [], 
-  showBranchFilter = false 
+  showBranchFilter = false,
+  initialBranchId
 }: BookingFiltersProps) {
+  const { user } = useAuth();
   const [status, setStatus] = useState("all");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [search, setSearch] = useState("");
-  const [branchId, setBranchId] = useState("all");
+  const [branchId, setBranchId] = useState<string>(initialBranchId ? initialBranchId.toString() : "all");
+  const initializedRef = useRef(false);
+
+  useEffect(() => {
+    if (initializedRef.current) {
+      return;
+    }
+
+    if (user?.role === Role.ADMIN_CABANG && branches.length > 0 && user.branches && user.branches.length > 0) {
+      const adminBranchId = user.branches[0].branchId;
+      if (branches.some(branch => branch.id === adminBranchId)) {
+        setBranchId(adminBranchId.toString());
+        
+        if (!initialBranchId || initialBranchId !== adminBranchId) {
+          onFilterChange({
+            branchId: adminBranchId
+          });
+        }
+        
+        initializedRef.current = true;
+      }
+    } else if (initialBranchId && initialBranchId > 0 && branches.some(branch => branch.id === initialBranchId)) {
+      setBranchId(initialBranchId.toString());
+      initializedRef.current = true;
+    }
+  }, [branches, user, initialBranchId, onFilterChange]);
 
   const applyFilter = () => {
     onFilterChange({
@@ -49,15 +77,28 @@ export default function BookingFilters({
     setStartDate(undefined);
     setEndDate(undefined);
     setSearch("");
-    setBranchId("all");
     
-    onFilterChange({
-      status: undefined,
-      startDate: "",
-      endDate: "",
-      search: "",
-      branchId: undefined,
-    });
+    if (user?.role === Role.ADMIN_CABANG && user.branches && user.branches.length > 0) {
+      const adminBranchId = user.branches[0].branchId.toString();
+      setBranchId(adminBranchId);
+      
+      onFilterChange({
+        status: undefined,
+        startDate: "",
+        endDate: "",
+        search: "",
+        branchId: Number(adminBranchId),
+      });
+    } else {
+      setBranchId("all");
+      onFilterChange({
+        status: undefined,
+        startDate: "",
+        endDate: "",
+        search: "",
+        branchId: undefined,
+      });
+    }
   };
 
   const renderDateButton = (
@@ -105,7 +146,9 @@ export default function BookingFilters({
                   <SelectValue placeholder="Semua Cabang" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Semua Cabang</SelectItem>
+                  {user?.role !== Role.ADMIN_CABANG && (
+                    <SelectItem value="all">Semua Cabang</SelectItem>
+                  )}
                   {branches.map((branch) => (
                     <SelectItem key={branch.id} value={branch.id.toString()}>
                       {branch.name}

@@ -107,6 +107,7 @@ export const useAdminBooking = (branchId?: number) => {
         await bookingContext.refreshAvailability();
       }
       
+      
       return booking;
     } catch (error: unknown) {
       console.error("Error creating manual booking:", error);

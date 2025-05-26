@@ -1,5 +1,5 @@
 import axiosInstance from '../config/axios.config';
-import { Booking, BookingRequest, Payment, PaymentMethod, PaymentStatus } from '../types';
+import { Booking, BookingRequest, Payment, PaymentMethod, PaymentStatus, Role } from '../types';
 import { combineDateAndTime } from '@/utils/date.utils';
 
 // Interface untuk format respons dengan data dan meta
@@ -206,18 +206,41 @@ class BookingApi {
   /**
    * Dapatkan booking berdasarkan ID
    * @param id - ID booking
+   * @param role - Peran pengguna (opsional)
    * @returns Promise dengan data booking
    */
-  async getBookingById(id: number): Promise<Booking> {
+  async getBookingById(id: number, role?: string, branchId?: number): Promise<Booking> {
     try {
-      const response = await axiosInstance.get<{ data: Booking } | { booking: Booking }>(`/bookings/${id}/user`);
+      // Tentukan endpoint yang akan digunakan berdasarkan peran pengguna
+      let endpoint = '';
       
-      if ('data' in response.data) {
-        return response.data.data;
-      } else if ('booking' in response.data) {
-        return response.data.booking;
-      } else if ('id' in response.data && 'bookingDate' in response.data) {
-        return response.data as Booking;
+      const userRole = role || Role.USER;
+
+      // Gunakan endpoint yang sesuai dengan peran pengguna
+      if (userRole === Role.SUPER_ADMIN) {
+        endpoint = `/bookings/admin/${id}?include=field.branch,user,payment`;
+      } else if (userRole === Role.ADMIN_CABANG) {
+        if (!branchId) {
+          throw new Error('BranchId diperlukan untuk admin cabang');
+        }
+        // Admin cabang menggunakan endpoint khusus untuk cabang
+        endpoint = `/bookings/branches/${branchId}/bookings/${id}?include=field.branch,user,payment`;
+      } else {
+        endpoint = `/bookings/${id}/user?include=field.branch,payment`;
+      }
+      
+      console.log(`Fetching booking with ID ${id} using endpoint: ${endpoint}`);
+      
+      const response = await axiosInstance.get<{ data: Booking } | { booking: Booking } | Booking>(endpoint);
+      
+      if (response.data && typeof response.data === 'object') {
+        if ('data' in response.data) {
+          return response.data.data;
+        } else if ('booking' in response.data) {
+          return response.data.booking;
+        } else if ('id' in response.data && 'bookingDate' in response.data) {
+          return response.data as Booking;
+        }
       }
       
       throw new Error('Unexpected response format');

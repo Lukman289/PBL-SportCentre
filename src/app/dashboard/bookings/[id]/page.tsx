@@ -7,7 +7,7 @@ import { Booking, PaymentMethod, PaymentStatus } from "@/types/booking.types";
 import { bookingApi } from "@/api/booking.api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, ArrowLeft, XCircle, Printer, CreditCard, Info } from "lucide-react";
+import { Check, ArrowLeft, XCircle, Printer, CreditCard, Info, Ban } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -16,11 +16,13 @@ import { id } from "date-fns/locale";
 import { toast } from "@/components/ui/use-toast";
 import { Role } from "@/types";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import PageTitle from "@/components/common/PageTitle";
+import { useParams } from "next/navigation";
+import Link from "next/link";
 
-export default function BookingDetailPage({ params }: { params: { id: string } }) {
+export default function SuperAdminBookingDetailPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const params = useParams();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -35,11 +37,56 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
     title: "",
     description: "",
   });
+  const [openCancelDialog, setOpenCancelDialog] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+
+  const bookingId = Number(params.id);
 
   const fetchBookingDetails = async () => {
     try {
       setLoading(true);
-      const data = await bookingApi.getBookingById(parseInt(params.id));
+      // Memastikan user?.role ada sebelum memanggil API
+      if (!user?.role) {
+        toast({
+          title: "Error",
+          description: "Data pengguna tidak ditemukan. Silakan login kembali.",
+          variant: "destructive",
+        });
+        router.push('/auth/login');
+        return;
+      }
+      
+      // Memastikan hanya SUPER_ADMIN dan ADMIN_CABANG yang dapat mengakses
+      if (user.role !== Role.SUPER_ADMIN && user.role !== Role.ADMIN_CABANG) {
+        toast({
+          title: "Akses Ditolak",
+          description: "Anda tidak memiliki izin untuk mengakses halaman ini",
+          variant: "destructive",
+        });
+        router.push('/dashboard');
+        return;
+      }
+      
+      const roleParam = user.role;
+      
+      let data;
+      if (user.role === Role.SUPER_ADMIN) {
+        // Super admin tidak membutuhkan branchId
+        data = await bookingApi.getBookingById(bookingId, roleParam);
+      } else if (user.role === Role.ADMIN_CABANG && user.branches && user.branches.length > 0) {
+        // Admin cabang membutuhkan branchId
+        // Ambil branchId dari cabang pertama yang dimiliki admin
+        const branchId = user.branches[0].branchId;
+        data = await bookingApi.getBookingById(bookingId, roleParam, branchId);
+      } else {
+        toast({
+          title: "Error",
+          description: "Data cabang tidak ditemukan untuk admin cabang",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setBooking(data);
     } catch (error) {
       console.error("Error fetching booking details:", error);
@@ -54,10 +101,10 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
   };
 
   useEffect(() => {
-    if (params.id) {
+    if (bookingId) {
       fetchBookingDetails();
     }
-  }, [params.id]);
+  }, [bookingId]);
 
   const handleAction = async () => {
     if (!booking) return;
@@ -190,6 +237,49 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
   const isManualBooking = booking?.payment?.paymentMethod === PaymentMethod.CASH && 
                          booking?.payment?.status === PaymentStatus.PAID;
 
+  const handleCancelBooking = async () => {
+    if (!booking) return;
+    
+    setCancelLoading(true);
+    try {
+      await bookingApi.cancelBooking(booking.id);
+      
+      toast({
+        title: "Berhasil",
+        description: "Booking berhasil dibatalkan",
+      });
+      
+      // Reload data booking setelah berhasil dibatalkan
+      if (user?.role) {
+        const roleParam = user.role;
+        
+        let updatedBooking;
+        if (user.role === Role.SUPER_ADMIN) {
+          updatedBooking = await bookingApi.getBookingById(bookingId, roleParam);
+        } else if (user.role === Role.ADMIN_CABANG && user.branches && user.branches.length > 0) {
+          // Admin cabang membutuhkan branchId
+          const branchId = user.branches[0].branchId;
+          updatedBooking = await bookingApi.getBookingById(bookingId, roleParam, branchId);
+        }
+        
+        if (updatedBooking) {
+          setBooking(updatedBooking);
+        }
+      }
+      
+      setOpenCancelDialog(false);
+    } catch (error) {
+      console.error("Error canceling booking:", error);
+      toast({
+        title: "Gagal",
+        description: "Terjadi kesalahan saat membatalkan booking",
+        variant: "destructive",
+      });
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container flex items-center justify-center h-[calc(100vh-200px)]">
@@ -213,16 +303,21 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
     );
   }
 
+  const canCancel = booking.payment?.status === PaymentStatus.PENDING ||
+    booking.payment?.status === PaymentStatus.DP_PAID;
+
   return (
     <div className="container p-4">
-      <div className="flex items-center gap-4 mb-6">
-        <Button onClick={() => router.back()} variant="outline" size="icon">
-          <ArrowLeft size={16} />
+      <div className="mb-4">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/dashboard/bookings">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Kembali ke Daftar Booking
+          </Link>
         </Button>
-        <PageTitle title="Detail Booking" />
       </div>
-
-      <div className="grid gap-6 md:grid-cols-3">
+      
+      <div className="flex flex-col gap-4 md:flex-row">
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle className="flex justify-between items-center">
@@ -413,7 +508,7 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
               </Button>
             )}
 
-            {(user?.role === Role.SUPER_ADMIN || user?.role === Role.USER) && 
+            {(user?.role === Role.SUPER_ADMIN || user?.role === Role.ADMIN_CABANG) && 
              booking.payment?.status !== PaymentStatus.FAILED && 
              booking.payment?.status !== PaymentStatus.REFUNDED && (
               <Button
@@ -454,6 +549,44 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
             </Button>
             <Button onClick={handleAction} disabled={actionLoading}>
               {actionLoading ? "Memproses..." : "Ya, Lanjutkan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {canCancel && (
+        <Button
+          variant="destructive"
+          onClick={() => setOpenCancelDialog(true)}
+          className="w-full mt-4"
+        >
+          <Ban className="mr-2 h-4 w-4" />
+          Batalkan Booking
+        </Button>
+      )}
+
+      <Dialog open={openCancelDialog} onOpenChange={setOpenCancelDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Batalkan Booking</DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin membatalkan booking ini? Tindakan ini tidak dapat dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 justify-end">
+            <Button 
+              variant="outline" 
+              onClick={() => setOpenCancelDialog(false)} 
+              disabled={cancelLoading}
+            >
+              Batal
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleCancelBooking} 
+              disabled={cancelLoading}
+            >
+              {cancelLoading ? "Memproses..." : "Ya, Batalkan"}
             </Button>
           </DialogFooter>
         </DialogContent>

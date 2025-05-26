@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useBooking } from "./useBooking.hook";
+import { useBooking } from "./bookings/useBooking.hook";
 
 export const useDurationCalculator = () => {
   const { selectedStartTime, selectedEndTime, times } = useBooking();

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Field } from "@/types";
-import { useBooking } from "./useBooking.hook";
+import { useBooking } from "./bookings/useBooking.hook";
 
 export const useTimeSlot = () => {
   const { 

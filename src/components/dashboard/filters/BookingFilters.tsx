@@ -14,7 +14,7 @@ import { CalendarIcon, Search } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Branch, PaymentStatus, Role } from "@/types";
-import { BookingFilters as BookingFiltersType } from "@/hooks/useBookingFilters.hook";
+import { BookingFilters as BookingFiltersType } from "@/hooks/bookings/useBookingFilters.hook";
 import { useAuth } from "@/context/auth/auth.context";
 
 interface BookingFiltersProps {

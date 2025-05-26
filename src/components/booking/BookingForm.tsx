@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useBookingContext } from "@/context/booking/booking.context";
-import { useAdminBooking } from "@/hooks/useAdminBooking.hook";
+import { useAdminBooking } from "@/hooks/bookings/useAdminBooking.hook";
 import { useDurationCalculator } from "@/hooks/useDurationCalculator.hook";
 import { PaymentMethod, PaymentStatus } from "@/types";
 import { BookingFormValues } from "@/context/booking/booking.context";

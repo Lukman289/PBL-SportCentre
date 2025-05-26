@@ -9,8 +9,8 @@ import Link from "next/link";
 import { Role } from "@/types";
 import PageTitle from "@/components/common/PageTitle";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import { useBookingFilters } from "@/hooks/useBookingFilters.hook";
-import { useBookingData } from "@/hooks/useBookingData.hook";
+import { useBookingFilters } from "@/hooks/bookings/useBookingFilters.hook";
+import { useBookingData } from "@/hooks/bookings/useBookingData.hook";
 import { useToast } from "@/components/ui/use-toast";
 import { useEffect, useMemo } from "react";
 

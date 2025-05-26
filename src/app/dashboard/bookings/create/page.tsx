@@ -1,6 +1,6 @@
 "use client";
 
-import { useAdminBooking } from "@/hooks/useAdminBooking.hook";
+import { useAdminBooking } from "@/hooks/bookings/useAdminBooking.hook";
 import { useAuth } from "@/context/auth/auth.context";
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";

@@ -5,7 +5,7 @@ import { Field, Branch } from "@/types";
 import { branchApi, fieldApi, bookingApi } from "@/api";
 import { format } from "date-fns";
 import { 
-  initSocket, 
+  initializeSockets,
   joinFieldAvailabilityRoom, 
   subscribeToFieldAvailability, 
   requestAvailabilityUpdate
@@ -27,11 +27,12 @@ const bookingSchema = z.object({
 
 export type BookingFormValues = z.infer<typeof bookingSchema>;
 export type BookingRequest = {
-  userId: number;
   fieldId: number;
   bookingDate: string;
   startTime: string;
   endTime: string;
+  branchId?: number;
+  userId?: number;
 };
 
 interface BookingContextType {
@@ -57,7 +58,7 @@ interface BookingContextType {
   dateValueHandler: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleTimeSelection: (startTime: string, fieldId: number, fieldName: string, endTime?: string) => void;
   showPicker: () => void;
-  onSubmit: (formData: BookingFormValues) => Promise<void>;
+  onSubmit: (formData?: BookingFormValues) => Promise<void>;
 }
 
 export const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -82,8 +83,8 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const [refreshing, setRefreshing] = useState(false);
   
   const router = useRouter();
-  const user = useAuth();
-  const userId = user?.user?.id || 0;
+  const { user } = useAuth();
+  const userRole = user?.role || '';
   const limit = 1000;
   
   const times = useMemo(() => [
@@ -166,8 +167,24 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         const branches = response.data || [];
         
         if (Array.isArray(branches) && branches.length > 0) {
-          setSelectedBranch(branches[0].id);
-          setSelectedBranchName(branches[0].name);
+          // Jika user adalah admin cabang, pilih cabang yang dikelola
+          if (user?.role === 'admin_cabang' && user?.branches && user.branches.length > 0) {
+            const adminBranchId = user.branches[0].branchId;
+            const adminBranch = branches.find(branch => branch.id === adminBranchId);
+            
+            if (adminBranch) {
+              setSelectedBranch(adminBranchId);
+              setSelectedBranchName(adminBranch.name);
+            } else {
+              setSelectedBranch(branches[0].id);
+              setSelectedBranchName(branches[0].name);
+            }
+          } else {
+            // Untuk user biasa, pilih cabang pertama
+            setSelectedBranch(branches[0].id);
+            setSelectedBranchName(branches[0].name);
+          }
+          
           setBranches(branches);
         } else {
           console.error("branches is not an array or empty:", branches);
@@ -176,7 +193,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         
         // Ambil data lapangan
         const fields = await fieldApi.getAllFields({limit});
-        setFields(Array.isArray(fields.data) ? fields.data : []);
+        setFields(Array.isArray(fields) ? fields : []);
         
         setLoading(false);
       } catch (error) {
@@ -188,14 +205,18 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
 
     fetchData();
     
-    // Inisialisasi socket.io
+    // Inisialisasi semua socket termasuk fields socket
     try {
-      initSocket();
-      console.log('Socket initialized in booking context');
+      const { rootSocket, fieldsSocket, notificationSocket } = initializeSockets();
+      console.log('Sockets initialized in booking context:', { 
+        rootId: rootSocket?.id, 
+        fieldsId: fieldsSocket?.id,
+        notificationId: notificationSocket?.id
+      });
     } catch (error) {
-      console.error('Error initializing socket:', error);
+      console.error('Error initializing sockets:', error);
     }
-  }, []);
+  }, [user?.role, user?.branches]);
 
   // Setup socket.io subscription untuk update real-time
   useEffect(() => {
@@ -252,19 +273,25 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     fetchInitialAvailability();
   }, [fetchInitialAvailability]);
 
-  const onSubmit = async () => {
+  const onSubmit = async (formData?: BookingFormValues) => {
     setLoading(true);
     setError(null);
 
-    if (!selectedField || selectedStartTime === "-" || !selectedEndTime) {
+    // Gunakan formData jika disediakan, jika tidak gunakan nilai dari state
+    const fieldId = formData?.fieldId || selectedField;
+    const bookingDate = formData?.bookingDate || selectedDate;
+    const startTime = formData?.startTime || selectedStartTime;
+    const endTime = formData?.endTime || selectedEndTime;
+
+    if (!fieldId || startTime === "-" || !endTime) {
       setError("Silakan pilih lapangan dan rentang waktu terlebih dahulu");
       setLoading(false);
       return;
     }
 
     // Pastikan waktu mulai kurang dari waktu selesai
-    const startHour = parseInt(selectedStartTime.split(":")[0], 10);
-    const endHour = parseInt(selectedEndTime.split(":")[0], 10);
+    const startHour = parseInt(startTime.split(":")[0], 10);
+    const endHour = parseInt(endTime.split(":")[0], 10);
 
     if (startHour >= endHour) {
       setError("Waktu selesai harus lebih besar dari waktu mulai");
@@ -273,12 +300,15 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const dataToSend: BookingRequest = {
-      userId: userId,
-      fieldId: selectedField,
-      bookingDate: selectedDate,
-      startTime: selectedStartTime,
-      endTime: selectedEndTime,
+      fieldId: fieldId,
+      bookingDate: bookingDate,
+      startTime: startTime,
+      endTime: endTime,
+      branchId: selectedBranch,
+      userId: user?.id
     };
+
+    console.log("Data booking yang akan dikirim:", dataToSend);
 
     try {
       const bookingResult = await bookingApi.createBooking(dataToSend);
@@ -297,7 +327,11 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         window.location.href = bookingResult.payment.paymentUrl;
       } else {
         // Jika tidak ada paymentUrl, arahkan ke halaman riwayat booking
-        router.push("/bookings/history");
+        if (userRole === 'admin_cabang') {
+          router.push("/dashboard/bookings");
+        } else {
+          router.push("/bookings");
+        }
       }
     } catch (error) {
       console.error("Booking error:", error);

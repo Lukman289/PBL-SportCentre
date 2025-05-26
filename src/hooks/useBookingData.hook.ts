@@ -39,7 +39,6 @@ export function useBookingData({ user, filters }: UseBookingDataProps) {
     }
   }, [user]);
 
-  // Mendapatkan data booking dan menerapkan filter
   useEffect(() => {
     const loadBookings = async () => {
       setLoading(true);
@@ -72,7 +71,6 @@ export function useBookingData({ user, filters }: UseBookingDataProps) {
     }
   }, [user, filters, toast]);
 
-  // Fungsi untuk memuat data booking admin cabang
   const loadAdminCabangBookings = async () => {
     if (!user?.branches?.length) {
       try {

@@ -56,4 +56,5 @@ export interface BookingRequest {
   notes?: string;
   branchId?: number;
   sportId?: number;
+  userId?: number;
 } 

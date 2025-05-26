@@ -77,7 +77,7 @@ class FieldApi {
    * Dapatkan semua lapangan
    * @returns Promise dengan array data lapangan
    */
-  async getAllFields(): Promise<Field[]> {
+  async getAllFields(p0: { limit: number; }): Promise<Field[]> {
     try {
       const response = await axiosInstance.get<{ data: Field[] } | Field[]>('/fields');
       
@@ -247,26 +247,90 @@ class FieldApi {
   /**
    * Cek ketersediaan lapangan
    * @param fieldId - ID lapangan
-   * @param date - Tanggal booking
+   * @param date - Tanggal booking (format: YYYY-MM-DD)
    * @returns Promise dengan data slot waktu tersedia
    */
   async checkFieldAvailability(fieldId: number, date: string): Promise<{ slots: { time: string, available: boolean }[] }> {
     try {
-      const response = await axiosInstance.get<{ data: { slots: { time: string, available: boolean }[] } } | { slots: { time: string, available: boolean }[] }>(`/fields/${fieldId}/availability?date=${date}&noCache=true`);
-      
-      // Format 1: { data: { slots: [...] } }
-      if ('data' in response.data && response.data.data.slots) {
-        return { slots: response.data.data.slots };
+      try {
+        // Coba endpoint pertama
+        const response = await axiosInstance.get<{ data: { slots: { time: string, available: boolean }[] } } | { slots: { time: string, available: boolean }[] }>(`/fields/${fieldId}/availability?date=${date}&noCache=true`);
+        
+        // Format 1: { data: { slots: [...] } }
+        if ('data' in response.data && response.data.data && response.data.data.slots) {
+          return { slots: response.data.data.slots };
+        }
+        // Format 2: { slots: [...] }
+        else if ('slots' in response.data) {
+          return { slots: response.data.slots };
+        }
+        
+        throw new Error('Unexpected response format');
+      } catch (error) {
+        console.warn(`Endpoint /fields/${fieldId}/availability tidak tersedia, mencoba endpoint alternatif...`);
+        
+        // Gunakan endpoint alternatif jika endpoint utama tidak ditemukan
+        const response = await axiosInstance.get<any>(`/fields/availability`, {
+          params: { 
+            date,
+            fieldId,
+            noCache: true
+          }
+        });
+        
+        // Dapatkan data yang relevan untuk lapangan tertentu
+        if (response.data && response.data.success && Array.isArray(response.data.data)) {
+          const fieldData = response.data.data.find((f: any) => f.fieldId === fieldId);
+          
+          if (fieldData && fieldData.availableTimeSlots) {
+            // Konversi format dari availableTimeSlots ke format slot yang diharapkan
+            const timeSlots = Array.from({ length: 14 }, (_, i) => `${(i + 8).toString().padStart(2, '0')}:00`);
+            const slots: { time: string, available: boolean }[] = [];
+            
+            // Buat set dari jam yang tersedia
+            const availableHoursSet = new Set<string>();
+            fieldData.availableTimeSlots.forEach((slot: any) => {
+              const startTime = new Date(slot.start);
+              const endTime = new Date(slot.end);
+              
+              // Dapatkan jam dalam timezone lokal
+              const localStartHour = startTime.getHours();
+              const localEndHour = endTime.getHours();
+              
+              // Tambahkan semua jam di antara waktu mulai dan selesai
+              for (let hour = localStartHour; hour < localEndHour; hour++) {
+                availableHoursSet.add(`${hour.toString().padStart(2, '0')}:00`);
+              }
+              
+              // Kasus khusus: jika endTime adalah 00:00, tambahkan 23:00
+              if (localEndHour === 0 && endTime.getMinutes() === 0) {
+                availableHoursSet.add("23:00");
+              }
+            });
+            
+            // Buat array slot dengan status ketersediaan
+            timeSlots.forEach(time => {
+              slots.push({
+                time,
+                available: availableHoursSet.has(time)
+              });
+            });
+            
+            return { slots };
+          }
+        }
+        
+        // Jika tidak berhasil mendapatkan data dari API alternatif
+        throw new Error('Tidak dapat menemukan data ketersediaan lapangan');
       }
-      // Format 2: { slots: [...] }
-      else if ('slots' in response.data) {
-        return { slots: response.data.slots };
-      }
-      
-      throw new Error('Unexpected response format');
     } catch (error) {
       console.error(`Error checking field availability for field ID ${fieldId}:`, error);
-      return { slots: [] };
+      
+      // Fallback: buat semua slot tersedia
+      const timeSlots = Array.from({ length: 14 }, (_, i) => `${(i + 8).toString().padStart(2, '0')}:00`);
+      const slots = timeSlots.map(time => ({ time, available: true }));
+      
+      return { slots };
     }
   }
 

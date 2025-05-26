@@ -1,4 +1,4 @@
-import { getSocket, joinRoom } from '@/config/socket.config';
+import { getRootSocket, joinRoom } from '@/config/socket.config';
 import { Booking, Payment } from '@/types';
 
 /**
@@ -7,7 +7,7 @@ import { Booking, Payment } from '@/types';
  * @returns Fungsi untuk berhenti berlangganan
  */
 export const subscribeToBookingUpdates = (callback: (data: { booking: Booking, payment?: Payment }) => void) => {
-  const socket = getSocket();
+  const socket = getRootSocket();
   if (!socket) return () => {};
 
   const handleBookingUpdate = (data: { booking: Booking, payment?: Payment }) => {
@@ -29,7 +29,7 @@ export const subscribeToBookingUpdates = (callback: (data: { booking: Booking, p
  * @returns Fungsi untuk berhenti berlangganan
  */
 export const subscribeToBookingCancellations = (callback: (data: { bookingId: number }) => void) => {
-  const socket = getSocket();
+  const socket = getRootSocket();
   if (!socket) return () => {};
 
   const handleBookingCancellation = (data: { bookingId: number }) => {

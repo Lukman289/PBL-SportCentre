@@ -20,10 +20,9 @@ export default function BookingsPage() {
     filters 
   });
 
-  // Menentukan link untuk tombol tambah booking
   const getCreateButtonLink = () => {
     if (user?.role === Role.ADMIN_CABANG && user.branches && user.branches.length > 0) {
-      return `/dashboard/branches/${user.branches[0].branchId}/bookings/create`;
+      return `/dashboard/bookings/create`;
     }
     return "#";
   };

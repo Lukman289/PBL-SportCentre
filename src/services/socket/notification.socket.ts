@@ -1,4 +1,4 @@
-import { getSocket, joinRoom } from '@/config/socket.config';
+import { getNotificationSocket, joinRoom } from '@/config/socket.config';
 import { Notification } from '@/types';
 
 /**
@@ -19,7 +19,7 @@ export const joinNotificationRoom = (userId: number) => {
  * @returns Fungsi untuk berhenti berlangganan
  */
 export const subscribeToNotifications = (callback: (data: Notification) => void) => {
-  const socket = getSocket();
+  const socket = getNotificationSocket();
   if (!socket) return () => {};
 
   const handleNewNotification = (notification: Notification) => {
@@ -41,7 +41,7 @@ export const subscribeToNotifications = (callback: (data: Notification) => void)
  * @returns Fungsi untuk berhenti berlangganan
  */
 export const subscribeToNotificationUpdates = (callback: (data: { id: number, read: boolean }) => void) => {
-  const socket = getSocket();
+  const socket = getNotificationSocket();
   if (!socket) return () => {};
 
   const handleNotificationUpdate = (data: { id: number, read: boolean }) => {

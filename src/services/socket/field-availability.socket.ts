@@ -1,4 +1,4 @@
-import { getSocket, joinRoom } from '@/config/socket.config';
+import { getFieldsSocket, joinFieldsRoom } from '@/config/socket.config';
 import { FieldStatus } from '@/types/field.types';
 
 /**
@@ -25,7 +25,7 @@ export interface FieldAvailabilityData {
  */
 export const joinFieldAvailabilityRoom = (branchId?: number, date?: string) => {
   const roomId = date ? `field_availability_${date}` : 'field_availability';
-  joinRoom(roomId, { branchId });
+  joinFieldsRoom(roomId, { branchId });
   
   // Minta update ketersediaan lapangan terbaru segera setelah join room
   requestAvailabilityUpdate(date, branchId);
@@ -37,7 +37,7 @@ export const joinFieldAvailabilityRoom = (branchId?: number, date?: string) => {
  * @param branchId - ID cabang (opsional)
  */
 export const requestAvailabilityUpdate = (date?: string, branchId?: number) => {
-  const socket = getSocket();
+  const socket = getFieldsSocket();
   if (!socket) return;
   
   socket.emit('request_availability_update', { date, branchId });
@@ -50,7 +50,7 @@ export const requestAvailabilityUpdate = (date?: string, branchId?: number) => {
  * @returns Fungsi untuk berhenti berlangganan
  */
 export const subscribeToFieldAvailability = (callback: (data: FieldAvailabilityData) => void) => {
-  const socket = getSocket();
+  const socket = getFieldsSocket();
   if (!socket) return () => {};
 
   const handleUpdate = (data: FieldAvailabilityData) => {

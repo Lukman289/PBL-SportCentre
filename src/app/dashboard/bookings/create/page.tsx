@@ -3,6 +3,7 @@
 import { useAdminBooking } from "@/hooks/useAdminBooking.hook";
 import { useAuth } from "@/context/auth/auth.context";
 import { useEffect, useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 // Komponen-komponen terpisah untuk halaman booking
 import TimeSlotSelector from "@/components/booking/TimeSlotSelector";
@@ -14,6 +15,7 @@ import { Branch } from "@/types";
 
 export default function AdminBookingCreatePage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [assignedBranches, setAssignedBranches] = useState<Branch[]>([]);
   const [selectedBranchId, setSelectedBranchId] = useState<number | undefined>(undefined);
   
@@ -49,6 +51,16 @@ export default function AdminBookingCreatePage() {
   const handleBranchChange = (branchId: number) => {
     setSelectedBranchId(branchId);
     setSelectedBranch(branchId);
+  };
+
+  // Handler untuk ketika booking berhasil dibuat
+  const handleBookingSuccess = () => {
+    toast({
+      title: "Booking Berhasil",
+      description: "Booking manual telah berhasil dibuat dan dicatat sebagai PAID dengan metode CASH.",
+      variant: "default",
+      duration: 5000,
+    });
   };
 
   // Render states
@@ -136,7 +148,7 @@ export default function AdminBookingCreatePage() {
 
       <section className="flex justify-center">
         <div className="w-full max-w-md">
-          <BookingForm isAdminBooking={true} />
+          <BookingForm isAdminBooking={true} onSuccess={handleBookingSuccess} />
         </div>
       </section>
     </div>

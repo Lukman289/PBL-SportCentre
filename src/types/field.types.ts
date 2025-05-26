@@ -1,4 +1,5 @@
 import { Branch } from "./branch.types";
+import { User } from "./user.types";
 
 export enum FieldStatus {
   AVAILABLE = 'available',
@@ -21,7 +22,7 @@ export interface Field {
   type?: FieldType;
   priceDay: number;
   priceNight: number;
-  status?: string;
+  status?: FieldStatus;
   imageUrl?: string;
   createdAt?: string;
 }
@@ -33,16 +34,58 @@ export interface FieldReview {
   rating: number;
   review?: string;
   createdAt: string;
-  user: {
-    id: number;
-    name: string;
-  };
-  field: {
-    id: number;
-    name: string;
-    branch: {
-      id: number;
-      name: string;
-    };
-  };
+  user: User;
+  field: Field;
+  branch: Branch;
+}
+
+export interface FieldListParams {
+  page?: number;
+  limit?: number;
+  status?: FieldStatus;
+  search?: string;
+  q?: string;
+}
+
+export interface FieldReviewResponseWithMeta {
+  data: FieldReview[];
+  meta: {
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  }
+}
+
+export interface StandardFieldResponse {
+  status: boolean;
+  message: string;
+  data: Field;
+}
+
+export interface LegacyFieldResponse {
+  field: Field;
+}
+
+// Union type for all possible response formats
+export type FieldCreateResponse = StandardFieldResponse | LegacyFieldResponse | Field;
+
+// Interface untuk slot waktu ketersediaan
+export interface TimeSlot {
+  start: string;
+  end: string;
+}
+
+// Interface untuk data ketersediaan lapangan
+export interface FieldAvailability {
+  fieldId: number;
+  availableTimeSlots: TimeSlot[];
+}
+
+// Interface untuk respons availability
+export interface AvailabilityResponse {
+  success: boolean;
+  data: FieldAvailability[];
 } 

@@ -94,7 +94,7 @@ export default function FieldPage() {
       setLoading(true);
       setError(null);
       
-      const fieldData = await fieldApi.getFieldsByBranchId(branchId);
+      const fieldData = await fieldApi.getBranchFields(branchId);
       
       if (Array.isArray(fieldData)) {
         setFields(fieldData);
@@ -319,9 +319,9 @@ export default function FieldPage() {
                       </TableCell>
                       <TableCell>
                         <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${getStatusClass(field.status)}`}
+                          className={`px-2 py-1 rounded text-xs font-medium ${getStatusClass(field.status || 'unknown')}`}
                         >
-                          {getStatusLabel(field.status)}
+                          {getStatusLabel(field.status || 'unknown')}
                         </span>
                       </TableCell>
                       <TableCell>

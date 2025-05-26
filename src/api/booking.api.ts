@@ -1,7 +1,6 @@
 import axiosInstance from '../config/axios.config';
 import { Booking, BookingRequest, Payment, PaymentMethod, PaymentStatus } from '../types';
 import { combineDateAndTime } from '@/utils/date.utils';
-import { BookingRequest as BookingRequestContext } from '@/context/booking/booking.context';
 
 // Interface untuk format respons dengan data dan meta
 interface BookingResponseWithMeta {

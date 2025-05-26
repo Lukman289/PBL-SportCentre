@@ -1,50 +1,7 @@
 import axiosInstance from '../config/axios.config';
-import { Branch, User } from '@/types';
+import { Branch, BranchListParams, BranchListResponse, CreateBranchRequest, UpdateBranchRequest, BranchAdmin } from '@/types';
 
-// Interface untuk request dan response
-export interface CreateBranchRequest {
-  name: string;
-  address: string;
-  logo?: File;
-  open_time: string;
-  close_time: string;
-  location: string;
-  ownerId: number;
-  admin_ids?: number[];
-}
 
-export interface UpdateBranchRequest {
-  name?: string;
-  location?: string;
-  imageUrl?: string;
-  status?: 'active' | 'inactive';
-}
-
-export interface BranchListParams {
-  page?: number;
-  limit?: number;
-  status?: 'active' | 'inactive';
-  search?: string;
-  q?: string;
-}
-
-export interface BranchListResponse {
-  data: Branch[];
-  meta: {
-    page: number;
-    limit: number;
-    totalItems: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-  };
-  }
-
-export interface BranchAdmin {
-  userId: number;
-  branchId: number;
-  user: User;
-}
 
 class BranchApi {
   /**

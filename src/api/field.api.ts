@@ -1,85 +1,51 @@
 import axiosInstance from '../config/axios.config';
-import { Field, FieldReview, FieldType, Booking } from '../types';
+import { 
+  Field, 
+  FieldReview, 
+  FieldType, 
+  FieldReviewResponseWithMeta,
+  StandardFieldResponse as StandardResponse,
+  LegacyFieldResponse,
+  FieldCreateResponse,
+  AvailabilityResponse
+} from '../types';
 import { bookingApi } from './booking.api';
+import { Booking } from '../types';
 
-// Interface untuk format respons dengan data dan meta
-interface FieldResponseWithMeta {
-  data: Field[];
-  meta: {
-    page: number;
-    limit: number;
-    totalItems: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-  }
-}
-
-export interface FieldListParams {
-  page?: number;
-  limit?: number;
-  status?: 'active' | 'inactive';
-  search?: string;
-  q?: string;
-}
-
-interface FieldReviewResponseWithMeta {
-  data: FieldReview[];
-  meta: {
-    page: number;
-    limit: number;
-    totalItems: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-  }
-}
-interface StandardResponse {
-  status: boolean;
-  message: string;
-  data: Field;
-}
-
-interface LegacyFieldResponse {
-  field: Field;
-}
-
-// Union type for all possible response formats
-type FieldCreateResponse = StandardResponse | LegacyFieldResponse | Field;
-
-interface FieldUpdateResponse {
-  status?: boolean;
-  message?: string;
-  data?: Field;
-  field?: Field;
-}
 // Type guards for better type checking
-function isStandardResponse(response: any): response is { status: boolean; message: string; data: Field } {
-  return 'status' in response && 'message' in response && 'data' in response;
+function isStandardResponse(response: unknown): response is StandardResponse {
+  return typeof response === 'object' && 
+         response !== null &&
+         'status' in response && 
+         'message' in response && 
+         'data' in response;
 }
 
-function isLegacyResponse(response: any): response is { field: Field } {
-  return 'field' in response;
+function isLegacyResponse(response: unknown): response is LegacyFieldResponse {
+  return typeof response === 'object' && 
+         response !== null &&
+         'field' in response;
 }
 
-function isField(response: any): response is Field {
-  return (
-    'id' in response &&
-    'name' in response &&
-    'branchId' in response &&
-    'typeId' in response &&
-    'priceDay' in response &&
-    'priceNight' in response
-  );
+function isField(response: unknown): response is Field {
+  return typeof response === 'object' &&
+         response !== null &&
+         'id' in response &&
+         'name' in response &&
+         'branchId' in response &&
+         'typeId' in response &&
+         'priceDay' in response &&
+         'priceNight' in response;
 }
+
 class FieldApi {
   /**
    * Dapatkan semua lapangan
    * @returns Promise dengan array data lapangan
    */
-  async getAllFields(p0: { limit: number; }): Promise<Field[]> {
+  async getAllFields(options?: { limit: number; }): Promise<Field[]> {
     try {
-      const response = await axiosInstance.get<{ data: Field[] } | Field[]>('/fields');
+      const response = await axiosInstance.get<{ data: Field[] } | Field[]>('/fields', { params: options });
       
       if (Array.isArray(response.data)) {
         return response.data;
@@ -134,6 +100,15 @@ class FieldApi {
       console.error(`Error fetching fields for branch ID ${branchId}:`, error);
       return [];
     }
+  }
+
+  /**
+   * Dapatkan lapangan berdasarkan cabang (alias untuk getBranchFields)
+   * @param branchId - ID cabang
+   * @returns Promise dengan array data lapangan
+   */
+  async getFieldsByBranchId(branchId: number): Promise<Field[]> {
+    return this.getBranchFields(branchId);
   }
 
   /**
@@ -270,7 +245,7 @@ class FieldApi {
         console.warn(`Endpoint /fields/${fieldId}/availability tidak tersedia, mencoba endpoint alternatif...`);
         
         // Gunakan endpoint alternatif jika endpoint utama tidak ditemukan
-        const response = await axiosInstance.get<any>(`/fields/availability`, {
+        const response = await axiosInstance.get<AvailabilityResponse>(`/fields/availability`, {
           params: { 
             date,
             fieldId,
@@ -280,7 +255,7 @@ class FieldApi {
         
         // Dapatkan data yang relevan untuk lapangan tertentu
         if (response.data && response.data.success && Array.isArray(response.data.data)) {
-          const fieldData = response.data.data.find((f: any) => f.fieldId === fieldId);
+          const fieldData = response.data.data.find((f) => f.fieldId === fieldId);
           
           if (fieldData && fieldData.availableTimeSlots) {
             // Konversi format dari availableTimeSlots ke format slot yang diharapkan
@@ -289,7 +264,7 @@ class FieldApi {
             
             // Buat set dari jam yang tersedia
             const availableHoursSet = new Set<string>();
-            fieldData.availableTimeSlots.forEach((slot: any) => {
+            fieldData.availableTimeSlots.forEach((slot) => {
               const startTime = new Date(slot.start);
               const endTime = new Date(slot.end);
               
@@ -358,7 +333,7 @@ class FieldApi {
       
       // Gunakan endpoint untuk mendapatkan ketersediaan semua lapangan sekaligus
       try {
-        const response = await axiosInstance.get(`/fields/availability`, {
+        const response = await axiosInstance.get<AvailabilityResponse>(`/fields/availability`, {
           params: { 
             date: selectedDate,
             branchId: selectedBranch > 0 ? selectedBranch : undefined,
@@ -367,13 +342,13 @@ class FieldApi {
         });
         
         // Proses respons API
-        const responseData = response.data as any;
+        const responseData = response.data;
         
         if (responseData && responseData.success && Array.isArray(responseData.data)) {
           // console.log('Successfully fetched availability data:', responseData.data.length, 'fields');
           
           // Iterasi setiap lapangan dalam respons
-          responseData.data.forEach((fieldAvailability: any) => {
+          responseData.data.forEach((fieldAvailability) => {
             const fieldId = fieldAvailability.fieldId;
             const availableTimeSlots = fieldAvailability.availableTimeSlots || [];
             
@@ -383,7 +358,7 @@ class FieldApi {
             
             // Iterasi setiap slot waktu tersedia
             // PENTING: Backend menyimpan waktu dalam UTC, kita perlu mengkonversinya ke lokal
-            availableTimeSlots.forEach((slot: any) => {
+            availableTimeSlots.forEach((slot) => {
               // Parse ISO string ke objek Date (tetap dalam UTC)
               const startTime = new Date(slot.start);
               const endTime = new Date(slot.end);
@@ -487,6 +462,7 @@ class FieldApi {
       return {};
     }
   }
+
   async createFieldWithImage(formData: FormData): Promise<Field> {
     try {
       const response = await axiosInstance.post<FieldCreateResponse>('/fields', formData, {
@@ -517,33 +493,34 @@ class FieldApi {
       throw error;
     }
   }
-  async updateFieldWithImage(fieldId: number, formData: FormData): Promise<Field> {
-  try {
-    const response = await axiosInstance.put(`/fields/${fieldId}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
 
-    // Gunakan penanganan response yang sama dengan create
-    const responseData = response.data;
-    
-    if (isStandardResponse(responseData)) {
-      return responseData.data;
+  async updateFieldWithImage(fieldId: number, formData: FormData): Promise<Field> {
+    try {
+      const response = await axiosInstance.put(`/fields/${fieldId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // Gunakan penanganan response yang sama dengan create
+      const responseData = response.data;
+      
+      if (isStandardResponse(responseData)) {
+        return responseData.data;
+      }
+      if (isLegacyResponse(responseData)) {
+        return responseData.field;
+      }
+      if (isField(responseData)) {
+        return responseData;
+      }
+      
+      throw new Error('Unexpected response format');
+    } catch (error) {
+      console.error('Error updating field:', error);
+      throw error;
     }
-    if (isLegacyResponse(responseData)) {
-      return responseData.field;
-    }
-    if (isField(responseData)) {
-      return responseData;
-    }
-    
-    throw new Error('Unexpected response format');
-  } catch (error) {
-    console.error('Error updating field:', error);
-    throw error;
   }
-}
 }
 
 export const fieldApi = new FieldApi(); 

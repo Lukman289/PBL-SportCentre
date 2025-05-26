@@ -241,6 +241,7 @@ class FieldApi {
         }
         
         throw new Error('Unexpected response format');
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         console.warn(`Endpoint /fields/${fieldId}/availability tidak tersedia, mencoba endpoint alternatif...`);
         

@@ -84,7 +84,7 @@ export default function FieldPage() {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, withLoading]);
+  }, [searchQuery]);
 
   // Fetch branches when component mounts
   useEffect(() => {

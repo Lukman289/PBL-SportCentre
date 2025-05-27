@@ -67,7 +67,7 @@ export default function BranchDetailPage() {
     if (branchId) {
       fetchData();
     }
-  }, [branchId, withLoading]);
+  }, [branchId]);
 
   if (user && user.role !== Role.SUPER_ADMIN && user.role !== Role.OWNER_CABANG) {
     router.push('/dashboard');
@@ -168,7 +168,7 @@ export default function BranchDetailPage() {
           {branch.imageUrl && (
             <div className="my-4 w-full h-100">
               <p className="text-sm font-medium text-muted-foreground mb-2">Gambar:</p>
-              <Image
+              <img
                 src={branch.imageUrl || "images/img_not_found.png"}
                 alt={branch.name}
                 className="w-full h-full rounded-md object-cover"

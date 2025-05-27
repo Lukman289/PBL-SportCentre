@@ -1,11 +1,20 @@
 import axiosInstance from '../config/axios.config';
-import { User, BranchAdmin } from '@/types';
+import { User, BranchAdmin, RegisterRequest } from '@/types';
 
 export interface UpdateUserRequest {
   name?: string;
   email?: string;
   phone?: string;
   password?: string;
+}
+
+export interface CreateUserRequest {
+  name?: string;
+  email?: string;
+  phone?: string;
+  password?: string;
+  role?: string;
+  branchId?: number | null;
 }
 
 class UserApi {
@@ -32,6 +41,15 @@ class UserApi {
    */
   async getUserProfile(): Promise<User> {
     const response = await axiosInstance.get<{ data: User }>('/users/profile');
+    return response.data.data;
+  }
+
+  /**
+   * Menambahkan user baru
+   * @param data - Data user baru
+   */
+  async createUser(data: CreateUserRequest): Promise<User> {
+    const response = await axiosInstance.post<{ data: User }>('/users', data);
     return response.data.data;
   }
 
@@ -71,7 +89,7 @@ class UserApi {
    */
   async getUserById(id: number): Promise<User | null> {
     try {
-      const response = await axiosInstance.get<{ data: User } | User>(`/users/${id}`);
+      const response = await axiosInstance.get<{ data: User } | User>(`/users/detail/${id}`);
       
       if ('data' in response.data) {
         return response.data.data;

@@ -28,7 +28,8 @@ import { useAuth } from '@/context/auth/auth.context';
 import { fieldApi } from '@/api/field.api';
 import { branchApi } from '@/api/branch.api';
 import { Role, Branch, FieldType, FieldStatus } from '@/types';
-import PageLoading from '@/components/ui/PageLoading';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
+import Image from 'next/image';
 
 // Validasi form menggunakan Zod
 const createFieldSchema = z.object({
@@ -52,6 +53,7 @@ export default function CreateFieldPage() {
   const [fieldTypes, setFieldTypes] = useState<FieldType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const defaultBranchId = searchParams.get('branchId');
+  const { showLoading, hideLoading } = useGlobalLoading();
   
   // For file handling
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -76,8 +78,9 @@ export default function CreateFieldPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true);
       try {
+        showLoading(); // Tampilkan loading di awal fetchData
+        
         let branchesToUse: Branch[] = [];
         
         // If user is admin_cabang, get their specific branches
@@ -108,12 +111,13 @@ export default function CreateFieldPage() {
         console.error('Error fetching data:', error);
         setError('Gagal memuat data. Silakan coba lagi.');
       } finally {
+        hideLoading(); // Sembunyikan loading setelah selesai fetch
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [user, form]);
+  }, [user, form, showLoading, hideLoading]);
 
   // Effect to handle defaultBranchId or singleAdminBranch
   useEffect(() => {
@@ -149,10 +153,11 @@ export default function CreateFieldPage() {
   }
 
   const onSubmit = async (data: CreateFieldFormValues) => {
-    setIsSubmitting(true);
-    setError(null);
-
     try {
+      showLoading(); // Tampilkan loading saat submit
+      setIsSubmitting(true);
+      setError(null);
+
       // Cari tipe lapangan berdasarkan ID
       const selectedTypeId = parseInt(data.typeId);
       const selectedType = fieldTypes.find(type => type.id === selectedTypeId);
@@ -211,12 +216,14 @@ export default function CreateFieldPage() {
       console.error('Error creating field:', error);
       setError('Gagal membuat lapangan. Silakan coba lagi.');
     } finally {
+      hideLoading(); // Sembunyikan loading setelah selesai submit
       setIsSubmitting(false);
     }
   };
 
+  // Jangan tampilkan apa-apa selama loading awal
   if (isLoading) {
-    return <PageLoading title="Tambah Lapangan" message="Memuat data..." />;
+    return null;
   }
 
   return (
@@ -388,7 +395,7 @@ export default function CreateFieldPage() {
                   </div>
                   <div>
                     {previewUrl && (
-                      <img
+                      <Image
                         src={previewUrl}
                         alt="Preview"
                         className="mt-2 max-h-40 rounded"

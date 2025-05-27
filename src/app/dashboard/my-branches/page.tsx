@@ -17,6 +17,7 @@ import { Branch } from '@/types';
 import { branchApi } from '@/api/branch.api';
 import { useAuth } from '@/context/auth/auth.context';
 import { Role } from '@/types';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 export default function MyBranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -24,15 +25,25 @@ export default function MyBranchesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
   const { user } = useAuth();
+  const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+
+  // Mengelola loading state
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
 
   useEffect(() => {
     const fetchBranches = async () => {
       try {
         setIsLoading(true);
         // Menggunakan metode getUserBranches untuk mendapatkan cabang yang dimiliki/dikelola
-        const response = await branchApi.getUserBranches({ 
+        const response = await withLoading(branchApi.getUserBranches({ 
           q: searchQuery || undefined 
-        });
+        }));
         setBranches(response.data);
       } catch (error) {
         console.error('Error fetching branches:', error);
@@ -42,7 +53,7 @@ export default function MyBranchesPage() {
     };
 
     fetchBranches();
-  }, [searchQuery]);
+  }, [searchQuery, withLoading]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -91,9 +102,7 @@ export default function MyBranchesPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-            </div>
+            null // GlobalLoading akan otomatis ditampilkan
           ) : branches.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {searchQuery ? 'Tidak ada cabang yang sesuai dengan pencarian' : 'Anda belum memiliki cabang'}

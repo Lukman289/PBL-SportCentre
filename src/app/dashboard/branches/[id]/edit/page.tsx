@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { branchApi } from '@/api/branch.api';
-import PageLoading from '@/components/ui/PageLoading';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 const editBranchSchema = z.object({
   name: z.string().min(3, 'Nama minimal 3 karakter'),
@@ -36,6 +36,16 @@ export default function EditBranchPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+
+  // Mengelola loading state
+  useEffect(() => {
+    if (loading || isSubmitting) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [loading, isSubmitting, showLoading, hideLoading]);
 
   const form = useForm<EditBranchFormValues>({
     resolver: zodResolver(editBranchSchema),
@@ -51,7 +61,7 @@ export default function EditBranchPage() {
     const fetchBranch = async () => {
       setLoading(true);
       try {
-        const response = await branchApi.getBranchById(Number(id));
+        const response = await withLoading(branchApi.getBranchById(Number(id)));
         const branchData = response.data;
         
         // Handle both array and single object responses
@@ -80,7 +90,7 @@ export default function EditBranchPage() {
     };
 
     fetchBranch();
-  }, [id, form]);
+  }, [id, form, withLoading]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -99,7 +109,7 @@ export default function EditBranchPage() {
     setIsSubmitting(true);
     setError(null);
     try {
-      await branchApi.updateBranch(Number(id), data);
+      await withLoading(branchApi.updateBranch(Number(id), data));
       router.push('/dashboard/branches');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
@@ -111,7 +121,7 @@ export default function EditBranchPage() {
   };
 
   if (loading) {
-    return <PageLoading title="Edit Cabang" message="Memuat data cabang..." />;
+    return null; // Global loading akan otomatis ditampilkan
   }
 
   return (

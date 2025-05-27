@@ -1,228 +1,233 @@
-    'use client';
+'use client';
 
-    import { useState, useEffect, useRef } from 'react';
-    import { useRouter } from 'next/navigation';
-    import { useForm } from 'react-hook-form';
-    import { zodResolver } from '@hookform/resolvers/zod';
-    import * as z from 'zod';
-    import { Button } from '@/components/ui/button';
-    import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-    import { Input } from '@/components/ui/input';
-    import {
-        Select,
-        SelectContent,
-        SelectItem,
-        SelectTrigger,
-        SelectValue,
-    } from '@/components/ui/select';
-    import {
-        Form,
-        FormControl,
-        FormField,
-        FormItem,
-        FormLabel,
-        FormMessage,
-    } from '@/components/ui/form';
-    import { Alert, AlertDescription } from '@/components/ui/alert';
-    import { fieldApi } from '@/api/field.api';
-    import { branchApi } from '@/api/branch.api';
-    import { Field, FieldType, Branch } from '@/types';
-    import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from '@/components/ui/form';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { fieldApi } from '@/api/field.api';
+import { branchApi } from '@/api/branch.api';
+import { Field, FieldType, Branch } from '@/types';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
-    const updateFieldSchema = z.object({
-        name: z.string().min(3, 'Nama lapangan minimal 3 karakter'),
-        typeId: z.string().min(1, 'Tipe lapangan harus dipilih'),
-        branchId: z.string().min(1, 'Cabang harus dipilih'),
-        priceDay: z.string().min(1, 'Harga siang harus diisi').regex(/^\d+$/, 'Harga harus berupa angka'),
-        priceNight: z.string().min(1, 'Harga malam harus diisi').regex(/^\d+$/, 'Harga harus berupa angka'),
-        status: z.string().min(1, 'Status harus dipilih'),
+const updateFieldSchema = z.object({
+    name: z.string().min(3, 'Nama lapangan minimal 3 karakter'),
+    typeId: z.string().min(1, 'Tipe lapangan harus dipilih'),
+    branchId: z.string().min(1, 'Cabang harus dipilih'),
+    priceDay: z.string().min(1, 'Harga siang harus diisi').regex(/^\d+$/, 'Harga harus berupa angka'),
+    priceNight: z.string().min(1, 'Harga malam harus diisi').regex(/^\d+$/, 'Harga harus berupa angka'),
+    status: z.string().min(1, 'Status harus dipilih'),
+});
+
+type UpdateFieldFormValues = z.infer<typeof updateFieldSchema>;
+
+export default function FieldDetailPage({ params }: { params: { id: string } }) {
+    const router = useRouter();
+    const fieldId = parseInt(params.id, 10);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [field, setField] = useState<Field | null>(null);
+    const [branches, setBranches] = useState<Branch[]>([]);
+    const [fieldTypes, setFieldTypes] = useState<FieldType[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isBranchSelectionDisabled, setIsBranchSelectionDisabled] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [shouldRemoveImage, setShouldRemoveImage] = useState(false);
+    const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const form = useForm<UpdateFieldFormValues>({
+        resolver: zodResolver(updateFieldSchema),
+        defaultValues: {
+            name: '',
+            typeId: '',
+            branchId: '',
+            priceDay: '',
+            priceNight: '',
+            status: '',
+        },
     });
 
-    type UpdateFieldFormValues = z.infer<typeof updateFieldSchema>;
+    // Efek untuk mengelola loading state global
+    useEffect(() => {
+        if (isLoading || isSubmitting || isDeleting) {
+            showLoading();
+        } else {
+            hideLoading();
+        }
+    }, [isLoading, isSubmitting, isDeleting, showLoading, hideLoading]);
 
-    export default function FieldDetailPage({ params }: { params: { id: string } }) {
-        const router = useRouter();
-        const fieldId = parseInt(params.id, 10);
-        const [isSubmitting, setIsSubmitting] = useState(false);
-        const [isDeleting, setIsDeleting] = useState(false);
-        const [error, setError] = useState<string | null>(null);
-        const [field, setField] = useState<Field | null>(null);
-        const [branches, setBranches] = useState<Branch[]>([]);
-        const [fieldTypes, setFieldTypes] = useState<FieldType[]>([]);
-        const [isLoading, setIsLoading] = useState(true);
-        const [isBranchSelectionDisabled, setIsBranchSelectionDisabled] = useState(false);
-        const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-        const [shouldRemoveImage, setShouldRemoveImage] = useState(false);
+    useEffect(() => {
+        const fetchData = async () => {
+            if (isNaN(fieldId)) {
+                setError('ID lapangan tidak valid');
+                setIsLoading(false);
+                return;
+            }
 
-        const [selectedImage, setSelectedImage] = useState<File | null>(null);
-        const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-        const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
-        const fileInputRef = useRef<HTMLInputElement>(null);
+            try {
+                setIsLoading(true);
 
-        const form = useForm<UpdateFieldFormValues>({
-            resolver: zodResolver(updateFieldSchema),
-            defaultValues: {
-                name: '',
-                typeId: '',
-                branchId: '',
-                priceDay: '',
-                priceNight: '',
-                status: '',
-            },
-        });
+                const fieldData = await withLoading(fieldApi.getFieldById(fieldId));
+                setField(fieldData);
 
-        useEffect(() => {
-            const fetchData = async () => {
-                if (isNaN(fieldId)) {
-                    setError('ID lapangan tidak valid');
-                    setIsLoading(false);
-                    return;
-                }
-
-                try {
-                    setIsLoading(true);
-
-                    const fieldData = await fieldApi.getFieldById(fieldId);
-                    setField(fieldData);
-
-                    if (fieldData) {
-                        if (fieldData.imageUrl) {
-                            setCurrentImageUrl(fieldData.imageUrl);
-                        }
-
-                        form.setValue('name', fieldData.name);
-                        form.setValue('typeId', fieldData.typeId ? fieldData.typeId.toString() : '');
-                        form.setValue('branchId', fieldData.branchId ? fieldData.branchId.toString() : '');
-                        form.setValue('priceDay', fieldData.priceDay ? fieldData.priceDay.toString() : '');
-                        form.setValue('priceNight', fieldData.priceNight ? fieldData.priceNight.toString() : '');
-                        form.setValue('status', fieldData.status || 'available');
+                if (fieldData) {
+                    if (fieldData.imageUrl) {
+                        setCurrentImageUrl(fieldData.imageUrl);
                     }
 
-                    const branchesResponse = await branchApi.getUserBranches();
-                    const branchesData = branchesResponse.data || [];
-                    setBranches(branchesData);
-
-                    setIsBranchSelectionDisabled(true);
-
-                    const fieldTypesData = await fieldApi.getFieldTypes();
-                    setFieldTypes(fieldTypesData || []);
-                } catch (err) {
-                    console.error('Error fetching data:', err);
-                    setError('Gagal memuat data. Silakan coba lagi.');
-                } finally {
-                    setIsLoading(false);
+                    form.setValue('name', fieldData.name);
+                    form.setValue('typeId', fieldData.typeId ? fieldData.typeId.toString() : '');
+                    form.setValue('branchId', fieldData.branchId ? fieldData.branchId.toString() : '');
+                    form.setValue('priceDay', fieldData.priceDay ? fieldData.priceDay.toString() : '');
+                    form.setValue('priceNight', fieldData.priceNight ? fieldData.priceNight.toString() : '');
+                    form.setValue('status', fieldData.status || 'available');
                 }
+
+                const branchesResponse = await branchApi.getUserBranches();
+                const branchesData = branchesResponse.data || [];
+                setBranches(branchesData);
+
+                setIsBranchSelectionDisabled(true);
+
+                const fieldTypesData = await fieldApi.getFieldTypes();
+                setFieldTypes(fieldTypesData || []);
+            } catch (err) {
+                console.error('Error fetching data:', err);
+                setError('Gagal memuat data. Silakan coba lagi.');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [fieldId, form, withLoading]);
+
+    const handleRemoveImage = () => {
+        setSelectedImage(null);
+        setPreviewUrl(null);
+        setShouldRemoveImage(true);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setSelectedImage(file);
+            setShouldRemoveImage(false);
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPreviewUrl(reader.result as string);
             };
-
-            fetchData();
-        }, [fieldId, form]);
-
-        const handleRemoveImage = () => {
+            reader.readAsDataURL(file);
+        } else {
             setSelectedImage(null);
             setPreviewUrl(null);
-            setShouldRemoveImage(true);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
-        };
+        }
+    };
 
-        const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-            const file = e.target.files?.[0];
-            if (file) {
-                setSelectedImage(file);
-                setShouldRemoveImage(false);
 
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    setPreviewUrl(reader.result as string);
-                };
-                reader.readAsDataURL(file);
+    const onSubmit = async (data: UpdateFieldFormValues) => {
+        setIsSubmitting(true);
+        setError(null);
+
+        try {
+            const updateData: Record<string, unknown> = {
+                name: data.name,
+                typeId: parseInt(data.typeId),
+                branchId: parseInt(data.branchId),
+                priceDay: parseFloat(data.priceDay),
+                priceNight: parseFloat(data.priceNight),
+                status: data.status,
+                ...(shouldRemoveImage && { removeImage: true }), // Tambahkan flag untuk hapus gambar
+            };
+
+            if (selectedImage) {
+                const formData = new FormData();
+
+                Object.entries(updateData).forEach(([key, value]) => {
+                    formData.append(key, String(value));
+                });
+
+                formData.append('imageUrl', selectedImage);
+
+                await withLoading(fieldApi.updateFieldWithImage(fieldId, formData));
             } else {
-                setSelectedImage(null);
-                setPreviewUrl(null);
+                await withLoading(fieldApi.updateField(fieldId, updateData));
             }
-        };
 
-
-        const onSubmit = async (data: UpdateFieldFormValues) => {
-            setIsSubmitting(true);
-            setError(null);
-
-            try {
-                const updateData: Record<string, unknown> = {
-                    name: data.name,
-                    typeId: parseInt(data.typeId),
-                    branchId: parseInt(data.branchId),
-                    priceDay: parseFloat(data.priceDay),
-                    priceNight: parseFloat(data.priceNight),
-                    status: data.status,
-                    ...(shouldRemoveImage && { removeImage: true }), // Tambahkan flag untuk hapus gambar
-                };
-
-                if (selectedImage) {
-                    const formData = new FormData();
-
-                    Object.entries(updateData).forEach(([key, value]) => {
-                        formData.append(key, String(value));
-                    });
-
-                    formData.append('imageUrl', selectedImage);
-
-                    await fieldApi.updateFieldWithImage(fieldId, formData);
-                } else {
-                    await fieldApi.updateField(fieldId, updateData);
-                }
-
-                router.push('/dashboard/fields');
-                router.refresh();
-            } catch (err) {
-                console.error('Error updating field:', err);
-                setError('Gagal memperbarui lapangan. Silakan coba lagi.');
-            } finally {
-                setIsSubmitting(false);
-            }
-        };
-
-        const handleDelete = async () => {
-            setIsDeleting(true);
-            setError(null);
-
-            try {
-                await fieldApi.deleteField(fieldId);
-                router.push('/dashboard/fields');
-                router.refresh();
-            } catch (err) {
-                console.error('Error deleting field:', err);
-                setError('Gagal menghapus lapangan. Silakan coba lagi.');
-            } finally {
-                setIsDeleting(false);
-                setShowDeleteDialog(false);
-            }
-        };
-
-        if (isLoading) {
-            return (
-                <LoadingSpinner />
-            ); 
+            router.push('/dashboard/fields');
+            router.refresh();
+        } catch (err) {
+            console.error('Error updating field:', err);
+            setError('Gagal memperbarui lapangan. Silakan coba lagi.');
+        } finally {
+            setIsSubmitting(false);
         }
+    };
 
-        if (error && !field) {
-            return (
-                <div className="container mx-auto py-8 px-4">
-                    <div className="p-4 mb-4 text-red-700 bg-red-100 rounded-lg">
-                        <p>{error}</p>
-                    </div>
-                    <Button onClick={() => router.push('/dashboard/fields')}>Kembali</Button>
-                </div>
-            );
+    const handleDelete = async () => {
+        setIsDeleting(true);
+        setError(null);
+
+        try {
+            await withLoading(fieldApi.deleteField(fieldId));
+            router.push('/dashboard/fields');
+            router.refresh();
+        } catch (err) {
+            console.error('Error deleting field:', err);
+            setError('Gagal menghapus lapangan. Silakan coba lagi.');
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteDialog(false);
         }
+    };
 
+    if (error && !field) {
         return (
             <div className="container mx-auto py-8 px-4">
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold">Detail & Edit Lapangan</h1>
+                <div className="p-4 mb-4 text-red-700 bg-red-100 rounded-lg">
+                    <p>{error}</p>
                 </div>
+                <Button onClick={() => router.push('/dashboard/fields')}>Kembali</Button>
+            </div>
+        );
+    }
 
+    return (
+        <div className="container mx-auto py-8 px-4">
+            <div className="mb-6">
+                <h1 className="text-2xl font-bold">Detail & Edit Lapangan</h1>
+            </div>
+
+            {!isLoading && (
                 <Card>
                     <CardHeader>
                         <CardTitle>Form Edit Lapangan</CardTitle>
@@ -470,35 +475,36 @@
                         </Form>
                     </CardContent>
                 </Card>
+            )}
 
-                {showDeleteDialog && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <Card className="w-full max-w-md">
-                            <CardHeader>
-                                <CardTitle>Konfirmasi Penghapusan</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="mb-6">Apakah Anda yakin ingin menghapus lapangan ini? Tindakan ini tidak dapat dibatalkan.</p>
-                                <div className="flex justify-end gap-4">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => setShowDeleteDialog(false)}
-                                        disabled={isDeleting}
-                                    >
-                                        Batal
-                                    </Button>
-                                    <Button
-                                        variant="destructive"
-                                        onClick={handleDelete}
-                                        disabled={isDeleting}
-                                    >
-                                        {isDeleting ? 'Menghapus...' : 'Ya, Hapus'}
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                )}
-            </div>
-        );
-    }
+            {showDeleteDialog && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <Card className="w-full max-w-md">
+                        <CardHeader>
+                            <CardTitle>Konfirmasi Penghapusan</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="mb-6">Apakah Anda yakin ingin menghapus lapangan ini? Tindakan ini tidak dapat dibatalkan.</p>
+                            <div className="flex justify-end gap-4">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowDeleteDialog(false)}
+                                    disabled={isDeleting}
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    onClick={handleDelete}
+                                    disabled={isDeleting}
+                                >
+                                    {isDeleting ? 'Menghapus...' : 'Ya, Hapus'}
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+        </div>
+    );
+}

@@ -16,6 +16,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth/auth.context";
+import useGlobalLoading from "@/hooks/useGlobalLoading.hook";
 
 // Schema untuk form booking
 const bookingSchema = z.object({
@@ -84,8 +85,16 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   
   const router = useRouter();
   const { user } = useAuth();
-  const userRole = user?.role || '';
+  const { withLoading, showLoading, hideLoading } = useGlobalLoading();
   const limit = 1000;
+  
+  useEffect(() => {
+    if (loading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [loading, showLoading, hideLoading]);
   
   const times = useMemo(() => [
     "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
@@ -306,71 +315,50 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   }, [fetchInitialAvailability]);
 
   const onSubmit = async (formData?: BookingFormValues) => {
-    setLoading(true);
-    setError(null);
-
-    // Gunakan formData jika disediakan, jika tidak gunakan nilai dari state
-    const fieldId = formData?.fieldId || selectedField;
-    const bookingDate = formData?.bookingDate || selectedDate;
-    const startTime = formData?.startTime || selectedStartTime;
-    const endTime = formData?.endTime || selectedEndTime;
-
-    if (!fieldId || startTime === "-" || !endTime) {
-      setError("Silakan pilih lapangan dan rentang waktu terlebih dahulu");
-      setLoading(false);
+    if (!user) {
+      router.push('/auth/login');
       return;
     }
 
-    // Pastikan waktu mulai kurang dari waktu selesai
-    const startHour = parseInt(startTime.split(":")[0], 10);
-    const endHour = parseInt(endTime.split(":")[0], 10);
+    let bookingData: BookingRequest;
 
-    if (startHour >= endHour) {
-      setError("Waktu selesai harus lebih besar dari waktu mulai");
-      setLoading(false);
-      return;
+    if (formData) {
+      bookingData = {
+        ...formData,
+        branchId: selectedBranch
+      };
+    } else {
+      bookingData = {
+        fieldId: selectedField,
+        bookingDate: selectedDate,
+        startTime: selectedStartTime,
+        endTime: selectedEndTime || calculateEndTime(selectedStartTime),
+        branchId: selectedBranch
+      };
     }
-
-    const dataToSend: BookingRequest = {
-      fieldId: fieldId,
-      bookingDate: bookingDate,
-      startTime: startTime,
-      endTime: endTime,
-      branchId: selectedBranch,
-      userId: user?.id
-    };
-
-    console.log("Data booking yang akan dikirim:", dataToSend);
 
     try {
-      const bookingResult = await bookingApi.createBooking(dataToSend);
-      console.log("Booking Berhasil:", bookingResult);
+      const result = await withLoading(bookingApi.createBooking(bookingData));
       
-      // Hapus cache ketersediaan untuk memastikan data di-refresh di halaman selanjutnya
-      const cacheKey = `${selectedBranch}_${selectedDate}`;
-      sessionStorage.removeItem(cacheKey);
-      
-      // Refresh ketersediaan lapangan
-      refreshAvailability();
-      
-      // Cek apakah response berisi payment dengan paymentUrl
-      if (bookingResult.payment && bookingResult.payment.paymentUrl) {
-        // Redirect langsung ke halaman pembayaran Midtrans
-        window.location.href = bookingResult.payment.paymentUrl;
+      if (result.payment?.paymentUrl) {
+        window.location.href = result.payment.paymentUrl;
       } else {
-        // Jika tidak ada paymentUrl, arahkan ke halaman riwayat booking
-        if (userRole === 'admin_cabang') {
-          router.push("/dashboard/bookings");
-        } else {
-          router.push("/bookings");
-        }
+        console.error("No payment URL returned from API");
+        alert("Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi.");
       }
     } catch (error) {
-      console.error("Booking error:", error);
-      setError("Data booking salah. Silakan coba lagi.");
-    } finally {
-      setLoading(false);
+      console.error("Error creating booking:", error);
+      alert("Gagal membuat booking. Silakan coba lagi nanti.");
     }
+  };
+
+  // Helper function untuk menghitung waktu berakhir (1 jam setelah waktu mulai)
+  const calculateEndTime = (startTime: string): string => {
+    const startIndex = times.indexOf(startTime);
+    if (startIndex >= 0 && startIndex < times.length - 1) {
+      return times[startIndex + 1];
+    }
+    return ""; // fallback jika tidak ditemukan
   };
 
   // Event handlers

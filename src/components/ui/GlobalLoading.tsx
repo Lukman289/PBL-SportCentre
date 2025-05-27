@@ -1,9 +1,15 @@
-"use client";
+'use client';
 
-export default function LoadingState() {
+import { useLoading } from '@/context/loading/loading.context';
+
+export default function GlobalLoading() {
+  const { isLoading } = useLoading();
+
+  if (!isLoading) return null;
+
   return (
-    <div className="container flex flex-col justify-center items-center mx-auto py-16 px-4">
-      <div className="bg-white p-8 rounded-2xl shadow-lg flex flex-col items-center">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+      <div className="bg-white p-8 rounded-2xl shadow-lg flex flex-col items-center animate-in fade-in zoom-in duration-300">
         <div className="relative w-24 h-24 mb-6">
           <div className="absolute top-0 right-0 bottom-0 left-0 animate-pulse rounded-full bg-primary/20"></div>
           <div className="absolute top-0 right-0 bottom-0 left-0 animate-spin">
@@ -24,7 +30,7 @@ export default function LoadingState() {
             />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Memuat Halaman</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">Memuat</h1>
         <p className="text-gray-600">Mohon tunggu sebentar...</p>
       </div>
     </div>

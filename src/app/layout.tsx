@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "@/context";
 import { Toaster } from "@/components/ui/toaster"
+import GlobalLoading from "@/components/ui/GlobalLoading";
 
 export const metadata: Metadata = {
   title: "Reservasi Sport Center",
@@ -17,8 +18,9 @@ export default function RootLayout({
     <html lang="id">
       <body>
         <Providers>
-        {children}
+          {children}
           <Toaster />
+          <GlobalLoading />
         </Providers>
       </body>
     </html>

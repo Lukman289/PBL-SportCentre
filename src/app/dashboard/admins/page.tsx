@@ -17,6 +17,7 @@ import { Role, BranchAdmin } from '@/types';
 import { useAuth } from '@/context/auth/auth.context';
 import { userApi } from '@/api/user.api';
 import { branchApi } from '@/api/branch.api';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 export default function AdminsPage() {
   const [admins, setAdmins] = useState<BranchAdmin[]>([]);
@@ -25,12 +26,22 @@ export default function AdminsPage() {
   const [isAddFormOpen, setIsAddFormOpen] = useState(false); // untuk toggle form
   const router = useRouter();
   const { user } = useAuth();
+  const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+
+  // Mengelola loading state
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
 
   useEffect(() => {
     const fetchAdmins = async () => {
       try {
         setIsLoading(true);
-        const adminList = await userApi.getUserBranchAdmins(searchQuery || undefined);
+        const adminList = await withLoading(userApi.getUserBranchAdmins(searchQuery || undefined));
         setAdmins(adminList);
       } catch (error) {
         console.error('Error fetching admins:', error);
@@ -41,7 +52,7 @@ export default function AdminsPage() {
     };
 
     fetchAdmins();
-  }, [searchQuery]);
+  }, [searchQuery, withLoading]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -53,11 +64,14 @@ export default function AdminsPage() {
 
   const handleRemoveAdmin = async (branchId: number, userId: number) => {
     try {
-      await branchApi.removeBranchAdmin(branchId, userId);
+      setIsLoading(true);
+      await withLoading(branchApi.removeBranchAdmin(branchId, userId));
       setAdmins(admins.filter(admin => admin.userId !== userId || admin.branchId !== branchId));
     } catch (error) {
       console.error('Error removing admin:', error);
       alert('Gagal menghapus admin. Silakan coba lagi.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -76,6 +90,11 @@ export default function AdminsPage() {
 
   if (user && user.role !== Role.OWNER_CABANG && user.role !== Role.ADMIN_CABANG && user.role !== Role.SUPER_ADMIN) {
     router.push('/dashboard');
+    return null;
+  }
+
+  // Jika loading, GlobalLoading akan otomatis ditampilkan
+  if (isLoading) {
     return null;
   }
 
@@ -155,11 +174,7 @@ export default function AdminsPage() {
           <CardTitle>Daftar Admin</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-            </div>
-          ) : admins.length === 0 ? (
+          {admins.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {searchQuery ? 'Tidak ada admin yang sesuai dengan pencarian' : 'Belum ada admin cabang'}
             </div>

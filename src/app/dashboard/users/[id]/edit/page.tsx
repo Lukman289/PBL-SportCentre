@@ -5,9 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { userApi } from '@/api/user.api';
-import { User } from '@/types';
 import { UpdateUserRequest } from '@/api/user.api';
-import PageLoading from '@/components/ui/PageLoading';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 export default function EditUserPage() {
   const router = useRouter();
@@ -24,23 +23,33 @@ export default function EditUserPage() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+
+  // Efek untuk mengelola loading state global
+  useEffect(() => {
+    if (initialLoading || loading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [initialLoading, loading, showLoading, hideLoading]);
 
   // Fungsi untuk fetch data user berdasarkan id dan isi form dengan data tersebut
   useEffect(() => {
     async function fetchUser() {
       try {
         setInitialLoading(true);
-        const user: User = await userApi.getUserProfile();
+        const userData = await withLoading(userApi.getUserProfile());
 
-        if (!user || user.id !== userId) {
+        if (!userData || userData.id !== userId) {
           setError('Pengguna tidak ditemukan atau tidak bisa diedit.');
           return;
         }
 
         setForm({
-          name: user.name,
-          email: user.email,
-          phone: (user as User).phone || '', 
+          name: userData.name,
+          email: userData.email,
+          phone: userData.phone || '', 
           password: '', 
         });
       } catch (error: unknown) {
@@ -53,7 +62,7 @@ export default function EditUserPage() {
     }
 
     fetchUser();
-  }, [userId]);
+  }, [userId, withLoading]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   const { name, value } = e.target;
@@ -70,7 +79,7 @@ export default function EditUserPage() {
 
     try {
       // Panggil API update user profile
-      await userApi.updateUserProfile(form);
+      await withLoading(userApi.updateUserProfile(form));
       alert('Profil pengguna berhasil diperbarui!');
       router.push(`/dashboard/users/${userId}`);
     } catch (error: unknown) {
@@ -81,10 +90,6 @@ export default function EditUserPage() {
       setLoading(false);
     }
   };
-
-  if (initialLoading) {
-    return <PageLoading title="Edit Pengguna" message="Memuat data pengguna..." />;
-  }
 
   if (error) {
     return <p className="p-4 text-red-600">{error}</p>;

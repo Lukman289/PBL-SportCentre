@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Branch } from '@/types';
 import { Search } from 'lucide-react';
-import PageLoading from '@/components/ui/PageLoading';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 export default function BranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -19,6 +19,7 @@ export default function BranchesPage() {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+  const { withLoading } = useGlobalLoading();
   const limit = 15;
 
   useEffect(() => {
@@ -49,7 +50,7 @@ export default function BranchesPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await branchApi.getBranches();
+      const response = await withLoading(branchApi.getBranches());
       
       if (response && response.data) {
         const data = response.data;
@@ -77,7 +78,7 @@ const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
   };
 
   if (loading) {
-    return <PageLoading title="Daftar Cabang" message="Memuat daftar cabang..." />;
+    return null; // GlobalLoading akan otomatis ditampilkan
   }
 
   if (error) {
@@ -194,4 +195,4 @@ const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
       )}
     </div>
   );
-} 
+}

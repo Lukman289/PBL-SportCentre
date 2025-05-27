@@ -20,6 +20,7 @@ import {
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import useAuth from '@/hooks/useAuth.hook';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import { Role } from '@/types';
 
 interface ApiError {
@@ -53,8 +54,8 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export default function RegisterPage() {
   const router = useRouter();
   const { register } = useAuth();
+  const { withLoading } = useGlobalLoading();
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   const form = useForm<RegisterFormValues>({
@@ -70,11 +71,10 @@ export default function RegisterPage() {
   });
 
   const onSubmit = async (data: RegisterFormValues) => {
-    setIsLoading(true);
     setError(null);
 
     try {
-      await register(data.name, data.email, data.password, data.phone, data.role);
+      await withLoading(register(data.name, data.email, data.password, data.phone, data.role));
       setSuccess(true);
       setTimeout(() => {
         router.push('/auth/login');
@@ -84,8 +84,6 @@ export default function RegisterPage() {
       const apiError = error as ApiError;
       const errorMessage = apiError.response?.data?.error || 'Gagal mendaftar. Silakan coba lagi.';
       setError(errorMessage);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -192,8 +190,8 @@ export default function RegisterPage() {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Memproses...' : 'Daftar'}
+            <Button type="submit" className="w-full">
+              Daftar
             </Button>
           </form>
         </Form>

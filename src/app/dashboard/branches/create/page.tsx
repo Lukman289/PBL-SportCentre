@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,6 +20,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/context/auth/auth.context';
 import { branchApi } from '@/api/branch.api';
 import { Role } from '@/types';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 // Validasi form menggunakan Zod
 const createBranchSchema = z.object({
@@ -39,6 +40,16 @@ export default function CreateBranchPage() {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+
+  // Mengelola loading state
+  useEffect(() => {
+    if (isSubmitting) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isSubmitting, showLoading, hideLoading]);
 
   const form = useForm<CreateBranchFormValues>({
     resolver: zodResolver(createBranchSchema),
@@ -75,7 +86,7 @@ export default function CreateBranchPage() {
         ownerId: user?.id || 0, // Gunakan ID user yang login sebagai ownerId
       };
 
-      await branchApi.createBranch(submitData);
+      await withLoading(branchApi.createBranch(submitData));
       
       // Redirect ke halaman daftar cabang
       if (user?.role === Role.SUPER_ADMIN) {
@@ -90,6 +101,11 @@ export default function CreateBranchPage() {
       setIsSubmitting(false);
     }
   };
+
+  // Jika loading, GlobalLoading akan otomatis ditampilkan
+  if (isSubmitting) {
+    return null;
+  }
 
   return (
     <div>

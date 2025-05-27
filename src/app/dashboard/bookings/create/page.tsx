@@ -4,20 +4,21 @@ import { useAdminBooking } from "@/hooks/bookings/useAdminBooking.hook";
 import { useAuth } from "@/context/auth/auth.context";
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import useGlobalLoading from "@/hooks/useGlobalLoading.hook";
 
 // Komponen-komponen terpisah untuk halaman booking
 import TimeSlotSelector from "@/components/booking/TimeSlotSelector";
 import BookingHeader from "@/components/booking/BookingHeader";
 import BookingForm from "@/components/booking/BookingForm";
-import LoadingState from "@/components/booking/LoadingState";
 import ErrorState from "@/components/booking/ErrorState";
-import { Branch } from "@/types";
+import { Branch, Role } from "@/types";
 
 export default function AdminBookingCreatePage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [assignedBranches, setAssignedBranches] = useState<Branch[]>([]);
   const [selectedBranchId, setSelectedBranchId] = useState<number | undefined>(undefined);
+  const { showLoading, hideLoading } = useGlobalLoading();
   
   // Menggunakan custom hook untuk admin cabang dengan branch ID yang dipilih
   const {
@@ -28,6 +29,15 @@ export default function AdminBookingCreatePage() {
     setSelectedBranch,
     branches
   } = useAdminBooking(selectedBranchId);
+
+  // Mengelola loading state
+  useEffect(() => {
+    if (loading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [loading, showLoading, hideLoading]);
 
   // Dapatkan daftar cabang yang di-assign ke admin cabang
   useEffect(() => {
@@ -57,7 +67,7 @@ export default function AdminBookingCreatePage() {
   const handleBookingSuccess = () => {
     toast({
       title: "Booking Berhasil",
-      description: "Booking manual telah berhasil dibuat dan dicatat sebagai PAID dengan metode CASH.",
+      description: `Booking manual telah berhasil dibuat dan dicatat sebagai ${user?.role === Role.ADMIN_CABANG ? "PAID" : "UNPAID"} dengan metode CASH.`,
       variant: "default",
       duration: 5000,
     });
@@ -65,7 +75,7 @@ export default function AdminBookingCreatePage() {
 
   // Render states
   if (loading) {
-    return <LoadingState />;
+    return null;
   }
 
   if (error) {

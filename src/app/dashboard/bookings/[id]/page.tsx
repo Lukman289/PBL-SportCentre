@@ -9,8 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { Role, User } from "@/types";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { XCircle, ArrowLeft } from "lucide-react";
+import useGlobalLoading from "@/hooks/useGlobalLoading.hook";
 
 // Import komponen-komponen yang sudah dipisahkan
 import {
@@ -42,8 +42,18 @@ export default function BookingDetailPage() {
   });
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const { showLoading, hideLoading, withLoading } = useGlobalLoading();
 
   const bookingId = Number(params.id);
+
+  // Mengelola loading state
+  useEffect(() => {
+    if (loading || actionLoading || cancelLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [loading, actionLoading, cancelLoading, showLoading, hideLoading]);
 
   const fetchBookingDetails = async () => {
     try {
@@ -75,12 +85,12 @@ export default function BookingDetailPage() {
       let data;
       if (user.role === Role.SUPER_ADMIN) {
         // Super admin tidak membutuhkan branchId
-        data = await bookingApi.getBookingById(bookingId, roleParam);
+        data = await withLoading(bookingApi.getBookingById(bookingId, roleParam));
       } else if (user.role === Role.ADMIN_CABANG && user.branches && user.branches.length > 0) {
         // Admin cabang membutuhkan branchId
         // Ambil branchId dari cabang pertama yang dimiliki admin
         const branchId = user.branches[0].branchId;
-        data = await bookingApi.getBookingById(bookingId, roleParam, branchId);
+        data = await withLoading(bookingApi.getBookingById(bookingId, roleParam, branchId));
       } else {
         toast({
           title: "Error",
@@ -117,7 +127,7 @@ export default function BookingDetailPage() {
       switch (confirmDialog.action) {
         case "approve":
           if (booking.payment?.id) {
-            await bookingApi.updatePaymentStatus(booking.payment.id, PaymentStatus.PAID);
+            await withLoading(bookingApi.updatePaymentStatus(booking.payment.id, PaymentStatus.PAID));
             toast({
               title: "Sukses",
               description: "Pembayaran berhasil dikonfirmasi",
@@ -126,7 +136,7 @@ export default function BookingDetailPage() {
           break;
         case "reject":
           if (booking.payment?.id) {
-            await bookingApi.updatePaymentStatus(booking.payment.id, PaymentStatus.FAILED);
+            await withLoading(bookingApi.updatePaymentStatus(booking.payment.id, PaymentStatus.FAILED));
             toast({
               title: "Sukses",
               description: "Pembayaran berhasil ditolak",
@@ -134,7 +144,7 @@ export default function BookingDetailPage() {
           }
           break;
         case "cancel":
-          await bookingApi.cancelBooking(booking.id);
+          await withLoading(bookingApi.cancelBooking(booking.id));
           toast({
             title: "Sukses",
             description: "Booking berhasil dibatalkan",
@@ -149,7 +159,7 @@ export default function BookingDetailPage() {
           break;
         case "pay":
           if (booking.payment?.id) {
-            await bookingApi.markPaymentAsPaid(booking.payment.id);
+            await withLoading(bookingApi.markPaymentAsPaid(booking.payment.id));
             toast({
               title: "Sukses",
               description: "Pembayaran berhasil dilunasi",
@@ -221,7 +231,7 @@ export default function BookingDetailPage() {
     
     setCancelLoading(true);
     try {
-      await bookingApi.cancelBooking(booking.id);
+      await withLoading(bookingApi.cancelBooking(booking.id));
       
       toast({
         title: "Berhasil",
@@ -234,11 +244,11 @@ export default function BookingDetailPage() {
         
         let updatedBooking;
         if (user.role === Role.SUPER_ADMIN) {
-          updatedBooking = await bookingApi.getBookingById(bookingId, roleParam);
+          updatedBooking = await withLoading(bookingApi.getBookingById(bookingId, roleParam));
         } else if (user.role === Role.ADMIN_CABANG && user.branches && user.branches.length > 0) {
           // Admin cabang membutuhkan branchId
           const branchId = user.branches[0].branchId;
-          updatedBooking = await bookingApi.getBookingById(bookingId, roleParam, branchId);
+          updatedBooking = await withLoading(bookingApi.getBookingById(bookingId, roleParam, branchId));
         }
         
         if (updatedBooking) {
@@ -260,11 +270,7 @@ export default function BookingDetailPage() {
   };
 
   if (loading) {
-    return (
-      <div className="container flex items-center justify-center h-[calc(100vh-200px)]">
-        <LoadingSpinner size="large" />
-      </div>
-    );
+    return null; // GlobalLoading akan otomatis ditampilkan
   }
 
   if (!booking) {
@@ -334,14 +340,7 @@ export default function BookingDetailPage() {
               Batal
             </Button>
             <Button onClick={handleAction} disabled={actionLoading}>
-              {actionLoading ? (
-                <>
-                  <LoadingSpinner size="small" /> 
-                  <span className="ml-2">Memproses...</span>
-                </>
-              ) : (
-                "Ya, Lanjutkan"
-              )}
+              {actionLoading ? "Memproses..." : "Ya, Lanjutkan"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -369,14 +368,7 @@ export default function BookingDetailPage() {
               onClick={handleCancelBooking} 
               disabled={cancelLoading}
             >
-              {cancelLoading ? (
-                <>
-                  <LoadingSpinner size="small" />
-                  <span className="ml-2">Memproses...</span>
-                </>
-              ) : (
-                "Ya, Batalkan"
-              )}
+              {cancelLoading ? "Memproses..." : "Ya, Batalkan"}
             </Button>
           </DialogFooter>
         </DialogContent>

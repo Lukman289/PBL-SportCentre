@@ -17,6 +17,7 @@ import { Branch } from '@/types';
 import { branchApi } from '@/api/branch.api';
 import { useAuth } from '@/context/auth/auth.context';
 import { Role } from '@/types';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 export default function BranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -26,6 +27,16 @@ export default function BranchesPage() {
   const [debug, setDebug] = useState<string>('');
   const router = useRouter();
   const { user } = useAuth();
+  const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+
+  // Mengelola loading state
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
 
   const fetchBranches = useCallback(async () => {
     try {
@@ -38,10 +49,10 @@ export default function BranchesPage() {
         limit: 100 
       });
       
-      const response = await branchApi.getBranches({
+      const response = await withLoading(branchApi.getBranches({
         q: searchQuery || undefined,
         limit: 100, // Menampilkan lebih banyak data
-      });
+      }));
       
       // Logging response untuk debug
       console.log("[DEBUG] Response dari API:", response);
@@ -60,7 +71,7 @@ export default function BranchesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery]);
+  }, [searchQuery, withLoading]);
 
   useEffect(() => {
     // Menggunakan timer untuk debounce pencarian
@@ -129,19 +140,14 @@ export default function BranchesPage() {
           <CardTitle>Daftar Cabang ({branches.length} cabang)</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
-              <p className="text-muted-foreground">Memuat data cabang...</p>
-            </div>
-          ) : error ? (
+          {error ? (
             <div className="text-center py-8 text-red-500">
               <p>{error}</p>
               <Button variant="outline" onClick={handleRefresh} className="mt-4">
                 Coba Lagi
               </Button>
             </div>
-          ) : branches.length === 0 ? (
+          ) : branches.length === 0 && !isLoading ? (
             <div className="text-center py-8 text-muted-foreground">
               {searchQuery ? 'Tidak ada cabang yang sesuai dengan pencarian' : 'Belum ada cabang'}
             </div>

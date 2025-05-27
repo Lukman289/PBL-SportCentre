@@ -20,7 +20,6 @@ import {
   Menu,
   User,
   LogOut,
-  Bell,
   Home,
   MapPin,
   Calendar,

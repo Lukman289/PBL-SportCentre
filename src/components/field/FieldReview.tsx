@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { Star, StarHalf } from 'lucide-react';
 import { FieldReview } from '@/types';
 import { fieldApi } from '@/api/field.api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { id } from 'date-fns/locale';
 
 export default function FieldReviewsClient({ fieldId }: { fieldId: number }) {

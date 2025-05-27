@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { branchApi } from '@/api/branch.api';
+import PageLoading from '@/components/ui/PageLoading';
 
 const editBranchSchema = z.object({
   name: z.string().min(3, 'Nama minimal 3 karakter'),
@@ -32,6 +33,7 @@ export default function EditBranchPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -47,9 +49,19 @@ export default function EditBranchPage() {
 
   useEffect(() => {
     const fetchBranch = async () => {
+      setLoading(true);
       try {
         const response = await branchApi.getBranchById(Number(id));
-        const branch = response.data;
+        const branchData = response.data;
+        
+        // Handle both array and single object responses
+        const branch = Array.isArray(branchData) 
+          ? branchData[0] // Take first item if array
+          : branchData;
+
+        if (!branch) {
+          throw new Error('Cabang tidak ditemukan');
+        }
 
         form.reset({
           name: branch.name || '',
@@ -59,8 +71,11 @@ export default function EditBranchPage() {
         });
 
         setImagePreview(branch.imageUrl || null);
-      } catch (err) {
-        setError('Gagal mengambil data cabang');
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
+        setError(`Gagal mengambil data cabang: ${errorMessage}`);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -86,13 +101,18 @@ export default function EditBranchPage() {
     try {
       await branchApi.updateBranch(Number(id), data);
       router.push('/dashboard/branches');
-    } catch (err) {
-      console.error(err);
-      setError('Gagal memperbarui cabang');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
+      setError(`Gagal memperbarui cabang: ${errorMessage}`);
+      console.error(error);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return <PageLoading title="Edit Cabang" message="Memuat data cabang..." />;
+  }
 
   return (
     <div>

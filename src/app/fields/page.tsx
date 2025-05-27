@@ -9,7 +9,8 @@ import { Branch, Field } from '@/types';
 import { fieldApi } from '@/api';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { se } from 'date-fns/locale';
+import PageLoading from '@/components/ui/PageLoading';
+import Image from 'next/image';
 
 export default function FieldPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -17,14 +18,13 @@ export default function FieldPage() {
   const [loading, setLoading] = useState(true);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [debug, setDebug] = useState<string>('');
   const [selectedBranch, setSelectedBranch] = useState<number>(0);
-  const [selectedBranchName, setSelectedBranchName] =useState<String>("Cabang");
+  const [selectedBranchName, setSelectedBranchName] =useState<string>("Cabang");
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredFields, setFilteredFields] = useState<Field[]>([]);
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const [limit, setLimit] = useState(20);
+  const limit = 20; // Mengubah state menjadi konstanta karena tidak pernah diubah
 
   const fetchFields = async () => {
     setLoading(true);
@@ -92,15 +92,10 @@ export default function FieldPage() {
   }, [searchQuery, selectedBranch]);
 
   const handleRefresh = async () => {
-    // fetchFields();
-    setFilteredFields(filteredFields);
+    fetchFields();
   };
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-  };
-  
-  const handleFilter = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
   };
   
@@ -110,25 +105,17 @@ export default function FieldPage() {
 
     const branch = branches.find((branch) => branch.id === branchId);
     setSelectedBranchName(branch?.name || "Cabang");
-    handleFilter;
   };
 
 
   if (loading) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-6">Daftar Cabang</h1>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
+    return <PageLoading title="Daftar Lapangan" message="Memuat data lapangan..." />;
   }
 
   if (error) {
     return (
       <div className="container mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-6">Daftar Cabang</h1>
+        <h1 className="text-3xl font-bold mb-6">Daftar Lapangan</h1>
         <div className="p-4 mb-4 text-red-700 bg-red-100 rounded-lg">
           <p>{error}</p>
         </div>
@@ -189,7 +176,7 @@ export default function FieldPage() {
             {filteredFields.map((field) => (
               <Card key={field.id} className="overflow-hidden">
                 <div className="relative h-48 bg-muted">
-                  <img
+                  <Image
                     src={field.imageUrl || "images/img_not_found.png"}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;

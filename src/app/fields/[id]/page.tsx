@@ -3,44 +3,28 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Field, FieldStatus, Branch } from '@/types';
+import { Field, FieldStatus } from '@/types';
 import { fieldApi } from '@/api/field.api';
 import { branchApi } from '@/api/branch.api';
 
 import FieldAvailabilityClient from '@/components/field/FieldAvailability';
 import FieldReviewsClient from '@/components/field/FieldReview';
 import { useParams } from 'next/navigation';
-import TimeSlotSelector from '@/components/booking/TimeSlotSelector';
+import PageLoading from '@/components/ui/PageLoading';
 
 export default function FieldDetailPage() {
   const params = useParams<{ id: string }>();
-  const [branches, setBranches] = useState<Branch[]>([]);
-  const [fields, setFields] = useState<Field[]>([]);
   const [field, setField] = useState<Field | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [debug, setDebug] = useState<string>('');
-  const fieldId = parseInt(params.id);[]>([]);
-  const [selectedBranch, setSelectedBranch] = useState<number>(0);
-  const [selectedBranchName, setSelectedBranchName] =useState<String>("Cabang");
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filteredFields, setFilteredFields] = useState<Field[]>([]);
 
   useEffect(() => {
       const fetchBranches = async () => {
         try {
           const response = await branchApi.getBranches();
-          const branches = response.data || [];
-          console.log("branches: ", branches);
-          if (Array.isArray(branches)) {
-            setBranches(branches);
-          } else {
-            console.error("branches is not an array:", branches);
-            setBranches([]);
-          }
+          console.log("branches: ", response.data || []);
         } catch (error) {
           console.error("Error fetching branches:", error);
-          setBranches([]);
         } finally {
           setLoading(false);
         }
@@ -50,8 +34,8 @@ export default function FieldDetailPage() {
         setLoading(true);
         setError(null);
         try {
-          const fields = await fieldApi.getAllFields();
-          setFields(Array.isArray(fields) ? fields : []);
+          const fieldsData = await fieldApi.getAllFields();
+          console.log("fields data:", fieldsData);
         } catch (error) {
           console.error("Error fetching user bookings:", error);
           setError("Gagal memuat lapangan. Silakan coba lagi nanti.");
@@ -75,6 +59,7 @@ export default function FieldDetailPage() {
         } catch (error) {
           console.error("Error fetching field:", error);
           setField(null);
+          setError("Gagal memuat data lapangan. Silakan coba lagi nanti.");
         } finally {
           setLoading(false);
         }
@@ -84,52 +69,23 @@ export default function FieldDetailPage() {
       fetchFields();
       fetchField();
     }, []);
-  
-    useEffect(() => {
-      const query = searchQuery.toLowerCase();
-  
-      const filtered = fields.filter((field) => {
-        const matchesBranch = selectedBranch === 0 || field.branchId === selectedBranch;
-        const matchesSearch = query === '' || field.name.toLowerCase().includes(query) || field.type.name.toLowerCase().includes(query);
-        return matchesBranch && matchesSearch;
-      });
-  
-      setFilteredFields(filtered);
-    }, [searchQuery, selectedBranch, fields]);
-  
-    const handleRefresh = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fieldApi.getAllFields();
-        
-        setFields(Array.isArray(response) ? response : []);
-      } catch (error) {
-        console.error('[ERROR] Error refreshing branches:', error);
-        setError('Gagal memuat daftar cabang. Silakan coba lagi nanti.');
-        setDebug(`Error: ${error instanceof Error ? error.message : String(error)}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-  
-    const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-    };
-    
-    const handleFilter = (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-    };
-    
-    const branchChanged = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const branchId = Number(e.target.value);
-      setSelectedBranch(branchId);
-  
-      const branch = branches.find((branch) => branch.id === branchId);
-      setSelectedBranchName(branch?.name || "Cabang");
-      handleFilter;
-    };
+
+  if (loading) {
+    return <PageLoading title="Detail Lapangan" message="Memuat data lapangan..." />;
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600">{error}</h1>
+          <Button asChild className="mt-4">
+            <Link href="/fields">Kembali ke Daftar Lapangan</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!field) {
     return (
@@ -166,7 +122,7 @@ export default function FieldDetailPage() {
           <h1 className="text-3xl font-bold mb-4">{field.name}</h1>
           <div className="mb-4">
             <h2 className="text-xl font-semibold mb-2">Tipe Lapangan</h2>
-            <p className="text-gray-700">{field.type.name}</p>
+            <p className="text-gray-700">{field.type?.name || 'Tidak ada informasi'}</p>
           </div>
           <div className="mb-4">
             <h2 className="text-xl font-semibold mb-2">Harga</h2>

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { userApi } from '@/api/user.api';
 import { User } from '@/types';
 import { UpdateUserRequest } from '@/api/user.api';
+import PageLoading from '@/components/ui/PageLoading';
 
 export default function EditUserPage() {
   const router = useRouter();
@@ -39,11 +40,13 @@ export default function EditUserPage() {
         setForm({
           name: user.name,
           email: user.email,
-          phone: (user as any).phone || '', // pastikan phone ada di tipe user
-          password: '', // kosongkan password, karena kita tidak fetch password
+          phone: (user as User).phone || '', 
+          password: '', 
         });
-      } catch (err) {
-        setError('Gagal mengambil data pengguna.');
+      } catch (error: unknown) {
+        console.error('Error fetching user:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
+        setError(`Gagal mengambil data pengguna: ${errorMessage}`);
       } finally {
         setInitialLoading(false);
       }
@@ -70,16 +73,17 @@ export default function EditUserPage() {
       await userApi.updateUserProfile(form);
       alert('Profil pengguna berhasil diperbarui!');
       router.push(`/dashboard/users/${userId}`);
-    } catch (err) {
-      setError('Gagal memperbarui pengguna.');
-      console.error(err);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
+      setError(`Gagal memperbarui pengguna: ${errorMessage}`);
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
   if (initialLoading) {
-    return <p className="p-4">Loading data pengguna...</p>;
+    return <PageLoading title="Edit Pengguna" message="Memuat data pengguna..." />;
   }
 
   if (error) {

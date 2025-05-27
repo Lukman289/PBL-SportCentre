@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { id } from 'date-fns/locale';
 import { bookingApi } from '@/api/booking.api';
 import { paymentApi } from '@/api/payment.api';
 import { fieldApi } from '@/api/field.api';
@@ -240,7 +239,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                         </div>
                         <div>
                           <h4 className="text-sm font-medium">Tipe</h4>
-                          <p>{field.type.name}</p>
+                          <p>{field.type?.name}</p>
                         </div>
                       </div>
                     </div>

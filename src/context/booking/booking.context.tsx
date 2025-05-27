@@ -202,7 +202,13 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         
         // Ambil data lapangan
         const fields = await fieldApi.getAllFields({limit});
-        setFields(Array.isArray(fields) ? fields : []);
+        const normalizedFields: Field[] = fields.data.map((field: any) => ({
+          ...field,
+          priceDay: field.priceDay || 0,
+          priceNight: field.priceNight || 0,
+        }));
+        setFields(normalizedFields);
+        // setFields(Array.isArray(fields) ? fields : []);
         
         setLoading(false);
       } catch (error) {

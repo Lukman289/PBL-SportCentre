@@ -7,7 +7,8 @@ import {
   StandardFieldResponse as StandardResponse,
   LegacyFieldResponse,
   FieldCreateResponse,
-  AvailabilityResponse
+  AvailabilityResponse,
+  FieldListParams
 } from '../types';
 import { bookingApi } from './booking.api';
 import { Booking } from '../types';
@@ -43,21 +44,10 @@ class FieldApi {
    * Dapatkan semua lapangan
    * @returns Promise dengan array data lapangan
    */
-  async getAllFields(options?: { limit: number; }): Promise<Field[]> {
-    try {
-      const response = await axiosInstance.get<{ data: Field[] } | Field[]>('/fields', { params: options });
-      
-      if (Array.isArray(response.data)) {
-        return response.data;
-      } else if ('data' in response.data && Array.isArray(response.data.data)) {
-        return response.data.data;
-      }
-      
-      return [];
-    } catch (error) {
-      console.error('Error fetching all fields:', error);
-      return [];
-    }
+  async getAllFields(params?: FieldListParams): Promise<FieldReviewResponseWithMeta> {
+    console.log("Fetching all fields with params:", params);
+    const response = await axiosInstance.get<FieldReviewResponseWithMeta>('/fields', { params: params });
+    return response.data;
   }
 
   /**

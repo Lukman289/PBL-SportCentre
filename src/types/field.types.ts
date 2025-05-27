@@ -44,6 +44,7 @@ export interface FieldListParams {
   limit?: number;
   status?: FieldStatus;
   search?: string;
+  branchId?: number;
   q?: string;
 }
 

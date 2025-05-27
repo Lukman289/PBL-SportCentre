@@ -55,7 +55,7 @@ export default function BranchDetailPage() {
     if (params.id) {
       fetchData();
     }
-  }, [params.id, withLoading]);
+  }, [params.id]);
 
   if (loading) {
     return null; // GlobalLoading akan otomatis ditampilkan

@@ -295,6 +295,7 @@ export default function AdminsPage() {
                           <Button
                             variant="destructive"
                             size="sm"
+                            className='text-white'
                             onClick={() => handleRemoveAdmin(admin.branchId, admin.userId)}
                           >
                             Hapus

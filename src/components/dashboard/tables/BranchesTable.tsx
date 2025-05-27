@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Building2, MapPin, User } from "lucide-react";
 import { BranchView } from "@/types";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 interface BranchesTableProps {
   branches: BranchView[];
@@ -25,6 +27,15 @@ export function BranchesTable({
   caption = "Daftar semua cabang yang terdaftar dalam sistem",
   isLoading = false,
 }: BranchesTableProps) {
+  const [branchPaginate, setBranchPaginate] = useState<BranchView[]>(branches);
+  const [page, setPage] = useState(1);
+  const totalItems = branches.length;
+  const limit = 10;
+
+  useEffect(() => {
+    setBranchPaginate(branches.slice((page - 1) * limit, page * limit));
+  }, [page, branches]);
+
   return (
     <Card className="border shadow-sm">
       <div className="p-6">
@@ -37,13 +48,12 @@ export function BranchesTable({
           <div className="h-52 flex items-center justify-center">
             <p className="text-muted-foreground">Memuat data...</p>
           </div>
-        ) : branches.length === 0 ? (
+        ) : totalItems === 0 ? (
           <div className="h-52 flex items-center justify-center">
             <p className="text-muted-foreground">Tidak ada data cabang</p>
           </div>
         ) : (
           <Table>
-            <TableCaption>{caption}</TableCaption>
             <TableHeader>
               <TableRow>
                 <TableHead>Nama Cabang</TableHead>
@@ -54,7 +64,7 @@ export function BranchesTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {branches.map((branch) => (
+              {branchPaginate.map((branch) => (
                 <TableRow key={branch.id}>
                   <TableCell className="font-medium">{branch.name}</TableCell>
                   <TableCell>
@@ -65,8 +75,8 @@ export function BranchesTable({
                   </TableCell>
                   <TableCell>
                     <Badge className={branch.status === 'active' 
-                      ? 'bg-green-100 text-green-700 border-green-200' 
-                      : 'bg-red-100 text-red-700 border-red-200'}>
+                      ? 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100' 
+                      : 'bg-red-100 text-red-700 border-red-200 hover:bg-red-100'}>
                       {branch.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
                     </Badge>
                   </TableCell>
@@ -80,6 +90,29 @@ export function BranchesTable({
                 </TableRow>
               ))}
             </TableBody>
+            <TableCaption>
+              {totalItems > limit ? (
+                <div className="flex justify-between items-center gap-4 mt-8">
+                  <Button 
+                    variant="outline" 
+                    disabled={page === 1} 
+                    onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                  >
+                    Sebelumnya
+                  </Button>
+                  {caption}
+                  <Button 
+                    variant="outline" 
+                    disabled={page >= Math.ceil(totalItems / limit)} 
+                    onClick={() => setPage((prev) => prev + 1)}
+                  >
+                    Selanjutnya
+                  </Button>
+                </div>
+              ) : (
+                caption
+              )}
+            </TableCaption>
           </Table>
         )}
       </div>

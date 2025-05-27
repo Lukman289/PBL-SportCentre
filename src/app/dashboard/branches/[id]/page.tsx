@@ -50,7 +50,7 @@ export default function BranchDetailPage() {
         const branchData = await withLoading(branchApi.getBranchById(branchId));
         setBranch(Array.isArray(branchData.data) ? branchData.data[0] : branchData.data);
 
-        const fieldsData = await withLoading(fieldApi.getFieldsByBranchId(branchId));
+        const fieldsData = await withLoading(fieldApi.getBranchFields(branchId));
         setFields(fieldsData);
 
         const adminsData = await withLoading(branchApi.getBranchAdmins(branchId));
@@ -98,7 +98,7 @@ export default function BranchDetailPage() {
   };
 
   const handleAddAdmin = () => {
-    router.push(`/dashboard/branches/${branchId}/add-admin`);
+    router.push(`/dashboard/admins`);
   };
 
   if (isLoading) {
@@ -123,9 +123,11 @@ export default function BranchDetailPage() {
           <Button variant="outline" onClick={handleEdit}>
             Edit
           </Button>
-          <Button variant="destructive" onClick={handleDelete}>
-            Hapus
-          </Button>
+          {user?.role === Role.SUPER_ADMIN && (
+            <Button variant="destructive" className='text-white' onClick={handleDelete}>
+              Hapus
+            </Button>
+          )}
         </div>
       </div>
 
@@ -163,12 +165,17 @@ export default function BranchDetailPage() {
             </div>
           </div>
           {branch.imageUrl && (
-            <div className="mt-4">
+            <div className="my-4 w-full h-100">
               <p className="text-sm font-medium text-muted-foreground mb-2">Gambar:</p>
               <img
-                src={branch.imageUrl}
+                src={branch.imageUrl || "images/img_not_found.png"}
                 alt={branch.name}
-                className="w-full max-w-md h-auto rounded-md"
+                className="w-full h-full rounded-md object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = "images/img_not_found.png";
+                }}
               />
             </div>
           )}
@@ -185,13 +192,15 @@ export default function BranchDetailPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Daftar Lapangan</CardTitle>
-              <Button onClick={handleAddField}>
-                {showAddFieldForm ? 'Tutup Form' : 'Tambah Lapangan'}
-              </Button>
+              {user?.role === Role.SUPER_ADMIN && (
+                <Button onClick={handleAddField}>
+                  {showAddFieldForm ? 'Tutup Form' : 'Tambah Lapangan'}
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               {showAddFieldForm && (
-                <div className="mb-6 p-4 border rounded-md bg-gray-50">
+                <div className="mb-6 p-4 border rounded-md">
                   <h3 className="text-lg font-semibold mb-4">Form Tambah Lapangan</h3>
                   <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -228,7 +237,8 @@ export default function BranchDetailPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ID</TableHead>
+                      <TableHead>No</TableHead>
+                      <TableHead>ID Lapangan</TableHead>
                       <TableHead>Nama</TableHead>
                       <TableHead>Tipe</TableHead>
                       <TableHead>Harga (Siang)</TableHead>
@@ -237,8 +247,9 @@ export default function BranchDetailPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {fields.map((field) => (
+                    {fields.map((field, index) => (
                       <TableRow key={field.id}>
+                        <TableCell>{index + 1}</TableCell>
                         <TableCell>{field.id}</TableCell>
                         <TableCell>{field.name}</TableCell>
                         <TableCell>{field.type?.name || '-'}</TableCell>
@@ -293,14 +304,16 @@ export default function BranchDetailPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ID</TableHead>
+                      <TableHead>No</TableHead>
+                      <TableHead>ID Admin</TableHead>
                       <TableHead>Nama</TableHead>
                       <TableHead>Email</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {admins.map((admin) => (
+                    {admins.map((admin, index) => (
                       <TableRow key={admin.userId}>
+                        <TableCell>{index + 1}</TableCell>
                         <TableCell>{admin.userId}</TableCell>
                         <TableCell>{admin.user?.name}</TableCell>
                         <TableCell>{admin.user?.email}</TableCell>

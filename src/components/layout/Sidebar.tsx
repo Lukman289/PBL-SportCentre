@@ -17,31 +17,46 @@ const menuItemsByRole = {
     { label: 'Dashboard', href: '/dashboard', icon: 'home' },
     { label: 'Cabang', href: '/dashboard/branches', icon: 'building' },
     { label: 'Pengguna', href: '/dashboard/users', icon: 'users' },
-    { label: 'Pengaturan', href: '/dashboard/settings', icon: 'settings' },
   ],
   [Role.OWNER_CABANG]: [
     { label: 'Dashboard', href: '/dashboard', icon: 'home' },
     { label: 'Cabang Saya', href: '/dashboard/my-branches', icon: 'building' },
     { label: 'Admin Cabang', href: '/dashboard/admins', icon: 'user-check' },
-    { label: 'Pengaturan', href: '/dashboard/settings', icon: 'settings' },
   ],
   [Role.ADMIN_CABANG]: [
     { label: 'Dashboard', href: '/dashboard', icon: 'home' },
     { label: 'Lapangan', href: '/dashboard/fields', icon: 'layout' },
     { label: 'Reservasi', href: '/dashboard/bookings', icon: 'calendar' },
-    { label: 'Pengaturan', href: '/dashboard/settings', icon: 'settings' },
   ],
   [Role.USER]: [
     { label: 'Dashboard', href: '/dashboard', icon: 'home' },
     { label: 'Reservasi Saya', href: '/dashboard/my-bookings', icon: 'calendar' },
     { label: 'Profil', href: '/dashboard/profile', icon: 'user' },
-    { label: 'Pengaturan', href: '/dashboard/settings', icon: 'settings' },
   ],
 };
 
 export default function Sidebar({ isOpen, role }: SidebarProps) {
   const pathname = usePathname();
   const menuItems = menuItemsByRole[role] || menuItemsByRole[Role.USER];
+  const activeItem = getActiveItem(pathname, menuItems);
+
+  function getActiveItem(pathname: string, menuItems: { href: string }[]) {
+    if (pathname.startsWith('/dashboard/branches')) {
+      const myBranches = menuItems.find(item => item.href === '/dashboard/my-branches');
+      if (myBranches) return myBranches.href;
+    }
+
+    let matched: { href: string } | undefined;
+    for (const item of menuItems) {
+      if (pathname === item.href || pathname.startsWith(item.href + '/')) {
+        if (!matched || item.href.length > matched.href.length) {
+          matched = item;
+        }
+      }
+    }
+
+    return matched?.href;
+  }
 
   return (
     <div
@@ -56,22 +71,26 @@ export default function Sidebar({ isOpen, role }: SidebarProps) {
       
       <nav className="mt-6 px-4">
         <ul className="space-y-2">
-          {menuItems.map((item) => (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                className={cn(
-                  "flex items-center rounded-md px-4 py-2.5 text-sm font-medium transition-colors",
-                  pathname === item.href || pathname.startsWith(`${item.href}/`)
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <SidebarIcon name={item.icon} className="mr-3 h-5 w-5" />
-                {item.label}
-              </Link>
-            </li>
-          ))}
+          {menuItems.map((item) => {
+            const isActive = activeItem === item.href;
+
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex items-center rounded-md px-4 py-2.5 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <SidebarIcon name={item.icon} className="mr-3 h-5 w-5" />
+                  {item.label}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </nav>
       

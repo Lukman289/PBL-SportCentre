@@ -19,6 +19,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { branchApi } from '@/api/branch.api';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
+import { useAuth } from '@/context/auth/auth.context';
 
 const editBranchSchema = z.object({
   name: z.string().min(3, 'Nama minimal 3 karakter'),
@@ -37,6 +38,7 @@ export default function EditBranchPage() {
   const [error, setError] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+  const { user } = useAuth();
 
   // Mengelola loading state
   useEffect(() => {
@@ -74,10 +76,10 @@ export default function EditBranchPage() {
         }
 
         form.reset({
-          name: branch.name || '',
-          location: branch.location || '',
-          status: branch.status || 'active',
-          imageUrl: branch.imageUrl || '',
+          name: branch?.name || '',
+          location: branch?.location || '',
+          status: branch?.status || 'active',
+          imageUrl: branch?.imageUrl || '',
         });
 
         setImagePreview(branch.imageUrl || null);
@@ -110,7 +112,13 @@ export default function EditBranchPage() {
     setError(null);
     try {
       await withLoading(branchApi.updateBranch(Number(id), data));
-      router.push('/dashboard/branches');
+
+      // Arahkan ke halaman yang sesuai berdasarkan peran pengguna
+      if (user?.role === 'super_admin') {
+        router.push('/dashboard/branches');
+      } else {
+        router.push('/dashboard/my-branches');
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
       setError(`Gagal memperbarui cabang: ${errorMessage}`);

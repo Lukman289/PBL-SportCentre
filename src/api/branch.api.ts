@@ -82,10 +82,18 @@ class BranchApi {
   }
 
   /**
+   * Mendapatkan detail admin cabang
+   */
+  async getBranchAdminById(userId: number): Promise<BranchAdmin> {
+    const response = await axiosInstance.get<BranchAdmin>(`/branches/admins/${userId}`);
+    return response.data;
+  }
+
+  /**
    * Menambah admin cabang
    */
   async addBranchAdmin(branchId: number, userId: number): Promise<void> {
-    await axiosInstance.post(`/branches/${branchId}/admins`, { userId });
+    await axiosInstance.post(`/branches/${branchId}/admins/${userId}`);
   }
 
   /**

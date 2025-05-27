@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { 
   Table, 
   TableBody, 
+  TableCaption, 
   TableCell, 
   TableHead, 
   TableHeader, 
@@ -21,11 +22,15 @@ import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 export default function MyBranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
+  const [branchPaginate, setBranchPaginate] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
   const { user } = useAuth();
   const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+  const [page, setPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const limit = 15;
 
   // Mengelola loading state
   useEffect(() => {
@@ -37,30 +42,56 @@ export default function MyBranchesPage() {
   }, [isLoading, showLoading, hideLoading]);
 
   useEffect(() => {
-    const fetchBranches = async () => {
-      try {
-        setIsLoading(true);
-        // Menggunakan metode getUserBranches untuk mendapatkan cabang yang dimiliki/dikelola
-        const response = await withLoading(branchApi.getUserBranches({ 
-          q: searchQuery || undefined 
-        }));
-        setBranches(response.data);
-      } catch (error) {
-        console.error('Error fetching branches:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchBranches();
-  }, [searchQuery, withLoading]);
+  }, []);
+
+  useEffect(() => {
+    setBranchPaginate(branches.slice((page - 1) * limit, page * limit));
+  }, [page, branches]);
+
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setBranchPaginate(branches.slice((page - 1) * limit, page * limit));
+      setTotalItems(branches.length);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = branches.filter(
+        (branch) =>
+          branch.name.toLowerCase().includes(query) ||
+          branch.location.toLowerCase().includes(query)
+      );
+      setTotalItems(filtered.length);
+      setBranchPaginate(filtered);
+    }
+  }, [searchQuery, branches, page, limit]);
+
+  const fetchBranches = async () => {
+    setIsLoading(true);
+    try {
+      const response = await withLoading(branchApi.getUserBranches({
+        q: searchQuery || undefined
+      }));
+      
+      if (response && response.data) {
+        const data = response.data;
+        setBranches(data);
+        setBranchPaginate(data.slice((page - 1) * limit, page * limit));
+        setTotalItems(response.meta?.totalItems || 0);
+      } else {
+        setBranches([]);
+        setBranchPaginate([]);
+      }
+    } catch (error) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-  };
-
-  const handleAddBranch = () => {
-    router.push('/dashboard/branches/create');
+    // Reset halaman ke 1 ketika pencarian berubah
+    setPage(1);
   };
 
   const handleViewBranch = (id: number) => {
@@ -73,13 +104,18 @@ export default function MyBranchesPage() {
     return null;
   }
 
+  // Jika loading, GlobalLoading akan otomatis ditampilkan
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Cabang Saya</h1>
-        {user?.role === Role.OWNER_CABANG && (
+        {/* {user?.role === Role.OWNER_CABANG && (
           <Button onClick={handleAddBranch}>Tambah Cabang</Button>
-        )}
+        )} */}
       </div>
 
       <Card className="mb-6">
@@ -101,9 +137,7 @@ export default function MyBranchesPage() {
           <CardTitle>Daftar Cabang</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            null // GlobalLoading akan otomatis ditampilkan
-          ) : branches.length === 0 ? (
+          {branchPaginate.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {searchQuery ? 'Tidak ada cabang yang sesuai dengan pencarian' : 'Anda belum memiliki cabang'}
             </div>
@@ -111,7 +145,8 @@ export default function MyBranchesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID</TableHead>
+                  <TableHead>No</TableHead>
+                  <TableHead>ID Cabang</TableHead>
                   <TableHead>Nama</TableHead>
                   <TableHead>Lokasi</TableHead>
                   <TableHead>Status</TableHead>
@@ -119,8 +154,9 @@ export default function MyBranchesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {branches.map((branch) => (
+                {branchPaginate.map((branch, index) => (
                   <TableRow key={branch.id}>
+                    <TableCell>{(page - 1) * limit + index + 1}</TableCell>
                     <TableCell>{branch.id}</TableCell>
                     <TableCell>{branch.name}</TableCell>
                     <TableCell>{branch.location}</TableCell>
@@ -144,7 +180,7 @@ export default function MyBranchesPage() {
                         >
                           Detail
                         </Button>
-                        {user?.role === Role.OWNER_CABANG && (
+                        {/* {user?.role === Role.OWNER_CABANG && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -152,12 +188,35 @@ export default function MyBranchesPage() {
                           >
                             Admin
                           </Button>
-                        )}
+                        )} */}
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
+              <TableCaption>
+                {totalItems > limit && (
+                  <div className="flex justify-between items-center gap-4 mt-8">
+                    <Button 
+                      variant="outline" 
+                      disabled={page === 1} 
+                      onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                    >
+                      Sebelumnya
+                    </Button>
+                    <span className="text-sm text-gray-500">
+                      Halaman {page} dari {Math.ceil(totalItems / limit)}
+                    </span>
+                    <Button 
+                      variant="outline" 
+                      disabled={page >= Math.ceil(totalItems / limit)} 
+                      onClick={() => setPage((prev) => prev + 1)}
+                    >
+                      Selanjutnya
+                    </Button>
+                  </div>
+                )}
+              </TableCaption>
             </Table>
           )}
         </CardContent>

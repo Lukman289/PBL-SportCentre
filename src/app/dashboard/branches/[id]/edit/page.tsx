@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { branchApi } from '@/api/branch.api';
+import { useAuth } from '@/context/auth/auth.context';
 
 const editBranchSchema = z.object({
   name: z.string().min(3, 'Nama minimal 3 karakter'),
@@ -34,6 +35,7 @@ export default function EditBranchPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const user = useAuth().user;
 
   const form = useForm<EditBranchFormValues>({
     resolver: zodResolver(editBranchSchema),
@@ -49,16 +51,16 @@ export default function EditBranchPage() {
     const fetchBranch = async () => {
       try {
         const response = await branchApi.getBranchById(Number(id));
-        const branch = response.data;
-
+        const branch = Array.isArray(response.data) ? response.data[0] : response.data;
+        
         form.reset({
-          name: branch.name || '',
-          location: branch.location || '',
-          status: branch.status || 'active',
-          imageUrl: branch.imageUrl || '',
+          name: branch?.name || '',
+          location: branch?.location || '',
+          status: branch?.status || 'active',
+          imageUrl: branch?.imageUrl || '',
         });
 
-        setImagePreview(branch.imageUrl || null);
+        setImagePreview(branch?.imageUrl || null);
       } catch (err) {
         setError('Gagal mengambil data cabang');
       }
@@ -85,7 +87,12 @@ export default function EditBranchPage() {
     setError(null);
     try {
       await branchApi.updateBranch(Number(id), data);
-      router.push('/dashboard/branches');
+
+      if (user?.role === 'super_admin') {
+        router.push('/dashboard/branches');
+      } else {
+        router.push('/dashboard/my-branches');
+      }
     } catch (err) {
       console.error(err);
       setError('Gagal memperbarui cabang');

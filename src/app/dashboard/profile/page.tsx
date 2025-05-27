@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import useAuth from '@/hooks/useAuth.hook';
 import { userApi } from '@/api/user.api';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 const profileSchema = z.object({
   name: z.string().min(3, 'Nama minimal 3 karakter'),
@@ -29,6 +30,16 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+
+  // Mengelola loading state
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -45,13 +56,12 @@ export default function ProfilePage() {
     setIsLoading(true);
     setError(null);
     setSuccess(false);
-
     try {
-      // Panggil API untuk update profil
-      const updatedUser = await userApi.updateUserProfile(user.id, {
+      const updatedUser = await withLoading(userApi.updateUserProfile({
         name: data.name,
+        email: data.email,
         phone: data.phone
-      });
+      }));
       
       // Update user profile di context
       updateUserProfile({
@@ -144,8 +154,8 @@ export default function ProfilePage() {
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Memperbarui...' : 'Perbarui Profil'}
+              <Button type="submit" className="w-full">
+                Perbarui Profil
               </Button>
             </form>
           </Form>

@@ -18,7 +18,7 @@ import { useAuth } from '@/context/auth/auth.context';
 import { branchApi } from '@/api/branch.api';
 import { fieldApi } from '@/api/field.api';
 import { Branch, BranchAdmin, Field, Role } from '@/types';
-
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 export default function BranchDetailPage() {
   const router = useRouter();
@@ -31,19 +31,29 @@ export default function BranchDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showAddFieldForm, setShowAddFieldForm] = useState(false);
   const branchId = parseInt(params.id as string);
+  const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+
+  // Mengelola loading state
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const branchData = await branchApi.getBranchById(branchId);
+        const branchData = await withLoading(branchApi.getBranchById(branchId));
         setBranch(Array.isArray(branchData.data) ? branchData.data[0] : branchData.data);
 
-        const fieldsData = await fieldApi.getBranchFields(branchId);
+        const fieldsData = await withLoading(fieldApi.getBranchFields(branchId));
         setFields(fieldsData);
 
-        const adminsData = await branchApi.getBranchAdmins(branchId);
+        const adminsData = await withLoading(branchApi.getBranchAdmins(branchId));
         setAdmins(adminsData);
       } catch (err) {
         console.error('Error fetching branch details:', err);
@@ -56,7 +66,7 @@ export default function BranchDetailPage() {
     if (branchId) {
       fetchData();
     }
-  }, [branchId]);
+  }, [branchId, withLoading]);
 
   if (user && user.role !== Role.SUPER_ADMIN && user.role !== Role.OWNER_CABANG) {
     router.push('/dashboard');
@@ -70,7 +80,7 @@ export default function BranchDetailPage() {
   const handleDelete = async () => {
     if (window.confirm('Anda yakin ingin menghapus cabang ini?')) {
       try {
-        await branchApi.deleteBranch(branchId);
+        await withLoading(branchApi.deleteBranch(branchId));
         if (user?.role === Role.SUPER_ADMIN) {
           router.push('/dashboard/branches');
         } else {
@@ -92,11 +102,7 @@ export default function BranchDetailPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center py-10">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
+    return null; // Global loading akan otomatis ditampilkan
   }
 
   if (error || !branch) {

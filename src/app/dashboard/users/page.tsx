@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/table';
 import { User, Role } from '@/types';
 import { useAuth } from '@/context/auth/auth.context';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 // Interface untuk respons API
 interface UsersResponse {
@@ -80,12 +81,22 @@ export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
   const { user } = useAuth();
+  const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+
+  // Mengelola loading state
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         setIsLoading(true);
-        const response = await getUsers(searchQuery);
+        const response = await withLoading(getUsers(searchQuery));
         setUsers(response.data);
       } catch (error) {
         console.error('Error fetching users:', error);
@@ -95,7 +106,7 @@ export default function UsersPage() {
     };
 
     fetchUsers();
-  }, [searchQuery]);
+  }, [searchQuery, withLoading]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -157,9 +168,7 @@ export default function UsersPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-            </div>
+            null // GlobalLoading akan otomatis ditampilkan
           ) : users.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {searchQuery ? 'Tidak ada pengguna yang sesuai dengan pencarian' : 'Belum ada pengguna'}

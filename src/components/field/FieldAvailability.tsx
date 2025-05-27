@@ -4,9 +4,14 @@ import { useBooking } from "@/hooks/bookings/useBooking.hook";
 import { useTimeSlot } from "@/hooks/useTimeSlot.hook";
 import { id } from "date-fns/locale";
 import { format } from "date-fns";
+import { Field } from "@/types";
 
-export default function FieldAvailability(field: any) {
-  const filteredFields = field.field;
+interface FieldAvailabilityProps {
+  field: Field;
+}
+
+export default function FieldAvailability({ field }: FieldAvailabilityProps) {
+  const filteredFields = field;
   const {
     getTimeSlotStatus,
     getTimeSlotClass,
@@ -25,7 +30,7 @@ export default function FieldAvailability(field: any) {
     );
   };
 
-  console.log("field: ", field.field);
+  console.log("field: ", field);
 
   return (
     <div className="grid grid-cols-1">

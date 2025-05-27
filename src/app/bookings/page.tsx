@@ -6,7 +6,6 @@ import { useBooking } from "@/hooks/bookings/useBooking.hook";
 import TimeSlotSelector from "@/components/booking/TimeSlotSelector";
 import BookingHeader from "@/components/booking/BookingHeader";
 import BookingForm from "@/components/booking/BookingForm";
-import LoadingState from "@/components/booking/LoadingState";
 import ErrorState from "@/components/booking/ErrorState";
 
 export default function BookingsPage() {
@@ -20,7 +19,7 @@ export default function BookingsPage() {
 
   // Render states
   if (loading) {
-    return <LoadingState />;
+    return null; // GlobalLoading akan otomatis ditampilkan
   }
 
   if (error) {

@@ -54,8 +54,8 @@ export const combineDateAndTime = (dateStr: string, timeStr: string): Date => {
 
 /**
  * Format rentang waktu dari dua string waktu UTC menjadi format jam saja
- * @param startTimeUTC - String waktu mulai format ISO UTC atau format jam HH:MM
- * @param endTimeUTC - String waktu selesai format ISO UTC atau format jam HH:MM
+ * @param startTime - String waktu mulai format ISO UTC atau format jam HH:MM
+ * @param endTime - String waktu selesai format ISO UTC atau format jam HH:MM
  * @returns String rentang jam format "HH:MM - HH:MM"
  */
 export const formatTimeRange = (startTime: string, endTime: string): string => {
@@ -73,4 +73,4 @@ export const formatTimeRange = (startTime: string, endTime: string): string => {
   const endTimeFormatted = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
   
   return `${startTimeFormatted} - ${endTimeFormatted}`;
-}; 
+};

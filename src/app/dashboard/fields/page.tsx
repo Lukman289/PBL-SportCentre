@@ -26,6 +26,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 export default function FieldPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -38,6 +39,16 @@ export default function FieldPage() {
   const [filteredFields, setFilteredFields] = useState<Field[]>([]);
   const { toast } = useToast();
   const router = useRouter();
+  const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+
+  // Mengelola loading state
+  useEffect(() => {
+    if (loading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [loading, showLoading, hideLoading]);
 
   // Function to fetch fields by branch ID
   const fetchFields = useCallback(async (branchId: number) => {
@@ -51,7 +62,7 @@ export default function FieldPage() {
       setLoading(true);
       setError(null);
       
-      const fieldData = await fieldApi.getBranchFields(branchId);
+      const fieldData = await withLoading(fieldApi.getBranchFields(branchId));
       
       if (Array.isArray(fieldData)) {
         setFields(fieldData);
@@ -73,14 +84,14 @@ export default function FieldPage() {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery]);
+  }, [searchQuery, withLoading]);
 
   // Fetch branches when component mounts
   useEffect(() => {
     const fetchBranches = async () => {
       try {
         setLoading(true);
-        const response = await branchApi.getUserBranches();
+        const response = await withLoading(branchApi.getUserBranches());
         const branchesData = response.data || [];
         
         if (Array.isArray(branchesData)) {
@@ -116,7 +127,7 @@ export default function FieldPage() {
     };
 
     fetchBranches();
-  }, [toast, fetchFields]);
+  }, [toast, fetchFields, withLoading]);
 
   // Apply search filter when search query changes
   useEffect(() => {
@@ -196,14 +207,7 @@ export default function FieldPage() {
   };
 
   if (loading && branches.length === 0) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-6">Daftar Lapangan</h1>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
+    return null; // GlobalLoading akan otomatis ditampilkan
   }
 
   if (error && branches.length === 0) {

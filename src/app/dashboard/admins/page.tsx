@@ -17,6 +17,7 @@ import { Role, BranchAdmin, Branch } from '@/types';
 import { useAuth } from '@/context/auth/auth.context';
 import { userApi } from '@/api/user.api';
 import { branchApi } from '@/api/branch.api';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 export default function AdminsPage() {
   const [admins, setAdmins] = useState<BranchAdmin[]>([]);
@@ -27,19 +28,32 @@ export default function AdminsPage() {
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const router = useRouter();
   const { user } = useAuth();
+  const { showLoading, hideLoading, withLoading } = useGlobalLoading();
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const limit = 15;
 
+  // Mengelola loading state
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
+
+  // Load initial data
   useEffect(() => {
     fetchAdmins();
     fetchBranches();
   }, []);
 
+  // Update pagination when page changes
   useEffect(() => {
     setAdminsPaginate(admins.slice((page - 1) * limit, page * limit));
-  }, [page]);
+  }, [page, admins]);
 
+  // Filter data when search query changes
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setAdminsPaginate(admins.slice((page - 1) * limit, page * limit));
@@ -47,19 +61,19 @@ export default function AdminsPage() {
     } else {
       const query = searchQuery.toLowerCase();
       const filtered = admins.filter(
-        (admins) =>
-          admins.user?.name.toLowerCase().includes(query) ||
-          admins.user?.email.toLowerCase().includes(query)
+        (admin) =>
+          admin.user?.name.toLowerCase().includes(query) ||
+          admin.user?.email.toLowerCase().includes(query)
       );
       setTotalItems(filtered.length);
       setAdminsPaginate(filtered);
     }
-  }, [searchQuery]);
-  
+  }, [searchQuery, admins, page, limit]);
+
   const fetchAdmins = async () => {
     setIsLoading(true);
     try {
-      const response = await userApi.getUserBranchAdmins();
+      const response = await withLoading(userApi.getUserBranchAdmins(searchQuery || undefined));
       setAdmins(response);
       setAdminsPaginate(response.slice((page - 1) * limit, page * limit));
       setTotalItems(response.length);
@@ -75,12 +89,11 @@ export default function AdminsPage() {
   const fetchBranches = async () => {
     setIsLoading(true);
     try {
-      const response = await branchApi.getUserBranches();
+      const response = await withLoading(branchApi.getUserBranches());
       
       if (response && response.data) {
         const data = response.data;
         setBranches(data);
-        setTotalItems(response.meta?.totalItems || 0);
       } else {
         setBranches([]);
       }
@@ -93,10 +106,28 @@ export default function AdminsPage() {
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+    setPage(1); // Reset halaman saat pencarian berubah
   };
 
   const handleAddAdmin = () => {
     setIsAddFormOpen(!isAddFormOpen);
+  };
+
+  const handleRemoveAdmin = async (branchId: number, userId: number) => {
+    try {
+      setIsLoading(true);
+      await withLoading(branchApi.removeBranchAdmin(branchId, userId));
+      // Update data setelah menghapus admin
+      const updatedAdmins = admins.filter(admin => admin.userId !== userId || admin.branchId !== branchId);
+      setAdmins(updatedAdmins);
+      setAdminsPaginate(updatedAdmins.slice((page - 1) * limit, page * limit));
+      setTotalItems(updatedAdmins.length);
+    } catch (error) {
+      console.error('Error removing admin:', error);
+      alert('Gagal menghapus admin. Silakan coba lagi.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmitAddAdmin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -109,16 +140,26 @@ export default function AdminsPage() {
     const role = Role.ADMIN_CABANG;
     const password = email.split('@')[0];
 
-    await userApi.createUser({
-      name,
-      email,
-      phone,
-      branchId: parseInt(branchId as string),
-      role,
-      password
-    });
+    try {
+      setIsLoading(true);
+      await withLoading(userApi.createUser({
+        name,
+        email,
+        phone,
+        branchId: parseInt(branchId as string),
+        role,
+        password
+      }));
 
-    setIsAddFormOpen(false);
+      // Refresh data setelah menambahkan admin baru
+      await fetchAdmins();
+      setIsAddFormOpen(false);
+    } catch (error) {
+      console.error('Error adding admin:', error);
+      alert('Gagal menambahkan admin. Silakan coba lagi.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (user && user.role !== Role.OWNER_CABANG && user.role !== Role.ADMIN_CABANG && user.role !== Role.SUPER_ADMIN) {
@@ -126,12 +167,19 @@ export default function AdminsPage() {
     return null;
   }
 
+  // Jika loading, GlobalLoading akan otomatis ditampilkan
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Manajemen Admin Cabang</h1>
-        {user?.role === Role.SUPER_ADMIN || user?.role === Role.OWNER_CABANG && (
-          <Button onClick={handleAddAdmin}>{isAddFormOpen ? 'Tutup Form' : 'Tambah Admin'}</Button>
+        {(user?.role === Role.SUPER_ADMIN || user?.role === Role.OWNER_CABANG) && (
+          <Button onClick={handleAddAdmin}>
+            {isAddFormOpen ? 'Tutup Form' : 'Tambah Admin'}
+          </Button>
         )}
       </div>
 
@@ -172,7 +220,7 @@ export default function AdminsPage() {
               <div>
                 <label className="block mb-1 font-medium">Cabang</label>
                 <select name="branchId" id="branchId" required className="block w-full border rounded p-2">
-                  <option value={0}>Pilih Cabang</option>
+                  <option value="">Pilih Cabang</option>
                   {branches.map((branch) => (
                     <option key={branch.id} value={branch.id}>
                       {branch.name}
@@ -210,11 +258,7 @@ export default function AdminsPage() {
           <CardTitle>Daftar Admin</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-            </div>
-          ) : adminsPaginate.length === 0 ? (
+          {adminsPaginate.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {searchQuery ? 'Tidak ada admin yang sesuai dengan pencarian' : 'Belum ada admin cabang'}
             </div>
@@ -239,13 +283,24 @@ export default function AdminsPage() {
                     <TableCell>{admin.user?.email || 'N/A'}</TableCell>
                     <TableCell>{admin.branch?.name || 'N/A'}</TableCell>
                     <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => router.push(`/dashboard/admins/${admin.userId}`)}
-                      >
-                        Detail
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => router.push(`/dashboard/admins/${admin.userId}`)}
+                        >
+                          Detail
+                        </Button>
+                        {(user?.role === Role.SUPER_ADMIN || user?.role === Role.OWNER_CABANG) && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleRemoveAdmin(admin.branchId, admin.userId)}
+                          >
+                            Hapus
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

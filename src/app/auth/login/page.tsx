@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import useAuth from '@/hooks/useAuth.hook';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 const loginSchema = z.object({
   identifier: z.string().min(1, 'Email atau nomor telepon wajib diisi'),
@@ -22,8 +23,8 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
+  const { withLoading } = useGlobalLoading();
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -34,17 +35,14 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
-    setIsLoading(true);
     setError(null);
 
     try {
-      await login(data.identifier, data.password);
+      await withLoading(login(data.identifier, data.password));
       router.push('/');
     } catch (error) {
       console.error('Login error:', error);
       setError('Kredensial tidak valid. Silakan coba lagi.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -89,8 +87,8 @@ export default function LoginPage() {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Memproses...' : 'Masuk'}
+            <Button type="submit" className="w-full">
+              Masuk
             </Button>
           </form>
         </Form>

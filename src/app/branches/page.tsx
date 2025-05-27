@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { branchApi } from '@/api/branch.api';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Branch } from '@/types';
 import { Search } from 'lucide-react';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 export default function BranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -17,9 +17,9 @@ export default function BranchesPage() {
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [debug, setDebug] = useState<string>('');
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+  const { withLoading } = useGlobalLoading();
   const limit = 15;
 
   useEffect(() => {
@@ -50,22 +50,20 @@ export default function BranchesPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await branchApi.getBranches();
+      const response = await withLoading(branchApi.getBranches());
       
       if (response && response.data) {
         const data = response.data;
         setBranches(data);
         setFilteredBranches(data.slice((page - 1) * limit, page * limit));
         setTotalItems(response.meta?.totalItems || 0);
-        setDebug(`Jumlah data: ${data.length}, Total: ${response.meta?.totalItems || 0}`);
       } else {
         setBranches([]);
         setFilteredBranches([]);
-        setDebug("Tidak ada data yang diterima dari API");
       }
     } catch (error) {
       setError('Gagal memuat daftar cabang. Silakan coba lagi nanti.');
-      setDebug(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      console.error('Error fetching branches:', error);
     } finally {
       setLoading(false);
     }
@@ -76,18 +74,11 @@ const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
   };
 
   const handleRefresh = async () => {
-    setFilteredBranches(filteredBranches);
+    fetchBranches();
   };
 
   if (loading) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-6">Daftar Cabang</h1>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
+    return null; // GlobalLoading akan otomatis ditampilkan
   }
 
   if (error) {
@@ -204,4 +195,4 @@ const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
       )}
     </div>
   );
-} 
+}

@@ -28,6 +28,7 @@ import { useAuth } from '@/context/auth/auth.context';
 import { fieldApi } from '@/api/field.api';
 import { branchApi } from '@/api/branch.api';
 import { Role, Branch, FieldType, FieldStatus } from '@/types';
+import PageLoading from '@/components/ui/PageLoading';
 
 // Validasi form menggunakan Zod
 const createFieldSchema = z.object({
@@ -59,7 +60,6 @@ export default function CreateFieldPage() {
 
   // Determine if branch selection should be disabled
   const [isBranchSelectionDisabled, setIsBranchSelectionDisabled] = useState(!!defaultBranchId);
-  const [userBranches, setUserBranches] = useState<Branch[]>([]);
   const [singleAdminBranch, setSingleAdminBranch] = useState<string | null>(null);
 
   const form = useForm<CreateFieldFormValues>({
@@ -83,8 +83,8 @@ export default function CreateFieldPage() {
         // If user is admin_cabang, get their specific branches
         if (user && user.role === Role.ADMIN_CABANG) {
           const userBranchResponse = await branchApi.getUserBranches();
-          setUserBranches(userBranchResponse.data || []);
-          branchesToUse = userBranchResponse.data || [];
+          const adminBranches = userBranchResponse.data || [];
+          branchesToUse = adminBranches;
           
           // If admin only has one branch, auto-select it
           if (branchesToUse.length === 1) {
@@ -104,8 +104,8 @@ export default function CreateFieldPage() {
         // Dapatkan daftar tipe lapangan
         const fieldTypeResponse = await fieldApi.getFieldTypes();
         setFieldTypes(fieldTypeResponse || []);
-      } catch (err) {
-        console.error('Error fetching data:', err);
+      } catch (error) {
+        console.error('Error fetching data:', error);
         setError('Gagal memuat data. Silakan coba lagi.');
       } finally {
         setIsLoading(false);
@@ -207,8 +207,8 @@ export default function CreateFieldPage() {
       } else {
         router.push('/dashboard/fields');
       }
-    } catch (err) {
-      console.error('Error creating field:', err);
+    } catch (error) {
+      console.error('Error creating field:', error);
       setError('Gagal membuat lapangan. Silakan coba lagi.');
     } finally {
       setIsSubmitting(false);
@@ -216,11 +216,7 @@ export default function CreateFieldPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center py-10">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <PageLoading title="Tambah Lapangan" message="Memuat data..." />;
   }
 
   return (
@@ -249,65 +245,8 @@ export default function CreateFieldPage() {
                   <FormItem>
                     <FormLabel>Nama Lapangan</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nama Lapangan" {...field} />
+                      <Input {...field} placeholder="Masukkan nama lapangan" />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="branchId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cabang</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                      disabled={isBranchSelectionDisabled}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih cabang" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {branches.map((branch) => (
-                          <SelectItem key={branch.id} value={branch.id.toString()}>
-                            {branch.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="typeId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipe Lapangan</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih tipe lapangan" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {fieldTypes.map((type) => (
-                          <SelectItem key={type.id} value={type.id.toString()}>
-                            {type.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -316,12 +255,75 @@ export default function CreateFieldPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
+                  name="typeId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipe Lapangan</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Pilih tipe lapangan" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {fieldTypes.map((type) => (
+                            <SelectItem key={type.id} value={type.id.toString()}>
+                              {type.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="branchId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cabang</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        disabled={isBranchSelectionDisabled}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Pilih cabang" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {branches.map((branch) => (
+                            <SelectItem key={branch.id} value={branch.id.toString()}>
+                              {branch.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
                   name="priceDay"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Harga Siang</FormLabel>
+                      <FormLabel>Harga Siang (Rp)</FormLabel>
                       <FormControl>
-                        <Input placeholder="100000" type="number" {...field} />
+                        <Input 
+                          {...field} 
+                          type="number" 
+                          placeholder="Masukkan harga siang"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -333,9 +335,13 @@ export default function CreateFieldPage() {
                   name="priceNight"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Harga Malam</FormLabel>
+                      <FormLabel>Harga Malam (Rp)</FormLabel>
                       <FormControl>
-                        <Input placeholder="150000" type="number" {...field} />
+                        <Input 
+                          {...field} 
+                          type="number" 
+                          placeholder="Masukkan harga malam"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -349,10 +355,7 @@ export default function CreateFieldPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Pilih status" />
@@ -369,96 +372,38 @@ export default function CreateFieldPage() {
                 )}
               />
 
-              {/* File Upload Component */}
-              <div className="space-y-2">
+              <FormItem>
                 <FormLabel>Gambar Lapangan</FormLabel>
-                <div className="flex flex-col items-center space-y-4 border-2 border-dashed border-gray-300 rounded-md p-6">
-                  {previewUrl ? (
-                    <div className="relative w-full max-w-xs">
-                      <img 
-                        src={previewUrl} 
-                        alt="Preview" 
-                        className="w-full h-auto rounded-md" 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                    />
+                    <p className="text-sm text-gray-500 mt-1">
+                      Ukuran maksimal: 5MB. Format: JPG, PNG
+                    </p>
+                  </div>
+                  <div>
+                    {previewUrl && (
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="mt-2 max-h-40 rounded"
                       />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        className="absolute top-2 right-2"
-                        onClick={() => {
-                          setSelectedImage(null);
-                          setPreviewUrl(null);
-                          if (fileInputRef.current) {
-                            fileInputRef.current.value = '';
-                          }
-                        }}
-                      >
-                        Hapus
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="text-center">
-                        <svg
-                          className="mx-auto h-12 w-12 text-gray-400"
-                          stroke="currentColor"
-                          fill="none"
-                          viewBox="0 0 48 48"
-                          aria-hidden="true"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M8 14v20c0 4.418 7.163 8 16 8 1.381 0 2.721-.087 4-.252M8 14c0 4.418 7.163 8 16 8s16-3.582 16-8M8 14c0-4.418 7.163-8 16-8s16 3.582 16 8m0 0v14m0-4c0 4.418-7.163 8-16 8S8 28.418 8 24m32 10v6m0 0v6m0-6h6m-6 0h-6"
-                          />
-                        </svg>
-                        <p className="mt-1 text-sm text-gray-600">
-                          Klik untuk mengunggah gambar atau seret dan lepas di sini
-                        </p>
-                        <p className="mt-1 text-xs text-gray-500">
-                          PNG, JPG, JPEG maksimal 5MB
-                        </p>
-                      </div>
-                      
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        Pilih Gambar
-                      </Button>
-                    </>
-                  )}
-                  
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/png, image/jpeg, image/jpg"
-                    className="hidden"
-                    onChange={handleFileChange}
-                  />
+                    )}
+                  </div>
                 </div>
-              </div>
+              </FormItem>
 
               <div className="flex gap-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    if (defaultBranchId) {
-                      router.push(`/dashboard/branches/${defaultBranchId}`);
-                    } else if (singleAdminBranch) {
-                      router.push(`/dashboard/branches/${singleAdminBranch}`);
-                    } else {
-                      router.push('/dashboard/fields');
-                    }
-                  }}
-                >
+                <Button type="button" variant="outline" onClick={() => router.back()}>
                   Batal
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+                  {isSubmitting ? 'Menyimpan...' : 'Simpan Lapangan'}
                 </Button>
               </div>
             </form>

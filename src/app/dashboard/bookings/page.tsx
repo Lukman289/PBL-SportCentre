@@ -8,15 +8,16 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { Role } from "@/types";
 import PageTitle from "@/components/common/PageTitle";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { useBookingFilters } from "@/hooks/bookings/useBookingFilters.hook";
 import { useBookingData } from "@/hooks/bookings/useBookingData.hook";
 import { useToast } from "@/components/ui/use-toast";
 import { useEffect, useMemo } from "react";
+import useGlobalLoading from "@/hooks/useGlobalLoading.hook";
 
 export default function BookingsPage() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { showLoading, hideLoading } = useGlobalLoading();
   
   // Hitung default branchId berdasarkan role user
   const defaultBranchId = useMemo(() => {
@@ -33,6 +34,15 @@ export default function BookingsPage() {
     user, 
     filters 
   });
+
+  // Mengelola loading state
+  useEffect(() => {
+    if (loading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [loading, showLoading, hideLoading]);
   
   // Tampilkan toast jika ada booking berhasil dibuat (digunakan saat redirect dari halaman create)
   useEffect(() => {
@@ -59,6 +69,11 @@ export default function BookingsPage() {
     return "#";
   };
 
+  // Jika loading, GlobalLoading akan ditampilkan
+  if (loading) {
+    return null;
+  }
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
@@ -80,13 +95,7 @@ export default function BookingsPage() {
         initialBranchId={defaultBranchId}
       />
 
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <LoadingSpinner />
-        </div>
-      ) : (
-        <BookingsTable bookings={bookings} userRole={user?.role} />
-      )}
+      <BookingsTable bookings={bookings} userRole={user?.role} />
     </div>
   );
 } 

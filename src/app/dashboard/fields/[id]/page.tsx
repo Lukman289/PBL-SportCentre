@@ -1,6 +1,5 @@
 'use client';
 
-import { use } from 'react'; 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -28,6 +27,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { fieldApi } from '@/api/field.api';
 import { branchApi } from '@/api/branch.api';
 import { Field, FieldType, Branch } from '@/types';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 const updateFieldSchema = z.object({
     name: z.string().min(3, 'Nama lapangan minimal 3 karakter'),
@@ -53,6 +53,7 @@ export default function FieldDetailPage({ params }: { params: { id: string } }) 
     const [isBranchSelectionDisabled, setIsBranchSelectionDisabled] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [shouldRemoveImage, setShouldRemoveImage] = useState(false);
+    const { showLoading, hideLoading, withLoading } = useGlobalLoading();
 
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -71,6 +72,15 @@ export default function FieldDetailPage({ params }: { params: { id: string } }) 
         },
     });
 
+    // Efek untuk mengelola loading state global
+    useEffect(() => {
+        if (isLoading || isSubmitting || isDeleting) {
+            showLoading();
+        } else {
+            hideLoading();
+        }
+    }, [isLoading, isSubmitting, isDeleting, showLoading, hideLoading]);
+
     useEffect(() => {
         const fetchData = async () => {
             if (isNaN(fieldId)) {
@@ -82,7 +92,7 @@ export default function FieldDetailPage({ params }: { params: { id: string } }) 
             try {
                 setIsLoading(true);
 
-                const fieldData = await fieldApi.getFieldById(fieldId);
+                const fieldData = await withLoading(fieldApi.getFieldById(fieldId));
                 setField(fieldData);
 
                 if (fieldData) {
@@ -115,7 +125,7 @@ export default function FieldDetailPage({ params }: { params: { id: string } }) 
         };
 
         fetchData();
-    }, [fieldId, form]);
+    }, [fieldId, form, withLoading]);
 
     const handleRemoveImage = () => {
         setSelectedImage(null);
@@ -149,7 +159,7 @@ export default function FieldDetailPage({ params }: { params: { id: string } }) 
         setError(null);
 
         try {
-            const updateData: Record<string, any> = {
+            const updateData: Record<string, unknown> = {
                 name: data.name,
                 typeId: parseInt(data.typeId),
                 branchId: parseInt(data.branchId),
@@ -168,9 +178,9 @@ export default function FieldDetailPage({ params }: { params: { id: string } }) 
 
                 formData.append('imageUrl', selectedImage);
 
-                await fieldApi.updateFieldWithImage(fieldId, formData);
+                await withLoading(fieldApi.updateFieldWithImage(fieldId, formData));
             } else {
-                await fieldApi.updateField(fieldId, updateData);
+                await withLoading(fieldApi.updateField(fieldId, updateData));
             }
 
             router.push('/dashboard/fields');
@@ -188,7 +198,7 @@ export default function FieldDetailPage({ params }: { params: { id: string } }) 
         setError(null);
 
         try {
-            await fieldApi.deleteField(fieldId);
+            await withLoading(fieldApi.deleteField(fieldId));
             router.push('/dashboard/fields');
             router.refresh();
         } catch (err) {
@@ -199,14 +209,6 @@ export default function FieldDetailPage({ params }: { params: { id: string } }) 
             setShowDeleteDialog(false);
         }
     };
-
-    if (isLoading) {
-        return (
-            <div className="flex justify-center py-10">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-            </div>
-        );
-    }
 
     if (error && !field) {
         return (
@@ -225,99 +227,28 @@ export default function FieldDetailPage({ params }: { params: { id: string } }) 
                 <h1 className="text-2xl font-bold">Detail & Edit Lapangan</h1>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Form Edit Lapangan</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {error && (
-                        <Alert variant="destructive" className="mb-6">
-                            <AlertDescription>{error}</AlertDescription>
-                        </Alert>
-                    )}
+            {!isLoading && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Form Edit Lapangan</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {error && (
+                            <Alert variant="destructive" className="mb-6">
+                                <AlertDescription>{error}</AlertDescription>
+                            </Alert>
+                        )}
 
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                            <FormField
-                                control={form.control}
-                                name="name"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Nama Lapangan</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Nama Lapangan" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="branchId"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Cabang</FormLabel>
-                                        <Select
-                                            onValueChange={field.onChange}
-                                            defaultValue={field.value}
-                                            disabled={isBranchSelectionDisabled}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Pilih cabang" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {branches.map((branch) => (
-                                                    <SelectItem key={branch.id} value={branch.id.toString()}>
-                                                        {branch.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="typeId"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Tipe Lapangan</FormLabel>
-                                        <Select
-                                            onValueChange={field.onChange}
-                                            defaultValue={field.value}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Pilih tipe lapangan" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {fieldTypes.map((type) => (
-                                                    <SelectItem key={type.id} value={type.id.toString()}>
-                                                        {type.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                                 <FormField
                                     control={form.control}
-                                    name="priceDay"
+                                    name="name"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Harga Siang</FormLabel>
+                                            <FormLabel>Nama Lapangan</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="100000" type="number" {...field} />
+                                                <Input placeholder="Nama Lapangan" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -326,152 +257,225 @@ export default function FieldDetailPage({ params }: { params: { id: string } }) 
 
                                 <FormField
                                     control={form.control}
-                                    name="priceNight"
+                                    name="branchId"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Harga Malam</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="150000" type="number" {...field} />
-                                            </FormControl>
+                                            <FormLabel>Cabang</FormLabel>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value}
+                                                disabled={isBranchSelectionDisabled}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Pilih cabang" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {branches.map((branch) => (
+                                                        <SelectItem key={branch.id} value={branch.id.toString()}>
+                                                            {branch.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
-                            </div>
 
-                            <FormField
-                                control={form.control}
-                                name="status"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Status</FormLabel>
-                                        <Select
-                                            onValueChange={field.onChange}
-                                            defaultValue={field.value}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Pilih status" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="available">available</SelectItem>
-                                                <SelectItem value="booked">booked</SelectItem>
-                                                <SelectItem value="maintenance">maintenance</SelectItem>
-                                                <SelectItem value="closed">closed</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                                <FormField
+                                    control={form.control}
+                                    name="typeId"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Tipe Lapangan</FormLabel>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Pilih tipe lapangan" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {fieldTypes.map((type) => (
+                                                        <SelectItem key={type.id} value={type.id.toString()}>
+                                                            {type.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
-                            <div className="space-y-2">
-                                <FormLabel>Gambar Lapangan</FormLabel>
-                                <div className="flex flex-col items-center space-y-4 border-2 border-dashed border-gray-300 rounded-md p-6">
-                                    {currentImageUrl && !previewUrl && !shouldRemoveImage ? (
-                                        <div className="relative w-full max-w-xs">
-                                            <img
-                                                src={currentImageUrl}
-                                                alt="Current Image"
-                                                className="w-full h-auto rounded-md"
-                                            />
-                                            <p className="text-xs text-center mt-2 text-muted-foreground">
-                                                Gambar saat ini
-                                            </p>
-                                            <Button
-                                                type="button"
-                                                variant="destructive"
-                                                size="sm"
-                                                className="absolute top-2 right-2"
-                                                onClick={handleRemoveImage}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <FormField
+                                        control={form.control}
+                                        name="priceDay"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Harga Siang</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="100000" type="number" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="priceNight"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Harga Malam</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="150000" type="number" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <FormField
+                                    control={form.control}
+                                    name="status"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Status</FormLabel>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value}
                                             >
-                                                Hapus
-                                            </Button>
-                                        </div>
-                                    ) : previewUrl ? (
-                                        <div className="relative w-full max-w-xs">
-                                            <img
-                                                src={previewUrl}
-                                                alt="Preview"
-                                                className="w-full h-auto rounded-md"
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="destructive"
-                                                size="sm"
-                                                className="absolute top-2 right-2"
-                                                onClick={handleRemoveImage}
-                                            >
-                                                Hapus
-                                            </Button>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <div className="text-center">
-                                                <svg
-                                                    className="mx-auto h-12 w-12 text-gray-400"
-                                                    stroke="currentColor"
-                                                    fill="none"
-                                                    viewBox="0 0 48 48"
-                                                    aria-hidden="true"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth="2"
-                                                        d="M8 14v20c0 4.418 7.163 8 16 8 1.381 0 2.721-.087 4-.252M8 14c0 4.418 7.163 8 16 8s16-3.582 16-8M8 14c0-4.418 7.163-8 16-8s16 3.582 16 8m0 0v14m0-4c0 4.418-7.163 8-16 8S8 28.418 8 24m32 10v6m0 0v6m0-6h6m-6 0h-6"
-                                                    />
-                                                </svg>
-                                                <p className="mt-1 text-sm text-gray-600">
-                                                    Tidak ada gambar
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Pilih status" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="available">available</SelectItem>
+                                                    <SelectItem value="booked">booked</SelectItem>
+                                                    <SelectItem value="maintenance">maintenance</SelectItem>
+                                                    <SelectItem value="closed">closed</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <div className="space-y-2">
+                                    <FormLabel>Gambar Lapangan</FormLabel>
+                                    <div className="flex flex-col items-center space-y-4 border-2 border-dashed border-gray-300 rounded-md p-6">
+                                        {currentImageUrl && !previewUrl && !shouldRemoveImage ? (
+                                            <div className="relative w-full max-w-xs">
+                                                <img
+                                                    src={currentImageUrl}
+                                                    alt="Current Image"
+                                                    className="w-full h-auto rounded-md"
+                                                />
+                                                <p className="text-xs text-center mt-2 text-muted-foreground">
+                                                    Gambar saat ini
                                                 </p>
+                                                <Button
+                                                    type="button"
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    className="absolute top-2 right-2"
+                                                    onClick={handleRemoveImage}
+                                                >
+                                                    Hapus
+                                                </Button>
                                             </div>
-                                        </>
-                                    )}
+                                        ) : previewUrl ? (
+                                            <div className="relative w-full max-w-xs">
+                                                <img
+                                                    src={previewUrl}
+                                                    alt="Preview"
+                                                    className="w-full h-auto rounded-md"
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    className="absolute top-2 right-2"
+                                                    onClick={handleRemoveImage}
+                                                >
+                                                    Hapus
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className="text-center">
+                                                    <svg
+                                                        className="mx-auto h-12 w-12 text-gray-400"
+                                                        stroke="currentColor"
+                                                        fill="none"
+                                                        viewBox="0 0 48 48"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            strokeWidth="2"
+                                                            d="M8 14v20c0 4.418 7.163 8 16 8 1.381 0 2.721-.087 4-.252M8 14c0 4.418 7.163 8 16 8s16-3.582 16-8M8 14c0-4.418 7.163-8 16-8s16 3.582 16 8m0 0v14m0-4c0 4.418-7.163 8-16 8S8 28.418 8 24m32 10v6m0 0v6m0-6h6m-6 0h-6"
+                                                        />
+                                                    </svg>
+                                                    <p className="mt-1 text-sm text-gray-600">
+                                                        Tidak ada gambar
+                                                    </p>
+                                                </div>
+                                            </>
+                                        )}
 
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() => fileInputRef.current?.click()}
+                                        >
+                                            {currentImageUrl || previewUrl ? 'Ganti Gambar' : 'Unggah Gambar'}
+                                        </Button>
+
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/png, image/jpeg, image/jpg"
+                                            className="hidden"
+                                            onChange={handleFileChange}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4">
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        onClick={() => fileInputRef.current?.click()}
+                                        onClick={() => router.push('/dashboard/fields')}
                                     >
-                                        {currentImageUrl || previewUrl ? 'Ganti Gambar' : 'Unggah Gambar'}
+                                        Kembali
                                     </Button>
-
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept="image/png, image/jpeg, image/jpg"
-                                        className="hidden"
-                                        onChange={handleFileChange}
-                                    />
+                                    <Button type="submit" disabled={isSubmitting}>
+                                        {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="destructive"
+                                        onClick={() => setShowDeleteDialog(true)}
+                                        disabled={isDeleting}
+                                    >
+                                        {isDeleting ? 'Menghapus...' : 'Hapus Lapangan'}
+                                    </Button>
                                 </div>
-                            </div>
-
-                            <div className="flex gap-4">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => router.push('/dashboard/fields')}
-                                >
-                                    Kembali
-                                </Button>
-                                <Button type="submit" disabled={isSubmitting}>
-                                    {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="destructive"
-                                    onClick={() => setShowDeleteDialog(true)}
-                                    disabled={isDeleting}
-                                >
-                                    {isDeleting ? 'Menghapus...' : 'Hapus Lapangan'}
-                                </Button>
-                            </div>
-                        </form>
-                    </Form>
-                </CardContent>
-            </Card>
+                            </form>
+                        </Form>
+                    </CardContent>
+                </Card>
+            )}
 
             {showDeleteDialog && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">

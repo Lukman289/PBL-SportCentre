@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { branchApi } from '@/api/branch.api';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import { useAuth } from '@/context/auth/auth.context';
 
 const editBranchSchema = z.object({
@@ -33,9 +34,20 @@ export default function EditBranchPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const user = useAuth().user;
+  const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+  const { user } = useAuth();
+
+  // Mengelola loading state
+  useEffect(() => {
+    if (loading || isSubmitting) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [loading, isSubmitting, showLoading, hideLoading]);
 
   const form = useForm<EditBranchFormValues>({
     resolver: zodResolver(editBranchSchema),
@@ -49,10 +61,20 @@ export default function EditBranchPage() {
 
   useEffect(() => {
     const fetchBranch = async () => {
+      setLoading(true);
       try {
-        const response = await branchApi.getBranchById(Number(id));
-        const branch = Array.isArray(response.data) ? response.data[0] : response.data;
+        const response = await withLoading(branchApi.getBranchById(Number(id)));
+        const branchData = response.data;
         
+        // Handle both array and single object responses
+        const branch = Array.isArray(branchData) 
+          ? branchData[0] // Take first item if array
+          : branchData;
+
+        if (!branch) {
+          throw new Error('Cabang tidak ditemukan');
+        }
+
         form.reset({
           name: branch?.name || '',
           location: branch?.location || '',
@@ -60,14 +82,17 @@ export default function EditBranchPage() {
           imageUrl: branch?.imageUrl || '',
         });
 
-        setImagePreview(branch?.imageUrl || null);
-      } catch (err) {
-        setError('Gagal mengambil data cabang');
+        setImagePreview(branch.imageUrl || null);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
+        setError(`Gagal mengambil data cabang: ${errorMessage}`);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchBranch();
-  }, [id, form]);
+  }, [id, form, withLoading]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -86,20 +111,26 @@ export default function EditBranchPage() {
     setIsSubmitting(true);
     setError(null);
     try {
-      await branchApi.updateBranch(Number(id), data);
+      await withLoading(branchApi.updateBranch(Number(id), data));
 
+      // Arahkan ke halaman yang sesuai berdasarkan peran pengguna
       if (user?.role === 'super_admin') {
         router.push('/dashboard/branches');
       } else {
         router.push('/dashboard/my-branches');
       }
-    } catch (err) {
-      console.error(err);
-      setError('Gagal memperbarui cabang');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
+      setError(`Gagal memperbarui cabang: ${errorMessage}`);
+      console.error(error);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return null; // Global loading akan otomatis ditampilkan
+  }
 
   return (
     <div>

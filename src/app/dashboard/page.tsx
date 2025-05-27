@@ -7,27 +7,22 @@ import { SuperAdminDashboard } from '@/components/dashboard/SuperAdminDashboard'
 import { AdminCabangDashboard } from '@/components/dashboard/AdminCabangDashboard';
 import { OwnerCabangDashboard } from '@/components/dashboard/OwnerCabangDashboard';
 import { UserDashboard } from '@/components/dashboard/UserDashboard';
-import { Skeleton } from '@/components/ui/skeleton';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 export default function DashboardPage() {
   const { user, isLoading } = useAuth();
+  const { showLoading, hideLoading } = useGlobalLoading();
 
   useEffect(() => {
-    // React hook untuk SSR
-  }, []);
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Skeleton className="h-36 w-full" />
-          <Skeleton className="h-36 w-full" />
-          <Skeleton className="h-36 w-full" />
-          <Skeleton className="h-36 w-full" />
-        </div>
-      </div>
-    );
+    return null;
   }
 
   if (!user) {

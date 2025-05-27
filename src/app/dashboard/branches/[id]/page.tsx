@@ -19,6 +19,7 @@ import { branchApi } from '@/api/branch.api';
 import { fieldApi } from '@/api/field.api';
 import { Branch, BranchAdmin, Field, Role } from '@/types';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
+import Image from 'next/image';
 
 export default function BranchDetailPage() {
   const router = useRouter();
@@ -167,7 +168,7 @@ export default function BranchDetailPage() {
           {branch.imageUrl && (
             <div className="my-4 w-full h-100">
               <p className="text-sm font-medium text-muted-foreground mb-2">Gambar:</p>
-              <img
+              <Image
                 src={branch.imageUrl || "images/img_not_found.png"}
                 alt={branch.name}
                 className="w-full h-full rounded-md object-cover"

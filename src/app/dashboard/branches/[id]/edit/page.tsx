@@ -20,6 +20,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { branchApi } from '@/api/branch.api';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import { useAuth } from '@/context/auth/auth.context';
+import Image from 'next/image';
 
 const editBranchSchema = z.object({
   name: z.string().min(3, 'Nama minimal 3 karakter'),
@@ -196,7 +197,7 @@ export default function EditBranchPage() {
                 <FormLabel>Gambar</FormLabel>
                 <Input type="file" accept="image/*" onChange={handleImageChange} />
                 {imagePreview && (
-                  <img src={imagePreview} alt="Preview" className="mt-2 w-40 h-auto rounded" />
+                  <Image src={imagePreview} alt="Preview" className="mt-2 w-40 h-auto rounded" />
                 )}
               </FormItem>
 

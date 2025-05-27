@@ -1,5 +1,5 @@
 import axiosInstance from '../config/axios.config';
-import { User, BranchAdmin, RegisterRequest } from '@/types';
+import { User, BranchAdmin } from '@/types';
 
 export interface UpdateUserRequest {
   name?: string;

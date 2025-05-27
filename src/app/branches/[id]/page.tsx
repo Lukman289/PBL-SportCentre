@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { branchApi, fieldApi } from '@/api';
-import { Branch, Field } from '@/types';
+import { Branch, Field, FieldStatus } from '@/types';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import Image from 'next/image';
+import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 export default function BranchDetailPage() {
   const params = useParams<{ id: string }>();
@@ -15,7 +17,16 @@ export default function BranchDetailPage() {
   const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const limit = 1000;
+  const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+
+  // Mengelola loading state
+  useEffect(() => {
+    if (loading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [loading, showLoading, hideLoading]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -23,20 +34,16 @@ export default function BranchDetailPage() {
       setError(null);
       try {
         const branchId = parseInt(params.id);
-        const branchResponse = await branchApi.getBranchById(branchId);
+        const branchResponse = await withLoading(branchApi.getBranchById(branchId));
         if (branchResponse) {
           setBranch(Array.isArray(branchResponse.data) ? branchResponse.data[0] : branchResponse.data);
         } else {
           throw new Error('Data cabang tidak ditemukan.');
         }
 
-        const fieldsResponse = await fieldApi.getAllFields({limit});
-
-        let filteredFields: Field[] = [];
-        filteredFields = fieldsResponse.data || [];
-        
-        const branchFields = filteredFields.filter((field) => field.branchId === branchId);
-        setFields(branchFields);        
+        // Perbaikan: Langsung menggunakan getBranchFields yang mengembalikan array lapangan
+        const fieldsResponse = await withLoading(fieldApi.getBranchFields(branchId));
+        setFields(fieldsResponse);        
       } catch (err) {
         console.error('Error fetching branch details:', err);
         setError('Gagal memuat data cabang. Silakan coba lagi nanti.');
@@ -48,24 +55,10 @@ export default function BranchDetailPage() {
     if (params.id) {
       fetchData();
     }
-  }, [params.id]);
+  }, [params.id, withLoading]);
 
   if (loading) {
-    return (
-      <div className="container py-8">
-        <div className="animate-pulse">
-          <div className="h-10 bg-muted rounded w-1/3 mb-4"></div>
-          <div className="h-6 bg-muted rounded w-1/2 mb-8"></div>
-          <div className="h-64 bg-muted rounded mb-8"></div>
-          <div className="h-8 bg-muted rounded w-1/4 mb-4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, index) => (
-              <div key={index} className="h-[250px] bg-muted rounded"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return null; // GlobalLoading akan otomatis ditampilkan
   }
 
   if (error || !branch) {
@@ -91,17 +84,17 @@ export default function BranchDetailPage() {
       </div>
 
       {branch.imageUrl && (
-        <div className="w-full h-64 bg-muted rounded-lg mb-8">
-          <img
-            src={branch.imageUrl || "../images/img_not_found.png"}
+        <div className="w-full h-64 mb-8 relative">
+          <Image
+            src={branch.imageUrl || "/images/img_not_found.png"}
+            alt={branch.name}
+            fill
+            className="object-cover rounded-lg"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.onerror = null;
-              target.src = "../images/img_not_found.png";
-              target.className = "h-full w-full object-contain";
+              target.src = "/images/img_not_found.png";
             }}
-            alt={branch.name}
-            className="h-full w-full object-cover"
           />
         </div>
       )}
@@ -118,23 +111,23 @@ export default function BranchDetailPage() {
                 <CardHeader>
                   <CardTitle>{field.name}</CardTitle>
                   <CardDescription>
-                    {field.status === 'available' ? 'Tersedia' : 
-                     field.status === 'booked' ? 'Sedang Diboooking' :
-                     field.status === 'maintenance' ? 'Dalam Pemeliharaan' : 'Tutup'}
+                    {field.status === FieldStatus.AVAILABLE ? 'Tersedia' : 
+                     field.status === FieldStatus.BOOKED ? 'Sedang Dibooking' :
+                     field.status === FieldStatus.MAINTENANCE ? 'Dalam Pemeliharaan' : 'Tutup'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[140px] rounded-md bg-muted mb-4 bg-cover bg-center">
-                    <img
-                      src={field.imageUrl || "../images/img_not_found.png"}
+                  <div className="h-[140px] rounded-md bg-muted mb-4 relative">
+                    <Image
+                      src={field.imageUrl || "/images/img_not_found.png"}
+                      alt={field.name}
+                      fill
+                      className="object-cover rounded-md"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.onerror = null;
-                        target.src = "../images/img_not_found.png";
-                        target.className = "h-full w-full object-contain";
+                        target.src = "/images/img_not_found.png";
                       }}
-                      alt={field.name}
-                      className="h-full w-full object-cover"
                     />
                   </div>
                   <div className="space-y-2">

@@ -28,6 +28,7 @@ import { fieldApi } from '@/api/field.api';
 import { branchApi } from '@/api/branch.api';
 import { Field, FieldType, Branch } from '@/types';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
+import Image from 'next/image';
 
 const updateFieldSchema = z.object({
     name: z.string().min(3, 'Nama lapangan minimal 3 karakter'),
@@ -374,7 +375,7 @@ export default function FieldDetailPage({ params }: { params: { id: string } }) 
                                     <div className="flex flex-col items-center space-y-4 border-2 border-dashed border-gray-300 rounded-md p-6">
                                         {currentImageUrl && !previewUrl && !shouldRemoveImage ? (
                                             <div className="relative w-full max-w-xs">
-                                                <img
+                                                <Image
                                                     src={currentImageUrl}
                                                     alt="Current Image"
                                                     className="w-full h-auto rounded-md"
@@ -394,7 +395,7 @@ export default function FieldDetailPage({ params }: { params: { id: string } }) 
                                             </div>
                                         ) : previewUrl ? (
                                             <div className="relative w-full max-w-xs">
-                                                <img
+                                                <Image
                                                     src={previewUrl}
                                                     alt="Preview"
                                                     className="w-full h-auto rounded-md"

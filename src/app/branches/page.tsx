@@ -7,59 +7,35 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Branch } from '@/types';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 export default function BranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
-  const [filteredBranches, setFilteredBranches] = useState<Branch[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const { withLoading } = useGlobalLoading();
-  const limit = 15;
+  const maxData = 15;
 
   useEffect(() => {
-    fetchBranches();
-  }, []);
+    fetchBranches(maxData, currentPage);
+  }, [currentPage]);
 
-  useEffect(() => {
-    setFilteredBranches(branches.slice((page - 1) * limit, page * limit));
-  }, [page]);
-
-  useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setFilteredBranches(branches.slice((page - 1) * limit, page * limit));
-      setSearched(false);
-    } else {
-      const query = searchQuery.toLowerCase();
-      const filtered = branches.filter(
-        (branch) =>
-          branch.name.toLowerCase().includes(query) ||
-          branch.location.toLowerCase().includes(query)
-      );
-      setFilteredBranches(filtered);
-      setSearched(true);
-    }
-  }, [searchQuery]);
-
-  const fetchBranches = async () => {
+  const fetchBranches = async (limit: number, page: number, q: string = '') => {
     setLoading(true);
     setError(null);
     try {
-      const response = await withLoading(branchApi.getBranches());
+      const response = await withLoading(branchApi.getBranches({limit, page, q}));
       
       if (response && response.data) {
-        const data = response.data;
-        setBranches(data);
-        setFilteredBranches(data.slice((page - 1) * limit, page * limit));
+        setBranches(response.data);
         setTotalItems(response.meta?.totalItems || 0);
       } else {
         setBranches([]);
-        setFilteredBranches([]);
       }
     } catch (error) {
       setError('Gagal memuat daftar cabang. Silakan coba lagi nanti.');
@@ -69,16 +45,26 @@ export default function BranchesPage() {
     }
   };
 
-const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const query = searchQuery.trim().toLowerCase();
+    if (query === '') {
+      fetchBranches(maxData, currentPage);
+      setSearched(false);
+    } else {
+      fetchBranches(1000, 1, query);
+      setSearched(true);
+    }
   };
 
   const handleRefresh = async () => {
-    fetchBranches();
+    setSearchQuery('');
+    setSearched(false);
+    fetchBranches(maxData, 1);
   };
 
   if (loading) {
-    return null; // GlobalLoading akan otomatis ditampilkan
+    return null;
   }
 
   if (error) {
@@ -96,24 +82,50 @@ const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
   return (
     <div className="container mx-auto mt-8 py-8 px-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Daftar Cabang ({filteredBranches.length})</h1>
+        <h1 className="text-3xl font-bold">Daftar Cabang</h1>
         <Button variant="outline" onClick={handleRefresh}>
           Muat Ulang
         </Button>
       </div>
 
-      <form onSubmit={handleSearch} className="relative mb-8">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-        <Input
-          type="text"
-          placeholder="Cari cabang berdasarkan nama atau lokasi..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
+      <form onSubmit={handleSearch} className="flex items-center gap-2 mb-8">
+        <div className="relative w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Cari cabang berdasarkan nama atau lokasi..."
+            name="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-20"
+          />
+          {searchQuery && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 h-6 w-6 text-gray-500 hover:text-red-600"
+              onClick={() => {
+                setSearchQuery('');
+                fetchBranches(maxData, 1);
+                setCurrentPage(1);
+                setSearched(false);
+              }}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+        <Button
+          type={searchQuery.trim() !== '' ? 'submit' : 'button'}
+          variant="default"
+          className="p-3 h-10 w-10 flex items-center justify-center"
+          disabled={loading}
+        >
+          <Search className="w-5 h-5" />
+        </Button>
       </form>
 
-      {filteredBranches.length === 0 ? (
+      {branches.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-500 mb-4">
             {searchQuery.trim() !== '' 
@@ -121,7 +133,14 @@ const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
               : 'Belum ada cabang tersedia.'}
           </p>
           {searchQuery.trim() !== '' && (
-            <Button variant="outline" onClick={() => setSearchQuery('')}>
+            <Button 
+            variant="outline" 
+            onClick={() => {
+                setSearchQuery('');
+                fetchBranches(maxData, 1);
+                setCurrentPage(1);
+                setSearched(false);
+              }}>
               Reset Pencarian
             </Button>
           )}
@@ -129,7 +148,7 @@ const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
       ) : (
         <div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredBranches.map((branch) => (
+            {branches.map((branch) => (
               <Card key={branch.id} className="overflow-hidden">
                 <div className="relative h-48 bg-muted">
                   <img
@@ -172,20 +191,20 @@ const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
               </Card>
             ))}
           </div>
-          {totalItems > limit && !searched &&(
+          {totalItems > maxData && !searched &&(
             <div className="flex justify-between items-center gap-4 mt-8">
               <Button 
                 variant="outline" 
-                disabled={page === 1} 
-                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1} 
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               >
                 Sebelumnya
               </Button>
-              <span className="text-sm text-gray-500">Halaman {page} dari {Math.ceil(totalItems / limit)}</span>
+              <span className="text-sm text-gray-500">Halaman {currentPage} dari {Math.ceil(totalItems / maxData)}</span>
               <Button 
                 variant="outline" 
-                disabled={page >= Math.ceil(totalItems / limit)} 
-                onClick={() => setPage((prev) => prev + 1)}
+                disabled={currentPage >= Math.ceil(totalItems / maxData)} 
+                onClick={() => setCurrentPage((prev) => prev + 1)}
               >
                 Selanjutnya
               </Button>

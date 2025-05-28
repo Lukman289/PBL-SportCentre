@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, ReactNode, useState, useEffect, useCallback, useMemo } from "react";
-import { Field, Branch } from "@/types";
+import { Field, Branch, BookingRequest } from "@/types";
 import { branchApi, fieldApi, bookingApi } from "@/api";
 import { format } from "date-fns";
 import { 
@@ -27,14 +27,6 @@ const bookingSchema = z.object({
 });
 
 export type BookingFormValues = z.infer<typeof bookingSchema>;
-export type BookingRequest = {
-  fieldId: number;
-  bookingDate: string;
-  startTime: string;
-  endTime: string;
-  branchId?: number;
-  userId?: number;
-};
 
 interface BookingContextType {
   loading: boolean;
@@ -214,19 +206,21 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
 
     fetchData();
     
-    // Inisialisasi semua socket termasuk fields socket
-    try {
-      const { rootSocket, fieldsSocket, notificationSocket } = initializeSockets();
-      console.log('Sockets initialized in booking context:', { 
-        rootId: rootSocket?.id, 
-        fieldsId: fieldsSocket?.id,
-        notificationId: notificationSocket?.id
-      });
-      setSocketInitialized(true);
-    } catch (error) {
-      console.error('Error initializing sockets:', error);
+    // Pindahkan inisialisasi socket ke blok terpisah dan hanya inisialisasi jika user sudah login
+    if (user?.id) {
+      try {
+        const { rootSocket, fieldsSocket, notificationSocket } = initializeSockets();
+        console.log('Sockets initialized in booking context:', { 
+          rootId: rootSocket?.id, 
+          fieldsId: fieldsSocket?.id,
+          notificationId: notificationSocket?.id
+        });
+        setSocketInitialized(true);
+      } catch (error) {
+        console.error('Error initializing sockets:', error);
+      }
     }
-  }, [user?.role, user?.branches]);
+  }, [user?.role, user?.branches, user?.id]);
 
   // Setup socket.io subscription untuk update real-time
   useEffect(() => {
@@ -325,10 +319,12 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     if (formData) {
       bookingData = {
         ...formData,
+        userId: user.id,
         branchId: selectedBranch
-      };
+        };
     } else {
       bookingData = {
+        userId: user.id,
         fieldId: selectedField,
         bookingDate: selectedDate,
         startTime: selectedStartTime,

@@ -10,4 +10,4 @@ export const useBooking = () => {
 };
 
 // Re-export types dari BookingContext untuk kompatibilitas
-export type { BookingFormValues, BookingRequest } from "@/context/booking/booking.context"; 
+export type { BookingFormValues } from "@/context/booking/booking.context"; 

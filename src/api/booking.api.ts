@@ -386,14 +386,7 @@ class BookingApi {
    * @param data - Data booking manual
    * @returns Promise dengan data booking yang berhasil dibuat
    */
-  async createManualBooking(data: {
-    userId: number;
-    fieldId: number;
-    bookingDate: string;
-    startTime: string;
-    endTime: string;
-    branchId: number;
-  }): Promise<Booking> {
+  async createManualBooking(data: BookingRequest): Promise<Booking> {
     try {
       const { branchId, ...bookingData } = data;
       

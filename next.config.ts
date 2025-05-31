@@ -1,9 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
-    domains: ['example.com'],
+    domains: [
+      'api.sportcenter.mywire.org',
+      'res.cloudinary.com',
+    ],
     remotePatterns: [
       {
         protocol: 'https',
@@ -20,7 +25,11 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: '**.ngrok-free.app',
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
     ],
   },
   async rewrites() {

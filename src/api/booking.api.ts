@@ -72,69 +72,84 @@ class BookingApi {
    * Dapatkan semua booking (untuk admin)
    * @returns Promise dengan array data booking
    */
-  async getAllBookings(filters?: { branchId?: number; status?: string; startDate?: string; endDate?: string; search?: string }): Promise<Booking[]> {
+  async getAllBookings(filters?: { branchId?: number; status?: string; startDate?: string; endDate?: string; search?: string }, params?: {limit?: number, page?: number}): Promise<BookingResponseWithMeta> {
     try {
       console.log("Fetching all bookings for admin with filters:", filters);
       
       // Buat query parameters jika ada filter
-      let queryParams = '';
-      if (filters) {
-        const params = new URLSearchParams();
-        if (filters.branchId) {
-          params.append('branchId', filters.branchId.toString());
-        }
-        if (filters.status) {
-          params.append('status', filters.status);
-        }
-        if (filters.startDate) {
-          params.append('startDate', filters.startDate);
-        }
-        if (filters.endDate) {
-          params.append('endDate', filters.endDate);
-        }
-        if (filters.search) {
-          params.append('search', filters.search);
-        }
+      // let queryParams = '';
+      // if (filters) {
+      //   const params = new URLSearchParams();
+      //   if (filters.branchId) {
+      //     params.append('branchId', filters.branchId.toString());
+      //   }
+      //   if (filters.status) {
+      //     params.append('status', filters.status);
+      //   }
+      //   if (filters.startDate) {
+      //     params.append('startDate', filters.startDate);
+      //   }
+      //   if (filters.endDate) {
+      //     params.append('endDate', filters.endDate);
+      //   }
+      //   if (filters.search) {
+      //     params.append('search', filters.search);
+      //   }
         
-        // Coba berbagai format parameter include yang mungkin didukung oleh backend
-        params.append('include', 'field.branch');
-        params.append('includes', 'field.branch'); // Alternatif format
-        params.append('_include', 'field.branch'); // Alternatif format
-        params.append('with', 'field.branch'); // Alternatif format
+      //   // Coba berbagai format parameter include yang mungkin didukung oleh backend
+      //   params.append('include', 'field.branch');
+      //   params.append('includes', 'field.branch'); // Alternatif format
+      //   params.append('_include', 'field.branch'); // Alternatif format
+      //   params.append('with', 'field.branch'); // Alternatif format
         
-        queryParams = params.toString() ? `?${params.toString()}` : '';
-      } else {
-        // Jika tidak ada filter, tetap tambahkan parameter include
-        queryParams = '?include=field.branch&includes=field.branch&_include=field.branch&with=field.branch';
-      }
+      //   queryParams = params.toString() ? `?${params.toString()}` : '';
+      // } else {
+      //   // Jika tidak ada filter, tetap tambahkan parameter include
+      //   queryParams = '?include=field.branch&includes=field.branch&_include=field.branch&with=field.branch';
+      // }
+
+      const query = new URLSearchParams();
+
+      if (filters?.branchId) query.append('branchId', filters.branchId.toString());
+      if (filters?.status) query.append('status', filters.status);
+      if (filters?.startDate) query.append('startDate', filters.startDate);
+      if (filters?.endDate) query.append('endDate', filters.endDate);
+      if (filters?.search) query.append('search', filters.search);
+
+      if (params?.limit) query.append('limit', params.limit.toString());
+      if (params?.page) query.append('page', params.page.toString());
+      query.append('include', 'field.branch');
+      const queryParams = `?${query.toString()}`;
       
       // Endpoint untuk admin mendapatkan semua booking
-      const response = await axiosInstance.get<BookingResponseWithMeta | BookingResponseVariants | Booking[]>(`/bookings/admin/bookings${queryParams}`);
+      const response = await axiosInstance.get<BookingResponseWithMeta>(
+        `/bookings/admin/bookings${queryParams}`
+      );
       
       console.log("Admin bookings response:", response.data);
       
       // Handle format respons yang berbeda-beda
-      if (response.data && typeof response.data === 'object') {
-        if ('data' in response.data && Array.isArray(response.data.data)) {
-          return response.data.data;
-        }
-        else if ('bookings' in response.data && Array.isArray(response.data.bookings)) {
-          return response.data.bookings;
-        }
-        else if (Array.isArray(response.data)) {
-          return response.data;
-        }
-        // Format dengan status dan data
-        else if ('status' in response.data && 'data' in response.data && Array.isArray(response.data.data)) {
-          return response.data.data;
-        }
-      }
+      // if (response.data && typeof response.data === 'object') {
+      //   if ('data' in response.data && Array.isArray(response.data.data)) {
+      //     return response.data.data;
+      //   }
+      //   else if ('bookings' in response.data && Array.isArray(response.data.bookings)) {
+      //     return response.data.bookings;
+      //   }
+      //   else if (Array.isArray(response.data)) {
+      //     return response.data;
+      //   }
+      //   // Format dengan status dan data
+      //   else if ('status' in response.data && 'data' in response.data && Array.isArray(response.data.data)) {
+      //     return response.data.data;
+      //   }
+      // }
       
-      console.error('Unexpected response format:', response.data);
-      return [];
+      // console.error('Unexpected response format:', response.data);
+      return response.data;
     } catch (error) {
       console.error('Error fetching all bookings:', error);
-      return [];
+      return { data: [], meta: { page: 1, limit: 10, totalItems: 0, totalPages: 1, hasNextPage: false, hasPrevPage: false } };
     }
   }
 
@@ -143,63 +158,52 @@ class BookingApi {
    * @param branchId - ID cabang
    * @returns Promise dengan array data booking
    */
-  async getBranchBookings(branchId: number, filters?: { status?: string; startDate?: string; endDate?: string; search?: string }): Promise<Booking[]> {
+  async getBranchBookings(branchId: number, filters?: { status?: string; startDate?: string; endDate?: string; search?: string }, params?: {limit?: number, page?: number}): Promise<BookingResponseWithMeta> {
     try {
       console.log(`Fetching bookings for branch ID: ${branchId} with filters:`, filters);
+
+      const query = new URLSearchParams();
+
+      if (filters?.status) query.append('status', filters.status);
+      if (filters?.startDate) query.append('startDate', filters.startDate);
+      if (filters?.endDate) query.append('endDate', filters.endDate);
+      if (filters?.search) query.append('search', filters.search);
+
+      if (params?.limit) query.append('limit', params.limit.toString());
+      if (params?.page) query.append('page', params.page.toString());
       
-      // Buat query parameters jika ada filter
-      let queryParams = '';
-      if (filters) {
-        const params = new URLSearchParams();
-        if (filters.status) {
-          params.append('status', filters.status);
-        }
-        if (filters.startDate) {
-          params.append('startDate', filters.startDate);
-        }
-        if (filters.endDate) {
-          params.append('endDate', filters.endDate);
-        }
-        if (filters.search) {
-          params.append('search', filters.search);
-        }
-        
-        // Tambahkan parameter include untuk memastikan field dan branch diambil
-        params.append('include', 'field.branch');
-        
-        queryParams = params.toString() ? `?${params.toString()}` : '';
-      } else {
-        // Jika tidak ada filter, tetap tambahkan parameter include
-        queryParams = '?include=field.branch';
-      }
-      
+      query.append('include', 'field.branch');
+
+      const queryParams = `?${query.toString()}`;
+
       // Endpoint untuk admin cabang
-      const response = await axiosInstance.get<BookingResponseWithMeta | BookingResponseVariants | Booking[]>(
+      const response = await axiosInstance.get<BookingResponseWithMeta>(
         `/bookings/branches/${branchId}/bookings${queryParams}`
       );
       
-      console.log(`API Response URL: /bookings/branches/${branchId}/bookings${queryParams}`);
-      console.log("Raw response from API:", response);
-      console.log("Branch bookings response:", response.data);
+      // console.log(`API Response URL: /bookings/branches/${branchId}/bookings${queryParams}`);
+      // console.log("Raw response from API:", response);
+      // console.log("Branch bookings response:", response.data);
       
       // Handle berbagai format respon
-      if (response.data) {
-        if (Array.isArray(response.data)) {
-          return response.data;
-        }
-        else if ('data' in response.data && Array.isArray(response.data.data)) {
-          return response.data.data;
-        }
-        else if ('bookings' in response.data && Array.isArray(response.data.bookings)) {
-          return response.data.bookings;
-        }
-      }
+      // if (response.data) {
+      //   if (Array.isArray(response.data)) {
+      //     return response.data;
+      //   }
+      //   else if ('data' in response.data && Array.isArray(response.data.data)) {
+      //     console.log('Response contains data array:', response.data.data);
+      //     return response.data.data;
+      //   }
+      //   else if ('bookings' in response.data && Array.isArray(response.data.bookings)) {
+      //     return response.data.bookings;
+      //   }
+      // }
       
-      console.error('Unexpected response format:', response.data);
-      return [];
+      // console.error('Unexpected response format:', response.data);
+      return response.data;
     } catch (error) {
       console.error(`Error fetching bookings for branch ID ${branchId}:`, error);
-      return [];
+      return { data: [], meta: { page: 1, limit: 10, totalItems: 0, totalPages: 1, hasNextPage: false, hasPrevPage: false } };
     }
   }
 

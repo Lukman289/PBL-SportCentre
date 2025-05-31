@@ -87,4 +87,24 @@ export interface BranchListResponse {
     hasNextPage: boolean;
     hasPrevPage: boolean;
   };
-  }
+}
+
+export interface BranchAdminListParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  branchId?: number;
+  q?: string;
+}
+
+export interface BranchAdminListResponse {
+  data: BranchAdmin[];
+  meta: {
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}

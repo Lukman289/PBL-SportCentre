@@ -2,6 +2,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/auth/auth.context";
 import { Button } from "@/components/ui/button";
+import { Role } from "@/types";
 import {
   Sheet,
   SheetClose,
@@ -25,6 +26,7 @@ import {
   Calendar,
   ChevronDown,
   Clock,
+  LayoutDashboard,
 } from "lucide-react";
 
 export function Header() {
@@ -165,7 +167,7 @@ export function Header() {
                 <DropdownMenuSeparator />
                 <Link href="/dashboard">
                   <DropdownMenuItem>
-                    <User size={16} className="mr-2" />
+                    <LayoutDashboard size={16} className="mr-2" />
                     Dashboard
                   </DropdownMenuItem>
                 </Link>
@@ -175,12 +177,14 @@ export function Header() {
                     Profil Saya
                   </DropdownMenuItem>
                 </Link>
-                <Link href="/histories">
-                  <DropdownMenuItem>
-                    <Clock size={16} className="mr-2" />
-                    Histori
-                  </DropdownMenuItem>
-                </Link>
+                {user?.role === Role.USER && (
+                  <Link href="/histories">
+                    <DropdownMenuItem>
+                      <Clock size={16} className="mr-2" />
+                      Histori
+                    </DropdownMenuItem>
+                  </Link>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}
@@ -261,7 +265,7 @@ export function Header() {
                           href="/dashboard"
                           className="flex items-center gap-2 px-4 py-2 rounded-md text-sm hover:bg-muted"
                         >
-                          <User size={16} />
+                          <LayoutDashboard size={16} />
                           Dashboard
                         </Link>
                       </SheetClose>
@@ -274,15 +278,17 @@ export function Header() {
                           Profil
                         </Link>
                       </SheetClose>
-                      <SheetClose asChild>
-                        <Link
-                          href="/histories"
-                          className="flex items-center gap-2 px-4 py-2 rounded-md text-sm hover:bg-muted"
-                        >
-                          <Clock size={16} />
-                          Histori
-                        </Link>
-                      </SheetClose>
+                      {user?.role === Role.USER && (
+                        <SheetClose asChild>
+                          <Link
+                            href="/histories"
+                            className="flex items-center gap-2 px-4 py-2 rounded-md text-sm hover:bg-muted"
+                          >
+                            <Clock size={16} />
+                            Histori
+                          </Link>
+                        </SheetClose>
+                      )}
                     </div>
                     <div className="mt-auto px-4">
                       <SheetClose asChild>

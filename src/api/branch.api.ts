@@ -74,14 +74,6 @@ class BranchApi {
   }
 
   /**
-   * Mendapatkan daftar admin cabang
-   */
-  async getBranchAdmins(branchId: number): Promise<BranchAdmin[]> {
-    const response = await axiosInstance.get<BranchAdmin[]>(`/branches/${branchId}/admins`);
-    return response.data;
-  }
-
-  /**
    * Mendapatkan detail admin cabang
    */
   async getBranchAdminById(userId: number): Promise<BranchAdmin> {

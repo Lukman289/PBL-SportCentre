@@ -14,6 +14,15 @@ export interface Booking {
   payment?: Payment & { paymentUrl?: string };
 }
 
+export interface BookingMeta {
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
 export enum PaymentStatus {
   PENDING = 'pending',
   PAID = 'paid',

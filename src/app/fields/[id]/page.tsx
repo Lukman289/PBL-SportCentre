@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Field, FieldStatus } from '@/types';
 import { fieldApi } from '@/api/field.api';
-import { branchApi } from '@/api/branch.api';
 
 import FieldAvailabilityClient from '@/components/field/FieldAvailability';
 import FieldReviewsClient from '@/components/field/FieldReview';
@@ -29,36 +28,14 @@ export default function FieldDetailPage() {
   }, [loading, showLoading, hideLoading]);
 
   useEffect(() => {
-      const fetchBranches = async () => {
-        try {
-          const response = await branchApi.getBranches();
-          console.log("branches: ", response.data || []);
-        } catch (error) {
-          console.error("Error fetching branches:", error);
-        }
-      };
-      
-      const fetchFields = async () => {
-        try {
-          const fieldsData = await fieldApi.getAllFields();
-          console.log("fields data:", fieldsData);
-        } catch (error) {
-          console.error("Error fetching user bookings:", error);
-          setError("Gagal memuat lapangan. Silakan coba lagi nanti.");
-        }
-      };
-      
       const fetchField = async () => {
         setLoading(true);
         setError(null);
         
         try {
           const fieldId = parseInt(params.id);
-          console.log("fieldId: ", fieldId);
           const fieldResponse = await withLoading(fieldApi.getFieldById(fieldId));
-          console.log("field data page: ", fieldResponse);
           if (fieldResponse) {
-            console.log("field data decision: ", fieldResponse);
             setField(Array.isArray(fieldResponse) ? fieldResponse[0] : fieldResponse);
           } else {
             throw new Error('Data lapangan tidak ditemukan.');
@@ -72,10 +49,8 @@ export default function FieldDetailPage() {
         }
       };
 
-      fetchBranches();
-      fetchFields();
       fetchField();
-    }, [params.id, withLoading]);
+    }, [params.id]);
 
   if (error) {
     return (

@@ -45,10 +45,12 @@ export default function FieldPage() {
     setLoading(true);
     setError(null);
     try {
-      console.log('Fetching fields with params:', { limit, page, q, branchId });
       if (branchId === 0) {
-        const response = await withLoading(fieldApi.getAllFields({ limit, page, q }));
-        console.log('Response from API:', response);  
+        const response = await withLoading(fieldApi.getAllFields({ 
+          limit, 
+          page, 
+          q 
+        }));
         if (response && response.data) {
           const normalizedFields: Field[] = response.data.map((field: any) => ({
             ...field,
@@ -62,7 +64,6 @@ export default function FieldPage() {
         }
       } else {
         const response = await withLoading(fieldApi.getAllFields({ limit, page, q, branchId }));
-        console.log('Response from API:', response);
         if (response && response.data) {
           const normalizedFields: Field[] = response.data.map((field: any) => ({
             ...field,
@@ -108,14 +109,14 @@ export default function FieldPage() {
       fetchFields(maxData, currentPage, '', selectedBranch);
       setSearched(false);
     } else {
-      fetchFields(1000, 1, query, selectedBranch);
+      fetchFields(maxData, 1, query, selectedBranch);
       setSearched(true);
     }
   };
 
   const handleBranchChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedBranch(Number(e.target.value));
-    fetchFields(1000, 1, searchQuery.trim().toLowerCase(), Number(e.target.value));
+    fetchFields(maxData, 1, searchQuery.trim().toLowerCase(), Number(e.target.value));
   };
 
   const handleRefresh = () => {

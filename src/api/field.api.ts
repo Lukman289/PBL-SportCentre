@@ -8,7 +8,8 @@ import {
   LegacyFieldResponse,
   FieldCreateResponse,
   AvailabilityResponse,
-  FieldListParams
+  FieldListParams,
+  FieldResponseWithMeta
 } from '../types';
 import { bookingApi } from './booking.api';
 import { Booking } from '../types';
@@ -44,10 +45,14 @@ class FieldApi {
    * Dapatkan semua lapangan
    * @returns Promise dengan array data lapangan
    */
-  async getAllFields(params?: FieldListParams): Promise<FieldReviewResponseWithMeta> {
-    console.log("Fetching all fields with params:", params);
-    const response = await axiosInstance.get<FieldReviewResponseWithMeta>('/fields', { params: params });
-    return response.data;
+  async getAllFields(params?: FieldListParams): Promise<FieldResponseWithMeta> {
+    try {
+      const response = await axiosInstance.get<FieldResponseWithMeta>('/fields', { params: params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching all fields:', error);
+      return { data: [], meta: { page: 1, limit: 10, totalItems: 0, totalPages: 1, hasNextPage: false, hasPrevPage: false } };
+    }
   }
 
   /**
@@ -75,20 +80,13 @@ class FieldApi {
    * @param branchId - ID cabang
    * @returns Promise dengan array data lapangan
    */
-  async getBranchFields(branchId: number): Promise<Field[]> {
+  async getBranchFields(branchId: number, params?: FieldListParams): Promise<FieldResponseWithMeta> {
     try {
-      const response = await axiosInstance.get<{ data: Field[] } | Field[]>(`/branches/${branchId}/fields`);
-      
-      if (Array.isArray(response.data)) {
-        return response.data;
-      } else if ('data' in response.data && Array.isArray(response.data.data)) {
-        return response.data.data;
-      }
-      
-      return [];
+      const response = await axiosInstance.get<FieldResponseWithMeta>(`/branches/${branchId}/fields`, { params: params });
+      return response.data;
     } catch (error) {
       console.error(`Error fetching fields for branch ID ${branchId}:`, error);
-      return [];
+      return { data: [], meta: { page: 1, limit: 10, totalItems: 0, totalPages: 1, hasNextPage: false, hasPrevPage: false } };
     }
   }
 
@@ -97,8 +95,8 @@ class FieldApi {
    * @param branchId - ID cabang
    * @returns Promise dengan array data lapangan
    */
-  async getFieldsByBranchId(branchId: number): Promise<Field[]> {
-    return this.getBranchFields(branchId);
+  async getFieldsByBranchId(branchId: number, params?: FieldListParams): Promise<FieldResponseWithMeta> {
+    return this.getBranchFields(branchId, params);
   }
 
   /**

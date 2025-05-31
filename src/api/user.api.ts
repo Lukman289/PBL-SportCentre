@@ -1,5 +1,5 @@
 import axiosInstance from '../config/axios.config';
-import { User, BranchAdmin } from '@/types';
+import { User, BranchAdmin, BranchAdminListParams, BranchAdminListResponse } from '@/types';
 
 export interface UpdateUserRequest {
   name?: string;
@@ -21,11 +21,9 @@ class UserApi {
   /**
    * Mendapatkan daftar admin dari cabang yang dimiliki/dikelola oleh user yang login
    */
-  async getUserBranchAdmins(search?: string): Promise<BranchAdmin[]> {
-    const response = await axiosInstance.get<{ data: BranchAdmin[] }>('/users/branch-admins', { 
-      params: { q: search }
-    });
-    return response.data.data;
+  async getUserBranchAdmins(params?: BranchAdminListParams): Promise<BranchAdminListResponse> {
+    const response = await axiosInstance.get<BranchAdminListResponse>('/users/branch-admins', { params: params });
+    return response.data;
   }
 
   /**

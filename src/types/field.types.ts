@@ -48,6 +48,18 @@ export interface FieldListParams {
   q?: string;
 }
 
+export interface FieldResponseWithMeta {
+  data: Field[];
+  meta: {
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  }
+}
+
 export interface FieldReviewResponseWithMeta {
   data: FieldReview[];
   meta: {

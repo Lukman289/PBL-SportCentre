@@ -19,20 +19,19 @@ import { branchApi } from '@/api/branch.api';
 import { useAuth } from '@/context/auth/auth.context';
 import { Role } from '@/types';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
+import { Search, X } from 'lucide-react';
 
 export default function MyBranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
-  const [branchPaginate, setBranchPaginate] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
   const { user } = useAuth();
   const { showLoading, hideLoading, withLoading } = useGlobalLoading();
-  const [page, setPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const limit = 15;
+  const maxData = 10;
 
-  // Mengelola loading state
   useEffect(() => {
     if (isLoading) {
       showLoading();
@@ -40,46 +39,26 @@ export default function MyBranchesPage() {
       hideLoading();
     }
   }, [isLoading, showLoading, hideLoading]);
-
+  
   useEffect(() => {
-    fetchBranches();
-  }, []);
+    fetchBranches(maxData, currentPage);
+  }, [currentPage]);
 
-  useEffect(() => {
-    setBranchPaginate(branches.slice((page - 1) * limit, page * limit));
-  }, [page, branches]);
-
-  useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setBranchPaginate(branches.slice((page - 1) * limit, page * limit));
-      setTotalItems(branches.length);
-    } else {
-      const query = searchQuery.toLowerCase();
-      const filtered = branches.filter(
-        (branch) =>
-          branch.name.toLowerCase().includes(query) ||
-          branch.location.toLowerCase().includes(query)
-      );
-      setTotalItems(filtered.length);
-      setBranchPaginate(filtered);
-    }
-  }, [searchQuery, branches, page, limit]);
-
-  const fetchBranches = async () => {
+  const fetchBranches = async (limit: number, page: number, q: string = '') => {
     setIsLoading(true);
     try {
       const response = await withLoading(branchApi.getUserBranches({
-        q: searchQuery || undefined
+        limit,
+        page,
+        q,
       }));
       
       if (response && response.data) {
         const data = response.data;
         setBranches(data);
-        setBranchPaginate(data.slice((page - 1) * limit, page * limit));
         setTotalItems(response.meta?.totalItems || 0);
       } else {
         setBranches([]);
-        setBranchPaginate([]);
       }
     } catch (error) {
       console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
@@ -87,11 +66,15 @@ export default function MyBranchesPage() {
       setIsLoading(false);
     }
   };
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    // Reset halaman ke 1 ketika pencarian berubah
-    setPage(1);
+  
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const query = searchQuery.trim().toLowerCase();
+    if (query === '') {
+      fetchBranches(maxData, currentPage);
+    } else {
+      fetchBranches(1000, 1, query);
+    }
   };
 
   const handleViewBranch = (id: number) => {
@@ -123,12 +106,41 @@ export default function MyBranchesPage() {
           <CardTitle>Cari Cabang</CardTitle>
         </CardHeader>
         <CardContent>
-          <Input
-            placeholder="Cari berdasarkan nama atau lokasi..."
-            value={searchQuery}
-            onChange={handleSearch}
-            className="max-w-md"
-          />
+          <form onSubmit={handleSearch} className="flex items-center gap-2 mb-8">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Cari cabang berdasarkan nama atau lokasi..."
+                name="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-20"
+              />
+              {searchQuery && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 h-6 w-6 text-gray-500 hover:text-red-600"
+                  onClick={() => {
+                    setSearchQuery('');
+                    fetchBranches(maxData, 1);
+                    setCurrentPage(1);
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+            <Button
+              type={searchQuery.trim() !== '' ? 'submit' : 'button'}
+              variant="default"
+              className="p-3 h-10 w-10 flex items-center justify-center"
+              disabled={isLoading}
+            >
+              <Search className="w-5 h-5" />
+            </Button>
+          </form>
         </CardContent>
       </Card>
 
@@ -137,7 +149,7 @@ export default function MyBranchesPage() {
           <CardTitle>Daftar Cabang</CardTitle>
         </CardHeader>
         <CardContent>
-          {branchPaginate.length === 0 ? (
+          {branches.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {searchQuery ? 'Tidak ada cabang yang sesuai dengan pencarian' : 'Anda belum memiliki cabang'}
             </div>
@@ -154,9 +166,9 @@ export default function MyBranchesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {branchPaginate.map((branch, index) => (
+                {branches.map((branch, index) => (
                   <TableRow key={branch.id}>
-                    <TableCell>{(page - 1) * limit + index + 1}</TableCell>
+                    <TableCell>{(currentPage - 1) * maxData + index + 1}</TableCell>
                     <TableCell>{branch.id}</TableCell>
                     <TableCell>{branch.name}</TableCell>
                     <TableCell>{branch.location}</TableCell>
@@ -180,37 +192,28 @@ export default function MyBranchesPage() {
                         >
                           Detail
                         </Button>
-                        {/* {user?.role === Role.OWNER_CABANG && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => router.push(`/dashboard/branches/${branch.id}/admins`)}
-                          >
-                            Admin
-                          </Button>
-                        )} */}
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
               <TableCaption>
-                {totalItems > limit && (
+                {totalItems > maxData && (
                   <div className="flex justify-between items-center gap-4 mt-8">
                     <Button 
                       variant="outline" 
-                      disabled={page === 1} 
-                      onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1} 
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                     >
                       Sebelumnya
                     </Button>
                     <span className="text-sm text-gray-500">
-                      Halaman {page} dari {Math.ceil(totalItems / limit)}
+                      Halaman {currentPage} dari {Math.ceil(totalItems / maxData)}
                     </span>
                     <Button 
                       variant="outline" 
-                      disabled={page >= Math.ceil(totalItems / limit)} 
-                      onClick={() => setPage((prev) => prev + 1)}
+                      disabled={currentPage >= Math.ceil(totalItems / maxData)} 
+                      onClick={() => setCurrentPage((prev) => prev + 1)}
                     >
                       Selanjutnya
                     </Button>

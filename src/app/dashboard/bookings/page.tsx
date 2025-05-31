@@ -11,15 +11,17 @@ import PageTitle from "@/components/common/PageTitle";
 import { useBookingFilters } from "@/hooks/bookings/useBookingFilters.hook";
 import { useBookingData } from "@/hooks/bookings/useBookingData.hook";
 import { useToast } from "@/components/ui/use-toast";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useGlobalLoading from "@/hooks/useGlobalLoading.hook";
 
 export default function BookingsPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { showLoading, hideLoading } = useGlobalLoading();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const maxData = 10;
   
-  // Hitung default branchId berdasarkan role user
   const defaultBranchId = useMemo(() => {
     if (user?.role === Role.ADMIN_CABANG && user.branches && user.branches.length > 0) {
       return user.branches[0].branchId;
@@ -27,15 +29,29 @@ export default function BookingsPage() {
     return undefined;
   }, [user]);
 
-  // Gunakan defaultBranchId saat inisialisasi filter
   const { filters, handleFilterChange } = useBookingFilters(defaultBranchId);
   
-  const { bookings, branches, loading, showBranchFilter } = useBookingData({ 
-    user, 
-    filters 
-  });
+  const { bookings, branches, loading, showBranchFilter, meta } = useBookingData(
+    { 
+      user, 
+      filters,
+    },
+    maxData,
+    currentPage,
+  );
 
-  // Mengelola loading state
+  useEffect(() => {
+    setCurrentPage(1);
+    console.log("Filters updated in page.tsx", filters);
+    console.log("currentPage :", currentPage);
+  }, [filters]);
+
+  useEffect(() => {
+    if (meta) {
+      setTotalItems(meta.totalItems);
+    }
+  }, [currentPage, bookings]);
+
   useEffect(() => {
     if (loading) {
       showLoading();
@@ -44,7 +60,6 @@ export default function BookingsPage() {
     }
   }, [loading, showLoading, hideLoading]);
   
-  // Tampilkan toast jika ada booking berhasil dibuat (digunakan saat redirect dari halaman create)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const success = urlParams.get('success');
@@ -62,13 +77,6 @@ export default function BookingsPage() {
     }
   }, [toast]);
 
-  const getCreateButtonLink = () => {
-    if (user?.role === Role.ADMIN_CABANG && user.branches && user.branches.length > 0) {
-      return `/dashboard/bookings/create`;
-    }
-    return "#";
-  };
-
   // Jika loading, GlobalLoading akan ditampilkan
   if (loading) {
     return null;
@@ -80,7 +88,7 @@ export default function BookingsPage() {
         <PageTitle title="Daftar Booking" />
         
         {user?.role === Role.ADMIN_CABANG && (
-          <Link href={getCreateButtonLink()}>
+          <Link href="/dashboard/bookings/create">
             <Button variant="default" className="flex items-center gap-2">
               <Plus size={16} /> Tambah Booking Manual
             </Button>
@@ -96,6 +104,28 @@ export default function BookingsPage() {
       />
 
       <BookingsTable bookings={bookings} userRole={user?.role} />
+
+      {totalItems > maxData && (
+        <div className="flex justify-between items-center gap-4 mt-8">
+          <Button 
+            variant="outline" 
+            disabled={currentPage === 1} 
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          >
+            Sebelumnya
+          </Button>
+          <span className="text-sm text-gray-500">
+            Halaman {currentPage} dari {Math.ceil(totalItems / maxData)}
+          </span>
+          <Button 
+            variant="outline" 
+            disabled={currentPage >= Math.ceil(totalItems / maxData)} 
+            onClick={() => setCurrentPage((prev) => prev + 1)}
+          >
+            Selanjutnya
+          </Button>
+        </div>
+      )}
     </div>
   );
 } 

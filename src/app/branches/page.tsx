@@ -52,7 +52,7 @@ export default function BranchesPage() {
       fetchBranches(maxData, currentPage);
       setSearched(false);
     } else {
-      fetchBranches(1000, 1, query);
+      fetchBranches(maxData, 1, query);
       setSearched(true);
     }
   };

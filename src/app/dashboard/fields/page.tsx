@@ -27,21 +27,23 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
+import { Search, X } from 'lucide-react';
 
 export default function FieldPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
+  const [selectedBranchId, setSelectedBranchId] = useState<number>(0);
   const [selectedBranchName, setSelectedBranchName] = useState<string>("Pilih cabang");
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredFields, setFilteredFields] = useState<Field[]>([]);
   const { toast } = useToast();
   const router = useRouter();
   const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+  const [currentPage, setCurrentPage] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const maxData = 10;
 
-  // Mengelola loading state
   useEffect(() => {
     if (loading) {
       showLoading();
@@ -50,43 +52,6 @@ export default function FieldPage() {
     }
   }, [loading, showLoading, hideLoading]);
 
-  // Function to fetch fields by branch ID
-  const fetchFields = useCallback(async (branchId: number) => {
-    if (!branchId) {
-      setFields([]);
-      setFilteredFields([]);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const fieldData = await withLoading(fieldApi.getBranchFields(branchId));
-      
-      if (Array.isArray(fieldData)) {
-        setFields(fieldData);
-        setFilteredFields(searchQuery
-          ? fieldData.filter(field => field.name.toLowerCase().includes(searchQuery.toLowerCase()))
-          : fieldData
-        );
-      } else {
-        console.error("Unexpected field data format:", fieldData);
-        setFields([]);
-        setFilteredFields([]);
-        setError("Format data lapangan tidak sesuai.");
-      }
-    } catch (error) {
-      console.error("Error fetching fields:", error);
-      setFields([]);
-      setFilteredFields([]);
-      setError("Gagal memuat lapangan. Silakan coba lagi nanti.");
-    } finally {
-      setLoading(false);
-    }
-  }, [searchQuery]);
-
-  // Fetch branches when component mounts
   useEffect(() => {
     const fetchBranches = async () => {
       try {
@@ -101,7 +66,6 @@ export default function FieldPage() {
             const firstBranch = branchesData[0];
             setSelectedBranchId(firstBranch.id);
             setSelectedBranchName(firstBranch.name);
-            fetchFields(firstBranch.id);
           }
         } else {
           console.error("branches is not an array:", branchesData);
@@ -127,24 +91,56 @@ export default function FieldPage() {
     };
 
     fetchBranches();
-  }, [toast, fetchFields, withLoading]);
+  }, [toast]);
 
-  // Apply search filter when search query changes
   useEffect(() => {
-    if (fields.length > 0) {
-      const filtered = searchQuery
-        ? fields.filter(field =>
-            field.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (field.type && field.type.name.toLowerCase().includes(searchQuery.toLowerCase()))
-          )
-        : fields;
+    fetchFields(selectedBranchId, maxData, currentPage, searchQuery);
+  }, [currentPage, selectedBranchId]);
 
-      setFilteredFields(filtered);
+  const fetchFields = async (branchId: number, limit: number, page: number, q: string = '') => {
+    if (!branchId) {
+      setFields([]);
+      return;
     }
-  }, [searchQuery, fields]);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const fieldData = await withLoading(fieldApi.getBranchFields(
+        branchId, 
+        {
+          limit,
+          page,
+          q,
+        }
+      ));
+
+      if (fieldData && fieldData.data && Array.isArray(fieldData.data)) {
+        setFields(fieldData.data);
+        setTotalItems(fieldData.meta?.totalItems || 0);
+      } else {
+        console.error("Unexpected field data format:", fieldData);
+        setFields([]);
+        setError("Format data lapangan tidak sesuai.");
+      }
+    } catch (error) {
+      console.error("Error fetching fields:", error);
+      setFields([]);
+      setError("Gagal memuat lapangan. Silakan coba lagi nanti.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const query = searchQuery.trim().toLowerCase();
+    if (query === '') {
+      fetchFields(selectedBranchId, maxData, currentPage);
+    } else {
+      fetchFields(selectedBranchId, maxData, 1, query);
+    }
   };
 
   const handleBranchChange = (branchId: string) => {
@@ -162,13 +158,11 @@ export default function FieldPage() {
     setSelectedBranchId(id);
     const branch = branches.find(b => b.id === id);
     setSelectedBranchName(branch?.name || "Pilih cabang");
-    fetchFields(id);
-    setSearchQuery('');
   };
 
   const handleRefresh = async () => {
     if (selectedBranchId) {
-      fetchFields(selectedBranchId);
+      fetchFields(selectedBranchId, maxData, 1);
     }
   };
 
@@ -207,7 +201,7 @@ export default function FieldPage() {
   };
 
   if (loading && branches.length === 0) {
-    return null; // GlobalLoading akan otomatis ditampilkan
+    return null;
   }
 
   if (error && branches.length === 0) {
@@ -267,12 +261,41 @@ export default function FieldPage() {
               <label className="block text-sm font-medium mb-1">
                 Cari Lapangan
               </label>
-              <Input
-                placeholder="Cari berdasarkan nama lapangan..."
-                value={searchQuery}
-                onChange={handleSearch}
-                disabled={!selectedBranchId || loading}
-              />
+              <form onSubmit={handleSearch} className="flex items-center gap-2 mb-8">
+                <div className="relative w-full">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Cari berdasarkan nama atau tipe lapangan..."
+                    name="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-20"
+                  />
+                  {searchQuery && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 h-6 w-6 text-gray-500 hover:text-red-600"
+                      onClick={() => {
+                        setSearchQuery('');
+                        fetchFields(selectedBranchId, maxData, 1);
+                        setCurrentPage(1);
+                      }}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+                <Button
+                  type={searchQuery.trim() !== '' ? 'submit' : 'button'}
+                  variant="default"
+                  className="p-3 h-10 w-10 flex items-center justify-center"
+                  disabled={loading}
+                >
+                  <Search className="w-5 h-5" />
+                </Button>
+              </form>
             </div>
           </div>
         </CardContent>
@@ -293,7 +316,7 @@ export default function FieldPage() {
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
             </div>
-          ) : filteredFields.length === 0 ? (
+          ) : fields.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {searchQuery ? 'Tidak ada lapangan yang sesuai dengan pencarian' : 'Belum ada lapangan untuk cabang ini'}
             </div>
@@ -311,7 +334,7 @@ export default function FieldPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredFields.map((field) => (
+                  {fields.map((field) => (
                     <TableRow key={field.id}>
                       <TableCell>{field.name}</TableCell>
                       <TableCell>{field.type?.name || '-'}</TableCell>
@@ -337,6 +360,27 @@ export default function FieldPage() {
                   ))}
                 </TableBody>
               </Table>
+              {totalItems > maxData && (
+                <div className="flex justify-between items-center gap-4 mt-8">
+                  <Button 
+                    variant="outline" 
+                    disabled={currentPage === 1} 
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  >
+                    Sebelumnya
+                  </Button>
+                  <span className="text-sm text-gray-500">
+                    Halaman {currentPage} dari {Math.ceil(totalItems / maxData)}
+                  </span>
+                  <Button 
+                    variant="outline" 
+                    disabled={currentPage >= Math.ceil(totalItems / maxData)} 
+                    onClick={() => setCurrentPage((prev) => prev + 1)}
+                  >
+                    Selanjutnya
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

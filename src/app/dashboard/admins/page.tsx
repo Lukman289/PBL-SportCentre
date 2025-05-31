@@ -18,22 +18,22 @@ import { useAuth } from '@/context/auth/auth.context';
 import { userApi } from '@/api/user.api';
 import { branchApi } from '@/api/branch.api';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
+import { Search, X } from 'lucide-react';
 
 export default function AdminsPage() {
   const [admins, setAdmins] = useState<BranchAdmin[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
-  const [adminsPaginate, setAdminsPaginate] = useState<BranchAdmin[]>([]);
+  // const [adminsPaginate, setAdminsPaginate] = useState<BranchAdmin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const router = useRouter();
   const { user } = useAuth();
   const { showLoading, hideLoading, withLoading } = useGlobalLoading();
-  const [page, setPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const limit = 15;
+  const maxData = 5;
 
-  // Mengelola loading state
   useEffect(() => {
     if (isLoading) {
       showLoading();
@@ -42,45 +42,35 @@ export default function AdminsPage() {
     }
   }, [isLoading, showLoading, hideLoading]);
 
-  // Load initial data
   useEffect(() => {
-    fetchAdmins();
     fetchBranches();
   }, []);
-
-  // Update pagination when page changes
+  
   useEffect(() => {
-    setAdminsPaginate(admins.slice((page - 1) * limit, page * limit));
-  }, [page, admins]);
+    fetchAdmins(maxData, currentPage);
+  }, [currentPage]);
 
-  // Filter data when search query changes
-  useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setAdminsPaginate(admins.slice((page - 1) * limit, page * limit));
-      setTotalItems(admins.length);
-    } else {
-      const query = searchQuery.toLowerCase();
-      const filtered = admins.filter(
-        (admin) =>
-          admin.user?.name.toLowerCase().includes(query) ||
-          admin.user?.email.toLowerCase().includes(query)
-      );
-      setTotalItems(filtered.length);
-      setAdminsPaginate(filtered);
-    }
-  }, [searchQuery, admins, page, limit]);
-
-  const fetchAdmins = async () => {
+  const fetchAdmins = async (limit: number, page: number, q: string = '') => {
     setIsLoading(true);
     try {
-      const response = await withLoading(userApi.getUserBranchAdmins(searchQuery || undefined));
-      setAdmins(response);
-      setAdminsPaginate(response.slice((page - 1) * limit, page * limit));
-      setTotalItems(response.length);
+      const response = await withLoading(userApi.getUserBranchAdmins({
+        limit,
+        page,
+        q
+      }));
+      
+      if (response && response.data) {
+        const data = response.data;
+        console.log('Fetched admins:', data);
+        setAdmins(data);
+        setTotalItems(response.meta?.totalItems || 0);
+      } else {
+        setAdmins([]);
+        setTotalItems(0);
+      }
     } catch (error) {
       console.error('Error fetching admins:', error);
       setAdmins([]);
-      setAdminsPaginate([]);
     } finally {
       setIsLoading(false);
     }
@@ -104,9 +94,14 @@ export default function AdminsPage() {
     }
   };
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    setPage(1); // Reset halaman saat pencarian berubah
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const query = searchQuery.trim().toLowerCase();
+    if (query === '') {
+      fetchAdmins(maxData, currentPage);
+    } else {
+      fetchAdmins(1000, 1, query);
+    }
   };
 
   const handleAddAdmin = () => {
@@ -117,10 +112,8 @@ export default function AdminsPage() {
     try {
       setIsLoading(true);
       await withLoading(branchApi.removeBranchAdmin(branchId, userId));
-      // Update data setelah menghapus admin
       const updatedAdmins = admins.filter(admin => admin.userId !== userId || admin.branchId !== branchId);
       setAdmins(updatedAdmins);
-      setAdminsPaginate(updatedAdmins.slice((page - 1) * limit, page * limit));
       setTotalItems(updatedAdmins.length);
     } catch (error) {
       console.error('Error removing admin:', error);
@@ -151,8 +144,7 @@ export default function AdminsPage() {
         password
       }));
 
-      // Refresh data setelah menambahkan admin baru
-      await fetchAdmins();
+      await fetchAdmins(maxData, currentPage);
       setIsAddFormOpen(false);
     } catch (error) {
       console.error('Error adding admin:', error);
@@ -244,12 +236,41 @@ export default function AdminsPage() {
           <CardTitle>Cari Admin</CardTitle>
         </CardHeader>
         <CardContent>
-          <Input
-            placeholder="Cari berdasarkan nama atau email..."
-            value={searchQuery}
-            onChange={handleSearch}
-            className="max-w-md"
-          />
+          <form onSubmit={handleSearch} className="flex items-center gap-2 mb-8">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Cari cabang berdasarkan nama atau lokasi..."
+                name="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-20"
+              />
+              {searchQuery && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 h-6 w-6 text-gray-500 hover:text-red-600"
+                  onClick={() => {
+                    setSearchQuery('');
+                    fetchAdmins(maxData, 1);
+                    setCurrentPage(1);
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+            <Button
+              type={searchQuery.trim() !== '' ? 'submit' : 'button'}
+              variant="default"
+              className="p-3 h-10 w-10 flex items-center justify-center"
+              disabled={isLoading}
+            >
+              <Search className="w-5 h-5" />
+            </Button>
+          </form>
         </CardContent>
       </Card>
 
@@ -258,7 +279,7 @@ export default function AdminsPage() {
           <CardTitle>Daftar Admin</CardTitle>
         </CardHeader>
         <CardContent>
-          {adminsPaginate.length === 0 ? (
+          {admins.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {searchQuery ? 'Tidak ada admin yang sesuai dengan pencarian' : 'Belum ada admin cabang'}
             </div>
@@ -275,9 +296,9 @@ export default function AdminsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {adminsPaginate.map((admin, index) => (
+                {admins.map((admin, index) => (
                   <TableRow key={`${admin.branchId}-${admin.userId}`}>
-                    <TableCell>{(page - 1) * limit + index + 1}</TableCell>
+                    <TableCell>{(currentPage - 1) * maxData + index + 1}</TableCell>
                     <TableCell>{admin.userId}</TableCell>
                     <TableCell>{admin.user?.name || 'N/A'}</TableCell>
                     <TableCell>{admin.user?.email || 'N/A'}</TableCell>
@@ -308,22 +329,22 @@ export default function AdminsPage() {
               </TableBody>
             </Table>
           )}
-          {totalItems > limit && (
+          {totalItems > maxData && (
             <div className="flex justify-between items-center gap-4 mt-8">
               <Button 
                 variant="outline" 
-                disabled={page === 1} 
-                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1} 
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               >
                 Sebelumnya
               </Button>
               <span className="text-sm text-gray-500">
-                Halaman {page} dari {Math.ceil(totalItems / limit)}
+                Halaman {currentPage} dari {Math.ceil(totalItems / maxData)}
               </span>
               <Button 
                 variant="outline" 
-                disabled={page >= Math.ceil(totalItems / limit)} 
-                onClick={() => setPage((prev) => prev + 1)}
+                disabled={currentPage >= Math.ceil(totalItems / maxData)} 
+                onClick={() => setCurrentPage((prev) => prev + 1)}
               >
                 Selanjutnya
               </Button>

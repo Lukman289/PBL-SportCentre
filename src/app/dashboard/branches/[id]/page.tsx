@@ -19,7 +19,7 @@ import { branchApi } from '@/api/branch.api';
 import { fieldApi } from '@/api/field.api';
 import { Branch, BranchAdmin, Field, Role } from '@/types';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
-import Image from 'next/image';
+import { userApi } from '@/api';
 
 export default function BranchDetailPage() {
   const router = useRouter();
@@ -54,8 +54,8 @@ export default function BranchDetailPage() {
         const fieldsData = await withLoading(fieldApi.getBranchFields(branchId));
         setFields(fieldsData);
 
-        const adminsData = await withLoading(branchApi.getBranchAdmins(branchId));
-        setAdmins(adminsData);
+        const adminsData = await withLoading(userApi.getUserBranchAdmins({ branchId }));
+        setAdmins(adminsData.data);
       } catch (err) {
         console.error('Error fetching branch details:', err);
         setError('Gagal memuat data cabang. Silakan coba lagi.');
@@ -249,7 +249,7 @@ export default function BranchDetailPage() {
                   </TableHeader>
                   <TableBody>
                     {fields.map((field, index) => (
-                      <TableRow key={field.id}>
+                      <TableRow key={index}>
                         <TableCell>{index + 1}</TableCell>
                         <TableCell>{field.id}</TableCell>
                         <TableCell>{field.name}</TableCell>
@@ -313,7 +313,7 @@ export default function BranchDetailPage() {
                   </TableHeader>
                   <TableBody>
                     {admins.map((admin, index) => (
-                      <TableRow key={admin.userId}>
+                      <TableRow key={index}>
                         <TableCell>{index + 1}</TableCell>
                         <TableCell>{admin.userId}</TableCell>
                         <TableCell>{admin.user?.name}</TableCell>

@@ -1,8 +1,23 @@
 import axiosInstance from '../config/axios.config';
-import { Branch, BranchListParams, BranchListResponse, CreateBranchRequest, UpdateBranchRequest, BranchAdmin } from '@/types';
+import { Branch, BranchListParams, BranchListResponse, CreateBranchRequest, UpdateBranchRequest, BranchAdmin, User,BranchDetailResponse } from '@/types';
 
-
-
+export interface UserListParams {
+  role?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+export interface UserListResponse {
+  data: User[];
+  meta: {
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
 class BranchApi {
   /**
    * Mendapatkan daftar cabang
@@ -19,49 +34,84 @@ class BranchApi {
     const response = await axiosInstance.get<BranchListResponse>('/branches/owner-branches', { params });
     return response.data;
   }
+   // Tambahkan method ini di dalam class BranchApi
+  /**
+   * Mendapatkan daftar user berdasarkan role
+   */
+  async getUsersByRole(role: string, params?: UserListParams): Promise<User[]> {
+    const response = await axiosInstance.get<UserListResponse>('/users', {
+      params: { ...params, role }
+    });
+    return response.data.data;
+  }
 
   /**
    * Mendapatkan detail cabang berdasarkan ID
    */
-  async getBranchById(id: number): Promise<BranchListResponse> {
-    const response = await axiosInstance.get<BranchListResponse>(`/branches/${id}`);
-    return response.data;
+ async getBranchById(id: number): Promise<BranchDetailResponse> {
+    try {
+      const response = await axiosInstance.get<BranchDetailResponse>(`/branches/${id}`);
+      
+      // Jika backend mengembalikan array, ambil elemen pertama
+      if (Array.isArray(response.data.data)) {
+        return {
+          ...response.data,
+          data: response.data.data[0]
+        };
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching branch by ID:', error);
+      throw error;
+    }
   }
 
   /**
    * Membuat cabang baru
    */
-  async createBranch(data: CreateBranchRequest): Promise<Branch> {
+async createBranch(data: CreateBranchRequest): Promise<Branch> {
     const formData = new FormData();
     formData.append('name', data.name);
-    formData.append('address', data.address);
-    formData.append('open_time', data.open_time);
-    formData.append('close_time', data.close_time);
     formData.append('location', data.location);
+    formData.append('status', data.status); // Tambahkan status
     formData.append('ownerId', data.ownerId.toString());
     
-    if (data.logo) {
-      formData.append('logo', data.logo);
+    if (data.imageUrl) {
+      formData.append('imageUrl', data.imageUrl);
     }
     
-    if (data.admin_ids && data.admin_ids.length > 0) {
-      data.admin_ids.forEach(id => {
-        formData.append('admin_ids', id.toString());
-      });
-    }
-
+    console.log('FormData being sent:', {
+      name: data.name,
+      location: data.location,
+      status: data.status,
+      ownerId: data.ownerId,
+      hasImage: !!data.imageUrl
+    });
+    
     const response = await axiosInstance.post<Branch>('/branches', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
     return response.data;
-  }
+}
 
   /**
    * Mengupdate cabang
    */
-  async updateBranch(id: number, data: UpdateBranchRequest): Promise<Branch> {
+  async updateBranch(id: number, data: UpdateBranchRequest | FormData): Promise<Branch> {
+    // Jika data adalah FormData, gunakan content-type multipart/form-data
+    if (data instanceof FormData) {
+      const response = await axiosInstance.put<Branch>(`/branches/${id}`, data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    }
+    
+    // Jika bukan FormData, kirim sebagai JSON biasa
     const response = await axiosInstance.put<Branch>(`/branches/${id}`, data);
     return response.data;
   }
@@ -80,6 +130,18 @@ class BranchApi {
     const response = await axiosInstance.get<BranchAdmin>(`/branches/admins/${userId}`);
     return response.data;
   }
+  /**
+   * Mendapatkan daftar admin cabang sesuai ID cabang
+   */
+  async getBranchAdmins(branchId: number): Promise<{ data: BranchAdmin[] }> {
+  try {
+    const response = await axiosInstance.get<{ data: BranchAdmin[] }>(`/branches/${branchId}/admins`);
+    return response.data;
+  } catch (error) {
+    console.error('Gagal mengambil data admin cabang:', error);
+    return { data: [] }; // Kembalikan array kosong jika error
+  }
+}
 
   /**
    * Menambah admin cabang

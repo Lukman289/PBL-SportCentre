@@ -6,6 +6,7 @@ export interface UpdateUserRequest {
   email?: string;
   phone?: string;
   password?: string;
+  role ?: string;
 }
 
 export interface CreateUserRequest {
@@ -79,25 +80,25 @@ class UserApi {
       return [];
     }
   }
+  /**
+   * Mengupdate user berdasarkan ID (super admin only)
+   */
+  async updateUserById(id: number, data: UpdateUserRequest): Promise<User> {
+    const response = await axiosInstance.put<{ data: User }>(`/users/${id}`, data);
+    return response.data.data;
+  }
 
   /**
    * Dapatkan user berdasarkan ID
    * @param id - ID user
    * @returns Promise dengan data user
    */
-  async getUserById(id: number): Promise<User | null> {
-    try {
-      const response = await axiosInstance.get<{ data: User } | User>(`/users/detail/${id}`);
-      
-      if ('data' in response.data) {
-        return response.data.data;
-      } else {
-        return response.data;
-      }
-    } catch (error) {
-      console.error(`Error fetching user with ID ${id}:`, error);
-      return null;
-    }
+  /**
+   * Mendapatkan detail user berdasarkan ID
+   */
+  async getUserById(id: number): Promise<User> {
+    const response = await axiosInstance.get<{ data: User }>(`/users/detail/${id}`);
+    return response.data.data;
   }
 }
 

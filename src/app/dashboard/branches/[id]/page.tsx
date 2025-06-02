@@ -1,9 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import {
   Table,
   TableBody,
@@ -17,48 +36,98 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/context/auth/auth.context';
 import { branchApi } from '@/api/branch.api';
 import { fieldApi } from '@/api/field.api';
-import { Branch, BranchAdmin, Field, Role } from '@/types';
+import { Branch, Field, Role, FieldType, FieldStatus } from '@/types';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
-import { userApi } from '@/api';
+import Image from 'next/image';
+
+// Interface untuk admin
+interface BranchAdmin {
+  userId: number;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+  };
+}
+
+// Validasi form untuk tambah lapangan
+const createFieldSchema = z.object({
+  name: z.string().min(3, 'Nama lapangan minimal 3 karakter'),
+  typeId: z.string().min(1, 'Tipe lapangan harus dipilih'),
+  priceDay: z.string().min(1, 'Harga siang harus diisi').regex(/^\d+$/, 'Harga harus berupa angka'),
+  priceNight: z.string().min(1, 'Harga malam harus diisi').regex(/^\d+$/, 'Harga harus berupa angka'),
+  status: z.string().min(1, 'Status harus dipilih'),
+});
+
+type CreateFieldFormValues = z.infer<typeof createFieldSchema>;
 
 export default function BranchDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { showLoading, hideLoading } = useGlobalLoading();
+  
+  // State untuk branch data
   const [branch, setBranch] = useState<Branch | null>(null);
   const [fields, setFields] = useState<Field[]>([]);
   const [admins, setAdmins] = useState<BranchAdmin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // State untuk form tambah lapangan
   const [showAddFieldForm, setShowAddFieldForm] = useState(false);
+  const [fieldTypes, setFieldTypes] = useState<FieldType[]>([]);
+  const [isSubmittingField, setIsSubmittingField] = useState(false);
+  const [fieldFormError, setFieldFormError] = useState<string | null>(null);
+  
+  // State untuk file handling
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const branchId = parseInt(params.id as string);
-  const { showLoading, hideLoading, withLoading } = useGlobalLoading();
 
-  // Mengelola loading state
-  useEffect(() => {
-    if (isLoading) {
-      showLoading();
-    } else {
-      hideLoading();
-    }
-  }, [isLoading, showLoading, hideLoading]);
+  // Form untuk tambah lapangan
+  const fieldForm = useForm<CreateFieldFormValues>({
+    resolver: zodResolver(createFieldSchema),
+    defaultValues: {
+      name: '',
+      typeId: '',
+      priceDay: '',
+      priceNight: '',
+      status: 'available',
+    },
+  });
 
+  // Fetch data cabang
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const branchData = await withLoading(branchApi.getBranchById(branchId));
+        const branchData = await branchApi.getBranchById(branchId);
         setBranch(Array.isArray(branchData.data) ? branchData.data[0] : branchData.data);
 
-        const fieldsData = await withLoading(fieldApi.getBranchFields(branchId));
-        setFields(fieldsData);
+        try {
+          const fieldsData = await fieldApi.getFieldsByBranchId(branchId);
+          console.log('Fields response:', fieldsData);
+          setFields(Array.isArray(fieldsData) ? fieldsData : []);
+        } catch (err) {
+          console.error('Error fetching fields:', err);
+          setFields([]);
+        }
 
-        const adminsData = await withLoading(userApi.getUserBranchAdmins({ branchId }));
-        setAdmins(adminsData.data);
+        const adminsData = await branchApi.getBranchAdmins(branchId);
+        setAdmins(Array.isArray(adminsData.data) ? adminsData.data : []);
+
+        // Fetch field types untuk form
+        const fieldTypeResponse = await fieldApi.getFieldTypes();
+        setFieldTypes(fieldTypeResponse || []);
       } catch (err) {
         console.error('Error fetching branch details:', err);
         setError('Gagal memuat data cabang. Silakan coba lagi.');
+        setAdmins([]);
+        setFields([]);
       } finally {
         setIsLoading(false);
       }
@@ -69,10 +138,91 @@ export default function BranchDetailPage() {
     }
   }, [branchId]);
 
-  if (user && user.role !== Role.SUPER_ADMIN && user.role !== Role.OWNER_CABANG) {
+  // Authorization check
+  if (user && user.role !== Role.SUPER_ADMIN && user.role !== Role.OWNER_CABANG && user.role !== Role.ADMIN_CABANG) {
     router.push('/dashboard');
     return null;
   }
+
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setSelectedImage(null);
+      setPreviewUrl(null);
+    }
+  };
+
+  // Submit form tambah lapangan
+  const onSubmitField = async (data: CreateFieldFormValues) => {
+    try {
+      showLoading();
+      setIsSubmittingField(true);
+      setFieldFormError(null);
+
+      const selectedTypeId = parseInt(data.typeId);
+      const selectedType = fieldTypes.find(type => type.id === selectedTypeId);
+      
+      if (!selectedType) {
+        throw new Error('Tipe lapangan tidak ditemukan');
+      }
+
+      const submitData = {
+        name: data.name,
+        typeId: selectedTypeId,
+        branchId: branchId,
+        priceDay: parseFloat(data.priceDay),
+        priceNight: parseFloat(data.priceNight),
+        status: data.status as FieldStatus,
+        type: {
+          id: selectedTypeId,
+          name: selectedType.name
+        },
+      };
+
+      if (selectedImage) {
+        const formData = new FormData();
+        
+        Object.entries(submitData).forEach(([key, value]) => {
+          if (key === 'type') {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, String(value));
+          }
+        });
+        
+        formData.append('imageUrl', selectedImage);
+        await fieldApi.createFieldWithImage(formData);
+      } else {
+        await fieldApi.createField(submitData);
+      }
+      
+      // Reset form dan refresh data
+      fieldForm.reset();
+      setSelectedImage(null);
+      setPreviewUrl(null);
+      setShowAddFieldForm(false);
+      
+      // Refresh fields data
+      const fieldsData = await fieldApi.getFieldsByBranchId(branchId);
+      setFields(Array.isArray(fieldsData) ? fieldsData : []);
+      
+    } catch (error) {
+      console.error('Error creating field:', error);
+      setFieldFormError('Gagal membuat lapangan. Silakan coba lagi.');
+    } finally {
+      hideLoading();
+      setIsSubmittingField(false);
+    }
+  };
 
   const handleEdit = () => {
     router.push(`/dashboard/branches/${branchId}/edit`);
@@ -81,7 +231,7 @@ export default function BranchDetailPage() {
   const handleDelete = async () => {
     if (window.confirm('Anda yakin ingin menghapus cabang ini?')) {
       try {
-        await withLoading(branchApi.deleteBranch(branchId));
+        await branchApi.deleteBranch(branchId);
         if (user?.role === Role.SUPER_ADMIN) {
           router.push('/dashboard/branches');
         } else {
@@ -96,14 +246,25 @@ export default function BranchDetailPage() {
 
   const handleAddField = () => {
     setShowAddFieldForm(!showAddFieldForm);
+    if (!showAddFieldForm) {
+      // Reset form dan file saat membuka form
+      fieldForm.reset();
+      setSelectedImage(null);
+      setPreviewUrl(null);
+      setFieldFormError(null);
+    }
   };
 
   const handleAddAdmin = () => {
-    router.push(`/dashboard/admins`);
+    router.push(`/dashboard/branches/${branchId}/add-admin`);
   };
 
   if (isLoading) {
-    return null; // Global loading akan otomatis ditampilkan
+    return (
+      <div className="flex justify-center py-10">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   if (error || !branch) {
@@ -124,11 +285,9 @@ export default function BranchDetailPage() {
           <Button variant="outline" onClick={handleEdit}>
             Edit
           </Button>
-          {user?.role === Role.SUPER_ADMIN && (
-            <Button variant="destructive" className='text-white' onClick={handleDelete}>
-              Hapus
-            </Button>
-          )}
+          <Button variant="destructive" onClick={handleDelete}>
+            Hapus
+          </Button>
         </div>
       </div>
 
@@ -151,14 +310,17 @@ export default function BranchDetailPage() {
               <p>{branch.location}</p>
             </div>
             <div>
+              <p className="text-sm font-medium text-muted-foreground">Owner:</p>
+              <p>{branch.owner?.name || '-'}</p>
+            </div>
+            <div>
               <p className="text-sm font-medium text-muted-foreground">Status:</p>
               <p>
                 <span
-                  className={`px-2 py-1 rounded text-xs font-medium ${
-                    branch.status === 'active'
+                  className={`px-2 py-1 rounded text-xs font-medium ${branch.status === 'active'
                       ? 'bg-green-100 text-green-800'
                       : 'bg-red-100 text-red-800'
-                  }`}
+                    }`}
                 >
                   {branch.status === 'active' ? 'Aktif' : 'Nonaktif'}
                 </span>
@@ -166,17 +328,12 @@ export default function BranchDetailPage() {
             </div>
           </div>
           {branch.imageUrl && (
-            <div className="my-4 w-full h-100">
+            <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground mb-2">Gambar:</p>
               <img
-                src={branch.imageUrl || "images/img_not_found.png"}
+                src={branch.imageUrl}
                 alt={branch.name}
-                className="w-full h-full rounded-md object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.onerror = null;
-                  target.src = "images/img_not_found.png";
-                }}
+                className="w-full max-w-md h-auto rounded-md"
               />
             </div>
           )}
@@ -193,44 +350,174 @@ export default function BranchDetailPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Daftar Lapangan</CardTitle>
-              {user?.role === Role.SUPER_ADMIN && (
-                <Button onClick={handleAddField}>
-                  {showAddFieldForm ? 'Tutup Form' : 'Tambah Lapangan'}
-                </Button>
-              )}
+              <Button onClick={handleAddField}>
+                {showAddFieldForm ? 'Tutup Form' : 'Tambah Lapangan'}
+              </Button>
             </CardHeader>
             <CardContent>
               {showAddFieldForm && (
-                <div className="mb-6 p-4 border rounded-md">
+                <div className="mb-6 p-6 border rounded-md bg-gray-50">
                   <h3 className="text-lg font-semibold mb-4">Form Tambah Lapangan</h3>
-                  <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium">Nama Lapangan</label>
-                      <input type="text" className="mt-1 block w-full border rounded p-2" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium">Tipe</label>
-                      <input type="text" className="mt-1 block w-full border rounded p-2" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium">Harga Siang</label>
-                      <input type="number" className="mt-1 block w-full border rounded p-2" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium">Harga Malam</label>
-                      <input type="number" className="mt-1 block w-full border rounded p-2" />
-                    </div>
-                    <div className="md:col-span-2 flex justify-end gap-2">
-                      <Button type="button" onClick={() => setShowAddFieldForm(false)} variant="secondary">
-                        Batal
-                      </Button>
-                      <Button type="submit">Simpan</Button>
-                    </div>
-                  </form>
+                  
+                  {fieldFormError && (
+                    <Alert variant="destructive" className="mb-4">
+                      <AlertDescription>{fieldFormError}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  <Form {...fieldForm}>
+                    <form onSubmit={fieldForm.handleSubmit(onSubmitField)} className="space-y-4">
+                      <FormField
+                        control={fieldForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nama Lapangan</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Masukkan nama lapangan" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={fieldForm.control}
+                          name="typeId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Tipe Lapangan</FormLabel>
+                              <Select 
+                                onValueChange={field.onChange} 
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Pilih tipe lapangan" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {fieldTypes.map((type) => (
+                                    <SelectItem key={type.id} value={type.id.toString()}>
+                                      {type.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={fieldForm.control}
+                          name="status"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Status</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Pilih status" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="available">Tersedia</SelectItem>
+                                  <SelectItem value="maintenance">Pemeliharaan</SelectItem>
+                                  <SelectItem value="closed">Tutup</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={fieldForm.control}
+                          name="priceDay"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Harga Siang (Rp)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  {...field} 
+                                  type="number" 
+                                  placeholder="Masukkan harga siang"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={fieldForm.control}
+                          name="priceNight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Harga Malam (Rp)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  {...field} 
+                                  type="number" 
+                                  placeholder="Masukkan harga malam"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormItem>
+                        <FormLabel>Gambar Lapangan</FormLabel>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Input
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/*"
+                              onChange={handleFileChange}
+                            />
+                            <p className="text-sm text-gray-500 mt-1">
+                              Ukuran maksimal: 5MB. Format: JPG, PNG
+                            </p>
+                          </div>
+                          <div>
+                            {previewUrl && (
+                              <Image
+                                src={previewUrl}
+                                alt="Preview"
+                                width={160}
+                                height={120}
+                                className="mt-2 max-h-30 rounded object-cover"
+                              />
+                            )}
+                          </div>
+                        </div>
+                      </FormItem>
+
+                      <div className="flex justify-end gap-2">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setShowAddFieldForm(false)}
+                        >
+                          Batal
+                        </Button>
+                        <Button type="submit" disabled={isSubmittingField}>
+                          {isSubmittingField ? 'Menyimpan...' : 'Simpan Lapangan'}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
                 </div>
               )}
 
-              {fields.length === 0 ? (
+              {!fields || fields.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Belum ada lapangan di cabang ini
                 </div>
@@ -238,8 +525,7 @@ export default function BranchDetailPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>No</TableHead>
-                      <TableHead>ID Lapangan</TableHead>
+                      <TableHead>ID</TableHead>
                       <TableHead>Nama</TableHead>
                       <TableHead>Tipe</TableHead>
                       <TableHead>Harga (Siang)</TableHead>
@@ -248,9 +534,8 @@ export default function BranchDetailPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {fields.map((field, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{index + 1}</TableCell>
+                    {fields.map((field) => (
+                      <TableRow key={field.id}>
                         <TableCell>{field.id}</TableCell>
                         <TableCell>{field.name}</TableCell>
                         <TableCell>{field.type?.name || '-'}</TableCell>
@@ -262,23 +547,22 @@ export default function BranchDetailPage() {
                         </TableCell>
                         <TableCell>
                           <span
-                            className={`px-2 py-1 rounded text-xs font-medium ${
-                              field.status === 'available'
+                            className={`px-2 py-1 rounded text-xs font-medium ${field.status === 'available'
                                 ? 'bg-green-100 text-green-800'
                                 : field.status === 'booked'
-                                ? 'bg-blue-100 text-blue-800'
-                                : field.status === 'maintenance'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : field.status === 'maintenance'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-red-100 text-red-800'
+                              }`}
                           >
                             {field.status === 'available'
                               ? 'Tersedia'
                               : field.status === 'booked'
-                              ? 'Dibooking'
-                              : field.status === 'maintenance'
-                              ? 'Pemeliharaan'
-                              : 'Tutup'}
+                                ? 'Dibooking'
+                                : field.status === 'maintenance'
+                                  ? 'Pemeliharaan'
+                                  : 'Tutup'}
                           </span>
                         </TableCell>
                       </TableRow>
@@ -297,7 +581,7 @@ export default function BranchDetailPage() {
               <Button onClick={handleAddAdmin}>Tambah Admin</Button>
             </CardHeader>
             <CardContent>
-              {admins.length === 0 ? (
+              {!admins || admins.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Belum ada admin di cabang ini
                 </div>
@@ -305,19 +589,17 @@ export default function BranchDetailPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>No</TableHead>
-                      <TableHead>ID Admin</TableHead>
+                      <TableHead>ID</TableHead>
                       <TableHead>Nama</TableHead>
                       <TableHead>Email</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {admins.map((admin, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{index + 1}</TableCell>
+                    {admins.map((admin) => (
+                      <TableRow key={admin.userId}>
                         <TableCell>{admin.userId}</TableCell>
-                        <TableCell>{admin.user?.name}</TableCell>
-                        <TableCell>{admin.user?.email}</TableCell>
+                        <TableCell>{admin.user.name}</TableCell>
+                        <TableCell>{admin.user.email}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

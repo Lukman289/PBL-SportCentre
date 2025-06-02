@@ -8,25 +8,134 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Role } from '@/types';
+import axiosInstance from '@/config/axios.config';
+import { toast } from 'sonner';
+
+interface CreateUserRequest {
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  role: Role;
+}
+
+interface CreateUserResponse {
+  status: boolean;
+  message: string;
+  data: {
+    id: number;
+    name: string;
+    email: string;
+    phone?: string;
+    role: Role;
+    createdAt: string;
+    branch?: string;
+  };
+}
 
 export default function CreateUserPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
   const [role, setRole] = useState<Role | ''>('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newUser = {
-      name,
-      email,
-      role,
-    };
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
     
-    // Simulasi API (ganti dengan real API call jika ada)
-    console.log('User baru:', newUser);
+    if (!name.trim()) newErrors.name = 'Nama harus diisi';
+    if (!email.trim()) newErrors.email = 'Email harus diisi';
+    if (!password.trim()) newErrors.password = 'Password harus diisi';
+    if (!phone.trim()) newErrors.phone = 'Nomor telepon harus diisi';
+    if (!role) newErrors.role = 'Peran harus dipilih';
+    
+    // Validasi format email
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Format email tidak valid';
+    }
+    
+    // Validasi format telepon (minimal 8 digit angka)
+    if (phone && !/^\d{8,}$/.test(phone)) {
+      newErrors.phone = 'Nomor telepon harus minimal 8 digit angka';
+    }
+    
+    // Validasi password minimal 6 karakter
+    if (password && password.length < 6) {
+      newErrors.password = 'Password minimal 6 karakter';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-    // Redirect ke halaman pengguna setelah simpan
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+    setErrors({});
+
+    try {
+      const payload: CreateUserRequest = {
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        phone: phone.trim(),
+        role: role as Role,
+      };
+
+      const response = await axiosInstance.post<CreateUserResponse>('/users', payload);
+
+      if (response.data.status) {
+        toast.success('User berhasil dibuat');
+        
+        // Reset form
+        setName('');
+        setEmail('');
+        setPassword('');
+        setPhone('');
+        setRole('');
+        
+        // Gunakan setTimeout untuk memastikan toast muncul sebelum redirect
+        setTimeout(() => {
+          // Redirect dengan parameter refresh untuk force update
+          router.push('/dashboard/users?refresh=true');
+        }, 100);
+      } else {
+        toast.error(response.data.message || 'Terjadi kesalahan');
+      }
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      
+      if (error.response?.data?.message) {
+        // Handle specific validation errors from backend
+        if (error.response.data.message.includes('Email sudah digunakan')) {
+          setErrors({ email: 'Email sudah digunakan' });
+        } else if (error.response.data.message.includes('Peran yang diizinkan')) {
+          setErrors({ role: error.response.data.message });
+        } else {
+          toast.error(error.response.data.message);
+        }
+      } else if (error.response?.status === 401) {
+        toast.error('Anda tidak memiliki izin untuk melakukan aksi ini');
+        router.push('/login');
+      } else if (error.response?.status === 403) {
+        toast.error('Anda tidak memiliki akses untuk membuat user dengan role tersebut');
+      } else {
+        toast.error('Terjadi kesalahan saat membuat user');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
     router.push('/dashboard/users');
   };
 
@@ -47,8 +156,10 @@ export default function CreateUserPage() {
                 placeholder="Nama pengguna"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                required
+                className={errors.name ? 'border-red-500' : ''}
+                disabled={isLoading}
               />
+              {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
             </div>
 
             <div>
@@ -59,14 +170,48 @@ export default function CreateUserPage() {
                 placeholder="Email pengguna"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
+                className={errors.email ? 'border-red-500' : ''}
+                disabled={isLoading}
               />
+              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+            </div>
+            
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Password pengguna (minimal 6 karakter)"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={errors.password ? 'border-red-500' : ''}
+                disabled={isLoading}
+              />
+              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+            </div>
+            
+            <div>
+              <Label htmlFor="phone">Nomor Telepon</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="Nomor telepon pengguna"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className={errors.phone ? 'border-red-500' : ''}
+                disabled={isLoading}
+              />
+              {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
             </div>
 
             <div>
               <Label htmlFor="role">Peran</Label>
-              <Select value={role} onValueChange={(val: Role) => setRole(val)}>
-                <SelectTrigger id="role">
+              <Select 
+                value={role} 
+                onValueChange={(val: Role) => setRole(val)}
+                disabled={isLoading}
+              >
+                <SelectTrigger id="role" className={errors.role ? 'border-red-500' : ''}>
                   <SelectValue placeholder="Pilih peran" />
                 </SelectTrigger>
                 <SelectContent>
@@ -76,13 +221,21 @@ export default function CreateUserPage() {
                   <SelectItem value={Role.USER}>Pengguna</SelectItem>
                 </SelectContent>
               </Select>
+              {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => router.push('/dashboard/users')}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleCancel}
+                disabled={isLoading}
+              >
                 Batal
               </Button>
-              <Button type="submit">Simpan</Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? 'Menyimpan...' : 'Simpan'}
+              </Button>
             </div>
           </form>
         </CardContent>

@@ -30,6 +30,11 @@ export interface BranchAdmin {
     location: string;
   };
 }
+export interface BranchDetailResponse {
+  data: Branch; 
+  status: boolean;
+  message?: string;
+}
 
 export interface BranchAdminView {
   id: string;
@@ -53,13 +58,10 @@ export interface BranchView {
 // Interface untuk request dan response
 export interface CreateBranchRequest {
   name: string;
-  address: string;
-  logo?: File;
-  open_time: string;
-  close_time: string;
+  imageUrl?: File;
   location: string;
   ownerId: number;
-  admin_ids?: number[];
+  status : BranchStatus
 }
 
 export interface UpdateBranchRequest {
@@ -67,6 +69,7 @@ export interface UpdateBranchRequest {
   location?: string;
   imageUrl?: string;
   status?: 'active' | 'inactive';
+  ownerId?: number;
 }
 
 export interface BranchListParams {
@@ -108,3 +111,4 @@ export interface BranchAdminListResponse {
     hasPrevPage: boolean;
   };
 }
+

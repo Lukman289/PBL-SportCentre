@@ -1,5 +1,6 @@
 'use client';
 
+import Image from "next/image";
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -66,7 +67,18 @@ export default function Sidebar({ isOpen, role }: SidebarProps) {
       )}
     >
       <div className="flex h-16 items-center border-b border-border px-6">
-        <h2 className="text-xl font-bold text-foreground">Sport Center</h2>
+        <div className="flex items-center gap-2 w-full">
+           <Link href="/" className="flex items-center gap-2 w-full">
+            <div className="relative w-full h-13 mt-1 justify-center"> {/* Sesuaikan ukuran */}
+              <Image
+                src="logo.svg"
+                alt="Sport Center Logo"
+                fill
+                className="object-contain"
+              />
+            </div>
+          </Link>
+        </div>
       </div>
       
       <nav className="mt-6 px-4">

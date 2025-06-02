@@ -7,4 +7,7 @@ export * from './FaqSection';
 export * from './CtaSection';
 export * from './BranchesSection';
 export * from './ContactSection';
-export * from './AnimationUtils'; 
+export * from './AnimationUtils';
+export * from './BusinessStatsSection';
+export * from './JoinStepsSection';
+export * from './FeatureComparisonSection'; 

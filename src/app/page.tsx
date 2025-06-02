@@ -13,7 +13,10 @@ import {
   FaqSection,
   CtaSection,
   BranchesSection,
-  ContactSection
+  ContactSection,
+  BusinessStatsSection,
+  JoinStepsSection,
+  FeatureComparisonSection
 } from "@/components/common";
 
 export default function HomePage() {
@@ -158,43 +161,11 @@ export default function HomePage() {
         bgClass="bg-gradient-to-br from-primary/5 to-primary/10"
       />
 
-      {/* Statistik Bisnis */}
-      <section className="py-20">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Tingkatkan Performa Bisnis Anda</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Hasil nyata yang diperoleh pemilik sport center yang bergabung dengan platform kami
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-all text-center">
-              <h3 className="text-5xl font-bold text-primary mb-2">40%</h3>
-              <p className="text-lg font-medium">Peningkatan Pendapatan</p>
-              <p className="text-muted-foreground">Rata-rata dalam 6 bulan pertama</p>
-            </div>
-            
-            <div className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-all text-center">
-              <h3 className="text-5xl font-bold text-primary mb-2">65%</h3>
-              <p className="text-lg font-medium">Pengurangan Pembatalan</p>
-              <p className="text-muted-foreground">Dengan sistem konfirmasi otomatis</p>
-            </div>
-            
-            <div className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-all text-center">
-              <h3 className="text-5xl font-bold text-primary mb-2">85%</h3>
-              <p className="text-lg font-medium">Efisiensi Operasional</p>
-              <p className="text-muted-foreground">Dengan manajemen terpusat</p>
-            </div>
-            
-            <div className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-all text-center">
-              <h3 className="text-5xl font-bold text-primary mb-2">3x</h3>
-              <p className="text-lg font-medium">Jangkauan Pelanggan</p>
-              <p className="text-muted-foreground">Peningkatan basis pelanggan</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Statistik Bisnis dengan komponen yang lebih menarik */}
+      <BusinessStatsSection />
+
+      {/* Langkah-langkah bergabung dengan desain yang lebih menarik */}
+      <JoinStepsSection />
 
       {/* FAQ untuk pemilik sport center */}
       <FaqSection 
@@ -209,6 +180,9 @@ export default function HomePage() {
       <TestimonialsSection testimonials={testimonials} />
       
       <FaqSection faqs={faqs} />
+      
+      {/* Perbandingan fitur untuk member dan pemilik */}
+      <FeatureComparisonSection />
       
       <CtaSection />
 

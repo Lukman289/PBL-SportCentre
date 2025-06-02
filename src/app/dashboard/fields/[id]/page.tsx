@@ -29,7 +29,7 @@ import { branchApi } from '@/api/branch.api';
 import { Field, FieldType, Branch } from '@/types';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import Image from 'next/image';
-
+import React from 'react';
 const updateFieldSchema = z.object({
     name: z.string().min(3, 'Nama lapangan minimal 3 karakter'),
     typeId: z.string().min(1, 'Tipe lapangan harus dipilih'),
@@ -41,9 +41,10 @@ const updateFieldSchema = z.object({
 
 type UpdateFieldFormValues = z.infer<typeof updateFieldSchema>;
 
-export default function FieldDetailPage({ params }: { params: { id: string } }) {
+export default function FieldDetailPage({ params }: { params: Promise<{ id: string }>    }) {
     const router = useRouter();
-    const fieldId = parseInt(params.id, 10);
+    const { id } = React.use(params);
+    const fieldId = parseInt(id);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -379,6 +380,8 @@ export default function FieldDetailPage({ params }: { params: { id: string } }) 
                                                     src={currentImageUrl}
                                                     alt="Current Image"
                                                     className="w-full h-auto rounded-md"
+                                                    width={500}
+                                                    height={300}
                                                 />
                                                 <p className="text-xs text-center mt-2 text-muted-foreground">
                                                     Gambar saat ini
@@ -399,6 +402,8 @@ export default function FieldDetailPage({ params }: { params: { id: string } }) 
                                                     src={previewUrl}
                                                     alt="Preview"
                                                     className="w-full h-auto rounded-md"
+                                                    width={500}
+                                                    height={300}
                                                 />
                                                 <Button
                                                     type="button"

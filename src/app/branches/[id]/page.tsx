@@ -43,7 +43,7 @@ export default function BranchDetailPage() {
 
         // Perbaikan: Langsung menggunakan getBranchFields yang mengembalikan array lapangan
         const fieldsResponse = await withLoading(fieldApi.getBranchFields(branchId));
-        setFields(fieldsResponse);        
+        setFields(Array.isArray(fieldsResponse.data) ? fieldsResponse.data : []);        
       } catch (err) {
         console.error('Error fetching branch details:', err);
         setError('Gagal memuat data cabang. Silakan coba lagi nanti.');
@@ -88,8 +88,9 @@ export default function BranchDetailPage() {
           <Image
             src={branch.imageUrl || "/images/img_not_found.png"}
             alt={branch.name}
-            fill
-            className="object-cover rounded-lg"
+            width={1200}
+            height={400}
+            className="object-cover rounded-lg w-full h-full"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.onerror = null;
@@ -121,8 +122,9 @@ export default function BranchDetailPage() {
                     <Image
                       src={field.imageUrl || "/images/img_not_found.png"}
                       alt={field.name}
-                      fill
-                      className="object-cover rounded-md"
+                      width={400}
+                      height={140}
+                      className="object-cover rounded-md w-full h-full"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.onerror = null;

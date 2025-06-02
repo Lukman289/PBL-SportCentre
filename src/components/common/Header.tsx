@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/auth/auth.context";
 import { Button } from "@/components/ui/button";
@@ -89,19 +90,15 @@ export function Header() {
       <div className="container px-4 sm:px-6 lg:px-8 mx-auto flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
-            <div className="bg-primary rounded-md p-1.5">
-              <svg
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-5 h-5 text-white"
-              >
-                <path d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm4.75-6a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3zm0 3a.75.75 0 0 0 0 1.5h5.625a.75.75 0 0 0 0-1.5H7zm0 3a.75.75 0 0 0 0 1.5h5.625a.75.75 0 0 0 0-1.5H7zm0 3a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3zm9-3a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 0 1.5h-3a.75.75 0 0 1-.75-.75zm.75 3a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3zm-5.5-12a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-1 0v-11a.5.5 0 0 1 .5-.5z" />
-              </svg>
-            </div>
-            <span className={`font-bold text-xl ${
-              pathname === "/" && !scrolled ? "text-white" : "text-foreground"
-            }`}>Sport Center</span>
-          </Link>
+        <div className="relative w-32 h-32 h-2"> 
+          <Image
+            src="logo.svg"
+            alt="Sport Center Logo"
+            fill
+            className={`object-contain ${!scrolled ? "invert" : ""} transition-all duration-300 ease-in-out`}
+          />
+        </div>
+  </Link>
         </div>
 
         {/* Desktop */}

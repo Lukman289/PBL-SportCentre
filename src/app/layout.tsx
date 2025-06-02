@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster"
 import GlobalLoading from "@/components/ui/GlobalLoading";
 
 export const metadata: Metadata = {
-  title: "Reservasi Sport Center",
+  title: "Jadwal.in - Sport Center",
   description: "Aplikasi reservasi lapangan olahraga terbaik dan terlengkap",
 };
 

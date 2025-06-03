@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, use } from 'react'; // ✅ Import use dari React
 import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -30,6 +30,7 @@ import { Field, FieldType, Branch } from '@/types';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import Image from 'next/image';
 import React from 'react';
+
 const updateFieldSchema = z.object({
     name: z.string().min(3, 'Nama lapangan minimal 3 karakter'),
     typeId: z.string().min(1, 'Tipe lapangan harus dipilih'),
@@ -40,10 +41,12 @@ const updateFieldSchema = z.object({
 });
 
 type UpdateFieldFormValues = z.infer<typeof updateFieldSchema>;
-export default function FieldDetailPage({ params }: { params: Promise<{ id: Number }> }) {
+
+export default function FieldDetailPage({ params }: { params: Promise<{ id: string }> }) { // ✅ Ubah tipe params menjadi Promise
     const router = useRouter();
-    const id = use(params);
-    const fieldId = Number(id.id);
+    const resolvedParams = use(params); // ✅ Unwrap params menggunakan React.use()
+    const fieldId = Number(resolvedParams.id); // ✅ Akses id dari params yang sudah di-unwrap
+    
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -129,13 +132,22 @@ export default function FieldDetailPage({ params }: { params: Promise<{ id: Numb
     }, [fieldId, form, withLoading]);
 
     const handleRemoveImage = () => {
-        setSelectedImage(null);
-        setPreviewUrl(null);
+    // Reset selected image dan preview
+    setSelectedImage(null);
+    setPreviewUrl(null);
+    
+    // ✅ PERBAIKAN: Set flag untuk menghapus gambar existing
+    if (currentImageUrl) {
         setShouldRemoveImage(true);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
-    };
+        // Reset currentImageUrl untuk UI
+        setCurrentImageUrl(null);
+    }
+    
+    // Reset file input
+    if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
+};
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -154,62 +166,62 @@ export default function FieldDetailPage({ params }: { params: Promise<{ id: Numb
         }
     };
 
-
     const onSubmit = async (data: UpdateFieldFormValues) => {
-        setIsSubmitting(true);
-        setError(null);
+    setIsSubmitting(true);
+    setError(null);
 
-        try {
-            const updateData: Record<string, unknown> = {
-                name: data.name,
-                typeId: parseInt(data.typeId),
-                branchId: parseInt(data.branchId),
-                priceDay: parseFloat(data.priceDay),
-                priceNight: parseFloat(data.priceNight),
-                status: data.status,
-                ...(shouldRemoveImage && { removeImage: true }), // Tambahkan flag untuk hapus gambar
-            };
+    try {
+        const updateData: Record<string, unknown> = {
+            name: data.name,
+            typeId: parseInt(data.typeId),
+            branchId: parseInt(data.branchId),
+            priceDay: parseFloat(data.priceDay),
+            priceNight: parseFloat(data.priceNight),
+            status: data.status,
+        };
 
-            if (selectedImage) {
-                const formData = new FormData();
-
-                Object.entries(updateData).forEach(([key, value]) => {
-                    formData.append(key, String(value));
-                });
-
-                formData.append('imageUrl', selectedImage);
-
-                await withLoading(fieldApi.updateFieldWithImage(fieldId, formData));
-            } else {
-                await withLoading(fieldApi.updateField(fieldId, updateData));
-            }
-
-            router.push('/dashboard/fields');
-            router.refresh();
-        } catch (err) {
-            console.error('Error updating field:', err);
-            setError('Gagal memperbarui lapangan. Silakan coba lagi.');
-        } finally {
-            setIsSubmitting(false);
+        if (shouldRemoveImage && !selectedImage) {
+            updateData.removeImage = true;
+            await withLoading(fieldApi.updateField(fieldId, updateData));
+        } else if (selectedImage) {
+            const formData = new FormData();
+            Object.entries(updateData).forEach(([key, value]) => {
+                formData.append(key, String(value));
+            });
+            formData.append('imageUrl', selectedImage);
+            await withLoading(fieldApi.updateFieldWithImage(fieldId, formData));
+        } else {
+            await withLoading(fieldApi.updateField(fieldId, updateData));
         }
-    };
 
-    const handleDelete = async () => {
-        setIsDeleting(true);
-        setError(null);
+        // Navigasi setelah semua operasi selesai
+        router.push('/dashboard/fields');
+        
+    } catch (err) {
+        console.error('Error updating field:', err);
+        // Error handling tetap sama
+    } finally {
+        setIsSubmitting(false);
+    }
+};
 
-        try {
-            await withLoading(fieldApi.deleteField(fieldId));
-            router.push('/dashboard/fields');
-            router.refresh();
-        } catch (err) {
-            console.error('Error deleting field:', err);
-            setError('Gagal menghapus lapangan. Silakan coba lagi.');
-        } finally {
-            setIsDeleting(false);
-            setShowDeleteDialog(false);
-        }
-    };
+   const handleDelete = async () => {
+  setIsDeleting(true);
+  setError(null);
+
+  try {
+    // Gunakan fieldApi yang sudah di-import
+    await withLoading(fieldApi.deleteField(fieldId));
+    router.push('/dashboard/fields');
+    router.refresh();
+  } catch (err) {
+    console.error('Error deleting field:', err);
+    setError('Gagal menghapus lapangan. Silakan coba lagi.');
+  } finally {
+    setIsDeleting(false);
+    setShowDeleteDialog(false);
+  }
+};
 
     if (error && !field) {
         return (

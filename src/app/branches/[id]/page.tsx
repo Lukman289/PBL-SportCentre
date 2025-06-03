@@ -43,7 +43,7 @@ export default function BranchDetailPage() {
 
         // Perbaikan: Langsung menggunakan getBranchFields yang mengembalikan array lapangan
         const fieldsResponse = await withLoading(fieldApi.getBranchFields(branchId));
-        setFields(fieldsResponse);        
+        setFields(fieldsResponse.data);        
       } catch (err) {
         console.error('Error fetching branch details:', err);
         setError('Gagal memuat data cabang. Silakan coba lagi nanti.');
@@ -128,6 +128,7 @@ export default function BranchDetailPage() {
                         target.onerror = null;
                         target.src = "/images/img_not_found.png";
                       }}
+                      priority
                     />
                   </div>
                   <div className="space-y-2">

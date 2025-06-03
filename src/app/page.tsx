@@ -53,7 +53,7 @@ export default function HomePage() {
     const fetchTotalFields = async () => {
       try {
         const response = await fieldApi.getAllFields();
-        setTotalFields(response.length || 0);
+        setTotalFields(response.data.length || 0);
       } catch (error) {
         console.error("Error fetching total fields:", error);
       }

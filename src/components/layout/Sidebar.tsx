@@ -69,10 +69,11 @@ export default function Sidebar({ isOpen, role }: SidebarProps) {
       <div className="flex h-16 items-center border-b border-border px-6">
         <div className="flex items-center gap-2 w-full">
            <Link href="/" className="flex items-center gap-2 w-full">
-            <div className="relative w-full h-13 mt-1 justify-center"> {/* Sesuaikan ukuran */}
+            <div className="relative w-full h-13 mt-1 justify-center">
               <Image
-                src="logo.svg"
+                src="/logo.svg"
                 alt="Sport Center Logo"
+                priority
                 fill
                 className="object-contain"
               />

@@ -111,7 +111,7 @@ export default function BranchDetailPage() {
         try {
           const fieldsData = await fieldApi.getFieldsByBranchId(branchId);
           console.log('Fields response:', fieldsData);
-          setFields(Array.isArray(fieldsData) ? fieldsData : []);
+          setFields(Array.isArray(fieldsData.data) ? fieldsData.data : []);
         } catch (err) {
           console.error('Error fetching fields:', err);
           setFields([]);

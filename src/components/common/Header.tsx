@@ -67,15 +67,16 @@ export function Header() {
     { href: "/", label: "Beranda", icon: <Home size={16} /> },
     { href: "/branches", label: "Cabang", icon: <MapPin size={16} /> },
     { href: "/fields", label: "Lapangan", icon: <MapPin size={16} /> },
+    { href: "/bookings", label: "Pemesanan", icon: <Calendar size={16} /> },
   ];
 
-  if (isAuthenticated) {
-    navLinks.push({
-      href: "/bookings",
-      label: "Pemesanan",
-      icon: <Calendar size={16} />,
-    });
-  }
+  // if (isAuthenticated) {
+  //   navLinks.push({
+  //     href: "/bookings",
+  //     label: "Pemesanan",
+  //     icon: <Calendar size={16} />,
+  //   });
+  // }
 
   return (
     <header
@@ -90,15 +91,16 @@ export function Header() {
       <div className="container px-4 sm:px-6 lg:px-8 mx-auto flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
-        <div className="relative w-32 h-32 h-2"> 
-          <Image
-            src="logo.svg"
-            alt="Sport Center Logo"
-            fill
-            className={`object-contain ${!scrolled ? "invert" : ""} transition-all duration-300 ease-in-out`}
-          />
-        </div>
-  </Link>
+            <div className="relative w-32 h-32"> 
+              <Image
+                src="/logo.svg"
+                alt="Sport Center Logo"
+                priority
+                fill
+                className={`object-contain ${pathname === "/" && !scrolled ? "invert" : ""} transition-all duration-300 ease-in-out`}
+              />
+            </div>
+        </Link>
         </div>
 
         {/* Desktop */}

@@ -1,6 +1,7 @@
 import axiosInstance from '../config/axios.config';
 import { LoginRequest, RegisterRequest, UserWithToken } from '../types';
 import { hasAuthCookie } from '@/utils/cookie.utils';
+import Cookies from 'js-cookie';
 
 // Interface untuk error Axios
 interface AxiosErrorResponse {
@@ -63,14 +64,19 @@ class AuthApi {
       });
       
       // Menghapus is_logged_in cookie dari client-side
-      document.cookie = "is_logged_in=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      // Next.js tidak mendukung operasi document.cookie di server-side
+      if (typeof window !== 'undefined') {
+        Cookies.remove('is_logged_in', { path: '/' });
+      }
       
       // Cookie akan dihapus oleh server
       return response.data;
     } catch (error) {
       console.error('Logout error:', error);
       // Tetap menghapus cookie meskipun terjadi error
-      document.cookie = "is_logged_in=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      if (typeof window !== 'undefined') {
+        Cookies.remove('is_logged_in', { path: '/' });
+      }
       throw error;
     }
   }
@@ -99,7 +105,9 @@ class AuthApi {
       // Jika error 401, hapus cookie klien supaya konsisten
       const axiosError = error as AxiosErrorResponse;
       if (axiosError.response?.status === 401) {
-        document.cookie = "is_logged_in=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        if (typeof window !== 'undefined') {
+          Cookies.remove('is_logged_in', { path: '/' });
+        }
       }
       
       return null;
@@ -126,7 +134,9 @@ class AuthApi {
       // Jika error 401, hapus cookie klien supaya konsisten
       const axiosError = error as AxiosErrorResponse;
       if (axiosError.response?.status === 401) {
-        document.cookie = "is_logged_in=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        if (typeof window !== 'undefined') {
+          Cookies.remove('is_logged_in', { path: '/' });
+        }
       }
       
       throw error;

@@ -1,21 +1,16 @@
+import Cookies from 'js-cookie';
+
 /**
  * Cek apakah cookie dengan nama tertentu ada
  * @param name Nama cookie yang dicari
  * @returns boolean true jika cookie ada, false jika tidak
  */
 export const hasCookie = (name: string): boolean => {
-  if (typeof document === 'undefined') {
-    return false; // Jika berjalan di server, tidak ada cookie
+  if (typeof window === 'undefined') {
+    return false; 
   }
   
-  const cookies = document.cookie.split(';');
-  for (let i = 0; i < cookies.length; i++) {
-    const cookie = cookies[i].trim();
-    if (cookie.startsWith(name + '=')) {
-      return true;
-    }
-  }
-  return false;
+  return Cookies.get(name) !== undefined;
 };
 
 /**
@@ -23,13 +18,38 @@ export const hasCookie = (name: string): boolean => {
  * @returns boolean true jika ada cookie auth, false jika tidak
  */
 export const hasAuthCookie = (): boolean => {
-  // Gunakan cookie penanda is_logged_in yang bisa diakses JavaScript
   return hasCookie('is_logged_in');
+};
+
+/**
+ * Mengatur cookie is_logged_in secara manual
+ */
+export const setIsLoggedInCookie = (): void => {
+  if (typeof window === 'undefined') {
+    return; 
+  }
+  Cookies.set('is_logged_in', 'true', { 
+    expires: 1/24, 
+    path: '/' 
+  });
+};
+
+/**
+ * Menghapus cookie is_logged_in secara manual
+ */
+export const removeIsLoggedInCookie = (): void => {
+  if (typeof window === 'undefined') {
+    return; 
+  }
+  
+  Cookies.remove('is_logged_in', { path: '/' });
 };
 
 const cookieUtils = {
   hasCookie,
-  hasAuthCookie
+  hasAuthCookie,
+  setIsLoggedInCookie,
+  removeIsLoggedInCookie
 };
 
 export default cookieUtils; 

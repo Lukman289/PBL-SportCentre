@@ -19,6 +19,7 @@ export default function HistoriesPage() {
   const userId = user?.user?.id || 0; 
 
   useEffect(() => {
+    if (!userId || userId === 0) return;
     const fetchBookings = async () => {
       setLoading(true);
       setError(null);
@@ -113,7 +114,7 @@ export default function HistoriesPage() {
             <CardHeader className="pb-2">
               <CardTitle className="flex justify-between items-center">
                 <span>Booking #{booking.id}</span>
-                <Badge className={getStatusColor(booking.payment?.status)}>
+                <Badge className={`${getStatusColor(booking.payment?.status)} pointer-events-none`}>
                   {getStatusText(booking.payment?.status)}
                 </Badge>
               </CardTitle>
@@ -126,7 +127,9 @@ export default function HistoriesPage() {
                 </div>
                 <div>
                   <span className="text-sm text-gray-500">Waktu:</span>
-                  <p>{booking.startTime} - {booking.endTime}</p>
+                  <p>
+                    {format(new Date(booking.startTime), 'HH:mm')} - {format(new Date(booking.endTime), 'HH:mm')}
+                  </p>
                 </div>
                 {booking.payment && (
                   <div>

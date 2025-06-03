@@ -56,6 +56,10 @@ export default function FieldReviewsClient({ fieldId }: { fieldId: number }) {
       stars.push(<StarHalf key="half" fill="currentColor" size={18} className="text-yellow-500" />);
     }
 
+    while (stars.length < 5) {
+      stars.push(<Star key={`empty-${stars.length}`} fill="none" size={18} className="text-gray-300" />);
+    }
+
     return stars;
   };
 
@@ -70,6 +74,7 @@ export default function FieldReviewsClient({ fieldId }: { fieldId: number }) {
                 {format(new Date(review.createdAt), 'dd MMM yyyy', { locale: id })}
               </span>
             </div>
+            <h3 className="text-lg font-semibold mb-1">{review.user?.name || 'Pengguna'}</h3>
             {review.review && <p className="text-gray-700">{review.review}</p>}
           </CardContent>
         </Card>

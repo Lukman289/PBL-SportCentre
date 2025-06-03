@@ -311,7 +311,7 @@ class BookingApi {
    */
   async cancelBooking(id: number): Promise<{ message: string }> {
     try {
-      const response = await axiosInstance.post<{ message: string }>(`/bookings/${id}/cancel`);
+      const response = await axiosInstance.delete<{ message: string }>(`/bookings/bookings/${id}`);
       return response.data;
     } catch (error) {
       console.error(`Error cancelling booking with ID ${id}:`, error);

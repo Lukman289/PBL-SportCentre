@@ -136,14 +136,13 @@ export default function FieldDetailPage() {
             </div>
           </div>
 
-          <div className="flex flex-row justify-between">
-            <div className="mt-10 w-auto">
-              <h2 className="text-2xl font-bold mb-6">Jadwal Ketersediaan</h2>
-              <FieldAvailabilityClient field={field}/>
+          <div className="flex flex-col gap-10 md:flex-row md:gap-8 mt-10">
+            <div className="md:w-1/2 w-full bg-white rounded-lg shadow p-6">
+              <h2 className="text-2xl font-bold mb-4">Jadwal Ketersediaan</h2>
+              <FieldAvailabilityClient field={field} />
             </div>
-
-            <div className="mt-10 w-[50%]">
-              <h2 className="text-2xl font-bold mb-6">Ulasan</h2>
+            <div className="md:w-1/2 w-full bg-white rounded-lg shadow p-6">
+              <h2 className="text-2xl font-bold mb-4">Ulasan</h2>
               <FieldReviewsClient fieldId={field.id} />
             </div>
           </div>

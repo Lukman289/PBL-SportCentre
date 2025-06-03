@@ -130,6 +130,7 @@ export default function BranchDetailPage() {
                         target.onerror = null;
                         target.src = "/images/img_not_found.png";
                       }}
+                      priority
                     />
                   </div>
                   <div className="space-y-2">

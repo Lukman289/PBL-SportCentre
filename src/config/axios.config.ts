@@ -1,9 +1,11 @@
 'use client';
 
 import axios from 'axios';
+import { useAuth } from "@/context/auth/auth.context";
 
 // Gunakan relative URL untuk memanfaatkan proxy di next.config.ts -chatgpt
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+
 
 export const axiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -25,6 +27,7 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
+    const { isAuthenticated } = useAuth();
     const originalRequest = error.config;
     
     // Jangan coba refresh token jika error dari endpoint auth/status atau auth/login
@@ -50,7 +53,7 @@ axiosInstance.interceptors.response.use(
           return axiosInstance(originalRequest);
         }
       } catch (refreshError) {
-        if (typeof window !== 'undefined') {
+        if (!isAuthenticated) {
           window.location.href = '/auth/login';
         }
         return Promise.reject(refreshError);

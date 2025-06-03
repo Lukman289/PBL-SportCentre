@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -29,6 +29,7 @@ import { branchApi } from '@/api/branch.api';
 import { Field, FieldType, Branch } from '@/types';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import Image from 'next/image';
+import { use } from 'react';
 
 const updateFieldSchema = z.object({
     name: z.string().min(3, 'Nama lapangan minimal 3 karakter'),
@@ -41,9 +42,10 @@ const updateFieldSchema = z.object({
 
 type UpdateFieldFormValues = z.infer<typeof updateFieldSchema>;
 
-export default function FieldDetailPage({ params }: { params: { id: string } }) {
+export default function FieldDetailPage({ params }: { params: Promise<{ id: Number }> }) {
     const router = useRouter();
-    const fieldId = parseInt(params.id, 10);
+    const id = use(params);
+    const fieldId = Number(id.id);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -379,6 +381,8 @@ export default function FieldDetailPage({ params }: { params: { id: string } }) 
                                                     src={currentImageUrl}
                                                     alt="Current Image"
                                                     className="w-full h-auto rounded-md"
+                                                    width={160}
+                                                    height={160}
                                                 />
                                                 <p className="text-xs text-center mt-2 text-muted-foreground">
                                                     Gambar saat ini

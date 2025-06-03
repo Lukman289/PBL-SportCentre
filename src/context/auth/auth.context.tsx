@@ -3,9 +3,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Role } from '@/types';
 import { authApi } from '@/api/auth.api';
-import { hasAuthCookie } from '@/utils/cookie.utils';
+import { hasAuthCookie, setIsLoggedInCookie } from '@/utils/cookie.utils';
+import { useRouter } from 'next/navigation';
+import { createAxiosResponseInterceptor } from '@/config/axios.config';
 
-// Interface untuk error Axios
 interface AxiosErrorResponse {
   response?: {
     status?: number;
@@ -37,23 +38,30 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    createAxiosResponseInterceptor(router);
+  }, [router]);
 
   useEffect(() => {
     const initAuth = async () => {
       setIsLoading(true);
       try {
-        // Log status cookie untuk debugging
-        console.log("Is logged in cookie exists:", hasAuthCookie());
+        console.log("logged? :", hasAuthCookie());
         
         if (hasAuthCookie()) {
-          const authData = await authApi.getAuthStatus();
-          if (authData && authData.user) {
-            setUser(authData.user);
-          } else {
-            // Jika response sukses tapi tidak ada user
+          try {
+            const authData = await authApi.getAuthStatus();
+            if (authData && authData.user) {
+              setUser(authData.user);
+              setIsLoggedInCookie();
+            } else {
+              setUser(null);
+            }
+          } catch (error) {
+            console.error('Error fetching auth status:', error);
             setUser(null);
-            // Force hard refresh halaman untuk membersihkan state jika ada inkonsistensi
-            window.location.reload();
           }
         } else {
           setUser(null);
@@ -77,7 +85,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(true);
     try {
       const authData = await authApi.login({ identifier, password });
-      setUser(authData.user);
+      if (authData && authData.user) {
+        console.log("Login berhasil:", authData.user);
+        setUser(authData.user);
+        setIsLoggedInCookie();
+      } else {
+        console.error("Login gagal: Tidak ada data user");
+        setUser(null);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -89,8 +107,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const userData = { name, email, password, phone, role };
       const response = await authApi.register(userData);
       if (response && response.user) {
-        // Register berhasil tapi tidak langsung login
-        // Login dilakukan di halaman login
+        router.push('/auth/login');
       }
     } finally {
       setIsLoading(false);
@@ -104,14 +121,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Set user ke null untuk memastikan keadaan tidak terautentikasi
       setUser(null);
       
-      // Force hard refresh halaman untuk membersihkan state
-      window.location.href = '/auth/login';
+      console.log("Logout berhasil, mengarahkan ke halaman login");
+      router.push('/auth/login');
     } catch (error) {
       console.error('Logout error:', error);
-      // Tetap set user ke null bahkan jika terjadi error
       setUser(null);
-      // Force hard refresh halaman untuk membersihkan state
-      window.location.href = '/auth/login';
+      router.push('/auth/login');
     } finally {
       setIsLoading(false);
     }

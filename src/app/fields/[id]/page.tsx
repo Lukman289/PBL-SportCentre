@@ -13,7 +13,8 @@ import Image from 'next/image';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 
 export default function FieldDetailPage() {
-  const params = useParams<{ id: string }>();
+  const params = useParams();
+  const fieldIdParam = params?.id as string;
   const [field, setField] = useState<Field | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +34,7 @@ export default function FieldDetailPage() {
         setError(null);
         
         try {
-          const fieldId = parseInt(params.id);
+          const fieldId = parseInt(fieldIdParam);
           const fieldResponse = await withLoading(fieldApi.getFieldById(fieldId));
           if (fieldResponse) {
             setField(Array.isArray(fieldResponse) ? fieldResponse[0] : fieldResponse);
@@ -50,7 +51,7 @@ export default function FieldDetailPage() {
       };
 
       fetchField();
-    }, [params.id]);
+    }, [fieldIdParam]);
 
   if (error) {
     return (
@@ -88,16 +89,16 @@ export default function FieldDetailPage() {
             <div className="relative h-64 md:h-80 rounded-lg overflow-hidden">
               <Image
                 src={field.imageUrl || "/images/img_not_found.png"}
+                alt={field.name}
+                className="h-full w-full object-cover"
+                width={500}
+                height={300}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.onerror = null;
                   target.src = "/images/img_not_found.png";
                   target.className = "h-full w-full object-contain";
                 }}
-                alt={field.name}
-                className="h-full w-full object-cover"
-                width={500}
-                height={300}
               />
             </div>
             <div>

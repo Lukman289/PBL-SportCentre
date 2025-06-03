@@ -29,8 +29,7 @@ import { branchApi } from '@/api/branch.api';
 import { Field, FieldType, Branch } from '@/types';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import Image from 'next/image';
-import { use } from 'react';
-
+import React from 'react';
 const updateFieldSchema = z.object({
     name: z.string().min(3, 'Nama lapangan minimal 3 karakter'),
     typeId: z.string().min(1, 'Tipe lapangan harus dipilih'),
@@ -41,7 +40,6 @@ const updateFieldSchema = z.object({
 });
 
 type UpdateFieldFormValues = z.infer<typeof updateFieldSchema>;
-
 export default function FieldDetailPage({ params }: { params: Promise<{ id: Number }> }) {
     const router = useRouter();
     const id = use(params);
@@ -403,6 +401,8 @@ export default function FieldDetailPage({ params }: { params: Promise<{ id: Numb
                                                     src={previewUrl}
                                                     alt="Preview"
                                                     className="w-full h-auto rounded-md"
+                                                    width={500}
+                                                    height={300}
                                                 />
                                                 <Button
                                                     type="button"

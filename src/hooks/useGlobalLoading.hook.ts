@@ -1,35 +1,41 @@
 'use client';
 
 import { useCallback } from 'react';
-import { useLoading } from '@/context/loading/loading.context';
 
+/**
+ * Hook dummy untuk kompatibilitas dengan kode lama.
+ * Tidak melakukan apa-apa karena loading ditangani oleh NextTopLoader.
+ */
 export default function useGlobalLoading() {
-  const { isLoading, startLoading, stopLoading } = useLoading();
-
   const showLoading = useCallback(() => {
-    startLoading();
-  }, [startLoading]);
+    // NextTopLoader otomatis menangani loading
+  }, []);
 
   const hideLoading = useCallback(() => {
-    stopLoading();
-  }, [stopLoading]);
+    // NextTopLoader otomatis menangani loading
+  }, []);
+
+  const updateProgress = useCallback(() => {
+    // NextTopLoader otomatis menangani progress
+  }, []);
 
   const withLoading = useCallback(
     async <T,>(promise: Promise<T>): Promise<T> => {
       try {
-        startLoading();
         return await promise;
-      } finally {
-        stopLoading();
+      } catch (error) {
+        throw error;
       }
     },
-    [startLoading, stopLoading]
+    []
   );
 
   return {
-    isLoading,
+    isLoading: false,
+    progress: 0,
     showLoading,
     hideLoading,
+    updateProgress,
     withLoading
   };
 } 

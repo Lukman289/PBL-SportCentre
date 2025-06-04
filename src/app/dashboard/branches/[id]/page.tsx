@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/context/auth/auth.context';
 import { branchApi } from '@/api/branch.api';
 import { fieldApi } from '@/api/field.api';
@@ -50,6 +51,14 @@ interface BranchAdmin {
   };
 }
 
+// Interface untuk pagination
+interface PaginationData<T> {
+  data: T[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
 // Validasi form untuk tambah lapangan
 const createFieldSchema = z.object({
   name: z.string().min(3, 'Nama lapangan minimal 3 karakter'),
@@ -61,30 +70,115 @@ const createFieldSchema = z.object({
 
 type CreateFieldFormValues = z.infer<typeof createFieldSchema>;
 
+// Komponen Pagination
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  totalItems: number;
+  itemsPerPage: number;
+}
+
+const Pagination = ({ currentPage, totalPages, onPageChange, totalItems, itemsPerPage }: PaginationProps) => {
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+  return (
+    <div className="flex items-center justify-between px-2 py-4">
+      <div className="text-sm text-muted-foreground">
+        Menampilkan {startItem}-{endItem} dari {totalItems} item
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage <= 1}
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Sebelumnya
+        </Button>
+
+        <div className="flex items-center space-x-1">
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            let pageNumber;
+            if (totalPages <= 5) {
+              pageNumber = i + 1;
+            } else if (currentPage <= 3) {
+              pageNumber = i + 1;
+            } else if (currentPage >= totalPages - 2) {
+              pageNumber = totalPages - 4 + i;
+            } else {
+              pageNumber = currentPage - 2 + i;
+            }
+
+            return (
+              <Button
+                key={pageNumber}
+                variant={currentPage === pageNumber ? "default" : "outline"}
+                size="sm"
+                onClick={() => onPageChange(pageNumber)}
+                className="w-8 h-8 p-0"
+              >
+                {pageNumber}
+              </Button>
+            );
+          })}
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages}
+        >
+          Selanjutnya
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 export default function BranchDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const { user } = useAuth();
   const { showLoading, hideLoading } = useGlobalLoading();
-  
+
   // State untuk branch data
   const [branch, setBranch] = useState<Branch | null>(null);
-  const [fields, setFields] = useState<Field[]>([]);
-  const [admins, setAdmins] = useState<BranchAdmin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
+  // State untuk fields pagination
+  const [fields, setFields] = useState<Field[]>([]);
+  const [fieldsTotal, setFieldsTotal] = useState(0);
+  const [fieldsCurrentPage, setFieldsCurrentPage] = useState(1);
+  const [fieldsTotalPages, setFieldsTotalPages] = useState(1);
+  const [fieldsLoading, setFieldsLoading] = useState(false);
+  const fieldsPerPage = 5;
+
+  // State untuk admins pagination
+  const [admins, setAdmins] = useState<BranchAdmin[]>([]);
+  const [adminsTotal, setAdminsTotal] = useState(0);
+  const [adminsCurrentPage, setAdminsCurrentPage] = useState(1);
+  const [adminsTotalPages, setAdminsTotalPages] = useState(1);
+  const [adminsLoading, setAdminsLoading] = useState(false);
+  const adminsPerPage = 5;
+
   // State untuk form tambah lapangan
   const [showAddFieldForm, setShowAddFieldForm] = useState(false);
   const [fieldTypes, setFieldTypes] = useState<FieldType[]>([]);
   const [isSubmittingField, setIsSubmittingField] = useState(false);
   const [fieldFormError, setFieldFormError] = useState<string | null>(null);
-  
+
   // State untuk file handling
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const branchId = parseInt(params.id as string);
 
   // Form untuk tambah lapangan
@@ -99,6 +193,62 @@ export default function BranchDetailPage() {
     },
   });
 
+  // Fetch fields dengan pagination
+  const fetchFields = async (page: number = 1) => {
+    setFieldsLoading(true);
+    try {
+      // Simulasi API call dengan pagination
+      // Ganti dengan actual API call yang mendukung pagination
+      const fieldsData = await fieldApi.getFieldsByBranchId(branchId);
+      const allFields = Array.isArray(fieldsData.data) ? fieldsData.data : [];
+
+      // Client-side pagination (idealnya dilakukan di server)
+      const startIndex = (page - 1) * fieldsPerPage;
+      const endIndex = startIndex + fieldsPerPage;
+      const paginatedFields = allFields.slice(startIndex, endIndex);
+
+      setFields(paginatedFields);
+      setFieldsTotal(allFields.length);
+      setFieldsTotalPages(Math.ceil(allFields.length / fieldsPerPage));
+      setFieldsCurrentPage(page);
+    } catch (err) {
+      console.error('Error fetching fields:', err);
+      setFields([]);
+      setFieldsTotal(0);
+      setFieldsTotalPages(1);
+    } finally {
+      setFieldsLoading(false);
+    }
+  };
+
+  // Fetch admins dengan pagination
+  const fetchAdmins = async (page: number = 1) => {
+    setAdminsLoading(true);
+    try {
+      // Simulasi API call dengan pagination
+      // Ganti dengan actual API call yang mendukung pagination
+      const adminsData = await branchApi.getBranchAdmins(branchId);
+      const allAdmins = Array.isArray(adminsData.data) ? adminsData.data : [];
+
+      // Client-side pagination (idealnya dilakukan di server)
+      const startIndex = (page - 1) * adminsPerPage;
+      const endIndex = startIndex + adminsPerPage;
+      const paginatedAdmins = allAdmins.slice(startIndex, endIndex);
+
+      setAdmins(paginatedAdmins);
+      setAdminsTotal(allAdmins.length);
+      setAdminsTotalPages(Math.ceil(allAdmins.length / adminsPerPage));
+      setAdminsCurrentPage(page);
+    } catch (err) {
+      console.error('Error fetching admins:', err);
+      setAdmins([]);
+      setAdminsTotal(0);
+      setAdminsTotalPages(1);
+    } finally {
+      setAdminsLoading(false);
+    }
+  };
+
   // Fetch data cabang
   useEffect(() => {
     const fetchData = async () => {
@@ -108,26 +258,18 @@ export default function BranchDetailPage() {
         const branchData = await branchApi.getBranchById(branchId);
         setBranch(Array.isArray(branchData.data) ? branchData.data[0] : branchData.data);
 
-        try {
-          const fieldsData = await fieldApi.getFieldsByBranchId(branchId);
-          console.log('Fields response:', fieldsData);
-          setFields(Array.isArray(fieldsData.data) ? fieldsData.data : []);
-        } catch (err) {
-          console.error('Error fetching fields:', err);
-          setFields([]);
-        }
-
-        const adminsData = await branchApi.getBranchAdmins(branchId);
-        setAdmins(Array.isArray(adminsData.data) ? adminsData.data : []);
-
         // Fetch field types untuk form
         const fieldTypeResponse = await fieldApi.getFieldTypes();
         setFieldTypes(fieldTypeResponse || []);
+
+        // Fetch fields dan admins dengan pagination
+        await Promise.all([
+          fetchFields(1),
+          fetchAdmins(1)
+        ]);
       } catch (err) {
         console.error('Error fetching branch details:', err);
         setError('Gagal memuat data cabang. Silakan coba lagi.');
-        setAdmins([]);
-        setFields([]);
       } finally {
         setIsLoading(false);
       }
@@ -149,7 +291,7 @@ export default function BranchDetailPage() {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedImage(file);
-      
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewUrl(reader.result as string);
@@ -170,7 +312,7 @@ export default function BranchDetailPage() {
 
       const selectedTypeId = parseInt(data.typeId);
       const selectedType = fieldTypes.find(type => type.id === selectedTypeId);
-      
+
       if (!selectedType) {
         throw new Error('Tipe lapangan tidak ditemukan');
       }
@@ -190,7 +332,7 @@ export default function BranchDetailPage() {
 
       if (selectedImage) {
         const formData = new FormData();
-        
+
         Object.entries(submitData).forEach(([key, value]) => {
           if (key === 'type') {
             formData.append(key, JSON.stringify(value));
@@ -198,23 +340,22 @@ export default function BranchDetailPage() {
             formData.append(key, String(value));
           }
         });
-        
+
         formData.append('imageUrl', selectedImage);
         await fieldApi.createFieldWithImage(formData);
       } else {
         await fieldApi.createField(submitData);
       }
-      
+
       // Reset form dan refresh data
       fieldForm.reset();
       setSelectedImage(null);
       setPreviewUrl(null);
       setShowAddFieldForm(false);
-      
-      // Refresh fields data
-      const fieldsData = await fieldApi.getFieldsByBranchId(branchId);
-      setFields(Array.isArray(fieldsData) ? fieldsData : []);
-      
+
+      // Refresh fields data dengan pagination
+      await fetchFields(fieldsCurrentPage);
+
     } catch (error) {
       console.error('Error creating field:', error);
       setFieldFormError('Gagal membuat lapangan. Silakan coba lagi.');
@@ -224,8 +365,17 @@ export default function BranchDetailPage() {
     }
   };
 
+  // Handle pagination changes
+  const handleFieldsPageChange = (page: number) => {
+    fetchFields(page);
+  };
+
+  const handleAdminsPageChange = (page: number) => {
+    fetchAdmins(page);
+  };
+
   const handleEdit = () => {
-    router.push(`/dashboard/branches/${branchId}/edit`);
+    // router.push(/dashboard/branches/${branchId}/edit);
   };
 
   const handleDelete = async () => {
@@ -256,7 +406,7 @@ export default function BranchDetailPage() {
   };
 
   const handleAddAdmin = () => {
-    router.push(`/dashboard/branches/${branchId}/add-admin`);
+    // router.push(/dashboard/branches/${branchId}/add-admin);
   };
 
   if (isLoading) {
@@ -318,8 +468,8 @@ export default function BranchDetailPage() {
               <p>
                 <span
                   className={`px-2 py-1 rounded text-xs font-medium ${branch.status === 'active'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
                     }`}
                 >
                   {branch.status === 'active' ? 'Aktif' : 'Nonaktif'}
@@ -358,7 +508,7 @@ export default function BranchDetailPage() {
               {showAddFieldForm && (
                 <div className="mb-6 p-6 border rounded-md bg-gray-50">
                   <h3 className="text-lg font-semibold mb-4">Form Tambah Lapangan</h3>
-                  
+
                   {fieldFormError && (
                     <Alert variant="destructive" className="mb-4">
                       <AlertDescription>{fieldFormError}</AlertDescription>
@@ -388,8 +538,8 @@ export default function BranchDetailPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Tipe Lapangan</FormLabel>
-                              <Select 
-                                onValueChange={field.onChange} 
+                              <Select
+                                onValueChange={field.onChange}
                                 defaultValue={field.value}
                               >
                                 <FormControl>
@@ -442,9 +592,9 @@ export default function BranchDetailPage() {
                             <FormItem>
                               <FormLabel>Harga Siang (Rp)</FormLabel>
                               <FormControl>
-                                <Input 
-                                  {...field} 
-                                  type="number" 
+                                <Input
+                                  {...field}
+                                  type="number"
                                   placeholder="Masukkan harga siang"
                                 />
                               </FormControl>
@@ -460,9 +610,9 @@ export default function BranchDetailPage() {
                             <FormItem>
                               <FormLabel>Harga Malam (Rp)</FormLabel>
                               <FormControl>
-                                <Input 
-                                  {...field} 
-                                  type="number" 
+                                <Input
+                                  {...field}
+                                  type="number"
                                   placeholder="Masukkan harga malam"
                                 />
                               </FormControl>
@@ -501,9 +651,9 @@ export default function BranchDetailPage() {
                       </FormItem>
 
                       <div className="flex justify-end gap-2">
-                        <Button 
-                          type="button" 
-                          variant="outline" 
+                        <Button
+                          type="button"
+                          variant="outline"
                           onClick={() => setShowAddFieldForm(false)}
                         >
                           Batal
@@ -517,58 +667,71 @@ export default function BranchDetailPage() {
                 </div>
               )}
 
-              {!fields || fields.length === 0 ? (
+              {fieldsLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                </div>
+              ) : !fields || fields.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Belum ada lapangan di cabang ini
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Nama</TableHead>
-                      <TableHead>Tipe</TableHead>
-                      <TableHead>Harga (Siang)</TableHead>
-                      <TableHead>Harga (Malam)</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {fields.map((field) => (
-                      <TableRow key={field.id}>
-                        <TableCell>{field.id}</TableCell>
-                        <TableCell>{field.name}</TableCell>
-                        <TableCell>{field.type?.name || '-'}</TableCell>
-                        <TableCell>
-                          Rp {parseInt(field.priceDay.toString()).toLocaleString('id-ID')}
-                        </TableCell>
-                        <TableCell>
-                          Rp {parseInt(field.priceNight.toString()).toLocaleString('id-ID')}
-                        </TableCell>
-                        <TableCell>
-                          <span
-                            className={`px-2 py-1 rounded text-xs font-medium ${field.status === 'available'
-                                ? 'bg-green-100 text-green-800'
-                                : field.status === 'booked'
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : field.status === 'maintenance'
-                                    ? 'bg-yellow-100 text-yellow-800'
-                                    : 'bg-red-100 text-red-800'
-                              }`}
-                          >
-                            {field.status === 'available'
-                              ? 'Tersedia'
-                              : field.status === 'booked'
-                                ? 'Dibooking'
-                                : field.status === 'maintenance'
-                                  ? 'Pemeliharaan'
-                                  : 'Tutup'}
-                          </span>
-                        </TableCell>
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Nama</TableHead>
+                        <TableHead>Tipe</TableHead>
+                        <TableHead>Harga (Siang)</TableHead>
+                        <TableHead>Harga (Malam)</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Aksi</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {fields.map((field) => (
+                        <TableRow key={field.id}>
+                          <TableCell>{field.id}</TableCell>
+                          <TableCell>{field.name}</TableCell>
+                          <TableCell>{field.type?.name || '-'}</TableCell>
+                          <TableCell>Rp {parseInt(field.priceDay.toString()).toLocaleString('id-ID')}</TableCell>
+                          <TableCell>Rp {parseInt(field.priceNight.toString()).toLocaleString('id-ID')}</TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${field.status === 'available' ? 'bg-green-100 text-green-800' :
+                                field.status === 'booked' ? 'bg-blue-100 text-blue-800' :
+                                  field.status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-red-100 text-red-800'
+                              }`}>
+                              {field.status === 'available' ? 'Tersedia' :
+                                field.status === 'booked' ? 'Dibooking' :
+                                  field.status === 'maintenance' ? 'Pemeliharaan' : 'Tutup'}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => router.push(`/dashboard/branches/${branchId}/fields/`)}
+                            >
+                              Detail
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+
+                  {fieldsTotalPages > 1 && (
+                    <Pagination
+                      currentPage={fieldsCurrentPage}
+                      totalPages={fieldsTotalPages}
+                      onPageChange={handleFieldsPageChange}
+                      totalItems={fieldsTotal}
+                      itemsPerPage={fieldsPerPage}
+                    />
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
@@ -581,29 +744,45 @@ export default function BranchDetailPage() {
               <Button onClick={handleAddAdmin}>Tambah Admin</Button>
             </CardHeader>
             <CardContent>
-              {!admins || admins.length === 0 ? (
+              {adminsLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                </div>
+              ) : !admins || admins.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Belum ada admin di cabang ini
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Nama</TableHead>
-                      <TableHead>Email</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {admins.map((admin) => (
-                      <TableRow key={admin.userId}>
-                        <TableCell>{admin.userId}</TableCell>
-                        <TableCell>{admin.user.name}</TableCell>
-                        <TableCell>{admin.user.email}</TableCell>
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Nama</TableHead>
+                        <TableHead>Email</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {admins.map((admin) => (
+                        <TableRow key={admin.userId}>
+                          <TableCell>{admin.userId}</TableCell>
+                          <TableCell>{admin.user.name}</TableCell>
+                          <TableCell>{admin.user.email}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+
+                  {adminsTotalPages > 1 && (
+                    <Pagination
+                      currentPage={adminsCurrentPage}
+                      totalPages={adminsTotalPages}
+                      onPageChange={handleAdminsPageChange}
+                      totalItems={adminsTotal}
+                      itemsPerPage={adminsPerPage}
+                    />
+                  )}
+                </>
               )}
             </CardContent>
           </Card>

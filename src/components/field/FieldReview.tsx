@@ -7,27 +7,28 @@ import { FieldReview } from '@/types';
 import { fieldApi } from '@/api/field.api';
 import { Card, CardContent } from '@/components/ui/card';
 import { id } from 'date-fns/locale';
+import AddFieldReview from './AddFieldReview';
 
 export default function FieldReviewsClient({ fieldId }: { fieldId: number }) {
   const [reviews, setReviews] = useState<FieldReview[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchReviews = async () => {
-      setLoading(true);
-      try {
-        const response = await fieldApi.getFieldReviews(fieldId);
-        console.log("reviews response data: ", response)
-        console.log("reviews response: ", response.data)
-        setReviews(Array.isArray(response.data) ? response.data : []);
-      } catch (error) {
-        console.error('Error fetching field reviews:', error);
-        setReviews([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchReviews = async () => {
+    setLoading(true);
+    try {
+      const response = await fieldApi.getFieldReviews(fieldId);
+      console.log("reviews response data: ", response)
+      console.log("reviews response: ", response.data)
+      setReviews(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error('Error fetching field reviews:', error);
+      setReviews([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchReviews();
   }, [fieldId]);
 
@@ -37,10 +38,6 @@ export default function FieldReviewsClient({ fieldId }: { fieldId: number }) {
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
-  }
-
-  if (reviews.length === 0) {
-    return <p className="text-center text-gray-500 py-6">Belum ada ulasan</p>;
   }
 
   const renderStars = (rating: number) => {
@@ -65,20 +62,28 @@ export default function FieldReviewsClient({ fieldId }: { fieldId: number }) {
 
   return (
     <div className="space-y-4">
-      {reviews.map((review) => (
-        <Card key={review.id}>
-          <CardContent className="p-4">
-            <div className="flex items-center mb-2">
-              <div className="flex mr-2">{renderStars(review.rating)}</div>
-              <span className="text-sm text-gray-600">
-                {format(new Date(review.createdAt), 'dd MMM yyyy', { locale: id })}
-              </span>
-            </div>
-            <h3 className="text-lg font-semibold mb-1">{review.user?.name || 'Pengguna'}</h3>
-            {review.review && <p className="text-gray-700">{review.review}</p>}
-          </CardContent>
-        </Card>
-      ))}
+      <AddFieldReview fieldId={fieldId} onReviewAdded={fetchReviews} />
+      
+      <h2 className="text-xl font-bold mb-4">Ulasan Pengguna</h2>
+      
+      {reviews.length === 0 ? (
+        <p className="text-center text-gray-500 py-6">Belum ada ulasan</p>
+      ) : (
+        reviews.map((review) => (
+          <Card key={review.id}>
+            <CardContent className="p-4">
+              <div className="flex items-center mb-2">
+                <div className="flex mr-2">{renderStars(review.rating)}</div>
+                <span className="text-sm text-gray-600">
+                  {format(new Date(review.createdAt), 'dd MMM yyyy', { locale: id })}
+                </span>
+              </div>
+              <h3 className="text-lg font-semibold mb-1">{review.user?.name || 'Pengguna'}</h3>
+              {review.review && <p className="text-gray-700">{review.review}</p>}
+            </CardContent>
+          </Card>
+        ))
+      )}
     </div>
   );
 } 

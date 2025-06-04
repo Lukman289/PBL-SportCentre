@@ -1,15 +1,28 @@
 /**
+ * @deprecated Gunakan timezone.utils.ts sebagai gantinya
+ * File ini dipertahankan untuk kompatibilitas dengan kode yang sudah ada
+ */
+
+import { format, setHours, setMinutes, setSeconds, setMilliseconds } from 'date-fns';
+import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
+
+/**
  * Utility functions for date handling
  */
 
 /**
- * Konversi waktu UTC dari server ke waktu lokal
+ * Tetapkan timezone WIB
+ */
+export const TIMEZONE = 'Asia/Jakarta';
+
+/**
+ * Konversi waktu UTC dari server ke waktu lokal WIB
  * @param utcDateString - String ISO format dari backend
  * @returns Date dalam timezone lokal
  */
 export const utcToLocal = (utcDateString: string): Date => {
   const date = new Date(utcDateString);
-  return date;
+  return toZonedTime(date, TIMEZONE);
 };
 
 /**
@@ -18,16 +31,18 @@ export const utcToLocal = (utcDateString: string): Date => {
  * @returns String tanggal format "DD/MM/YYYY HH:MM"
  */
 export const formatDate = (date: Date): string => {
-  return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+  const zonedDate = toZonedTime(date, TIMEZONE);
+  return format(zonedDate, 'dd/MM/yyyy HH:mm');
 };
 
 /**
- * Ekstrak jam dari objek Date
+ * Ekstrak jam dari objek Date dalam timezone WIB
  * @param date - Objek Date
  * @returns String jam format "HH:00"
  */
 export const extractHour = (date: Date): string => {
-  return `${date.getHours().toString().padStart(2, '0')}:00`;
+  const zonedDate = toZonedTime(date, TIMEZONE);
+  return format(zonedDate, 'HH:00');
 };
 
 /**
@@ -40,7 +55,7 @@ export const localToUTC = (localDate: Date): string => {
 };
 
 /**
- * Parse string waktu HH:MM dan gabungkan dengan tanggal
+ * Parse string waktu HH:MM dan gabungkan dengan tanggal dalam timezone WIB
  * @param dateStr - String tanggal format YYYY-MM-DD
  * @param timeStr - String waktu format HH:MM
  * @returns Date object yang menggabungkan tanggal dan waktu
@@ -48,8 +63,8 @@ export const localToUTC = (localDate: Date): string => {
 export const combineDateAndTime = (dateStr: string, timeStr: string): Date => {
   const [hours, minutes] = timeStr.split(':').map(Number);
   const date = new Date(dateStr);
-  date.setHours(hours, minutes, 0, 0);
-  return date;
+  const zonedDate = toZonedTime(date, TIMEZONE);
+  return setMilliseconds(setSeconds(setMinutes(setHours(zonedDate, hours), minutes), 0), 0);
 };
 
 /**
@@ -64,13 +79,66 @@ export const formatTimeRange = (startTime: string, endTime: string): string => {
     return `${startTime} - ${endTime}`;
   }
   
-  // Jika format ISO UTC, konversi ke objek Date
-  const startDate = startTime.includes('T') ? utcToLocal(startTime) : new Date(`1970-01-01T${startTime}`);
-  const endDate = endTime.includes('T') ? utcToLocal(endTime) : new Date(`1970-01-01T${endTime}`);
+  // Jika format ISO UTC, konversi ke objek Date dalam timezone WIB
+  const startDate = startTime.includes('T') ? utcToLocal(startTime) : toZonedTime(new Date(`1970-01-01T${startTime}`), TIMEZONE);
+  const endDate = endTime.includes('T') ? utcToLocal(endTime) : toZonedTime(new Date(`1970-01-01T${endTime}`), TIMEZONE);
   
   // Format hanya jam dan menit
-  const startTimeFormatted = `${startDate.getHours().toString().padStart(2, '0')}:${startDate.getMinutes().toString().padStart(2, '0')}`;
-  const endTimeFormatted = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+  const startTimeFormatted = format(startDate, 'HH:mm');
+  const endTimeFormatted = format(endDate, 'HH:mm');
   
   return `${startTimeFormatted} - ${endTimeFormatted}`;
+};
+
+/**
+ * Mengkonversi tanggal ke string format WIB
+ * @param date Tanggal yang akan diformat
+ * @returns String tanggal dalam format WIB
+ */
+export const formatDateToWIB = (date: Date): string => {
+  return formatInTimeZone(date, TIMEZONE, 'yyyy-MM-dd HH:mm:ss xxxx');
+};
+
+/**
+ * Mengkonversi tanggal ke awal hari dalam timezone WIB
+ * @param date Tanggal yang akan dikonversi
+ * @returns Date object yang menunjukkan awal hari dalam WIB
+ */
+export const getStartOfDayWIB = (date: Date): Date => {
+  const zonedDate = toZonedTime(date, TIMEZONE);
+  // Set jam, menit, detik, milidetik ke 0
+  const startOfDay = setMilliseconds(setSeconds(setMinutes(setHours(zonedDate, 0), 0), 0), 0);
+  return startOfDay;
+};
+
+/**
+ * Membuat Date dengan jam tertentu dalam timezone WIB
+ * @param baseDate Tanggal dasar
+ * @param hour Jam yang diinginkan (0-23)
+ * @returns Date object dengan jam yang ditentukan dalam WIB
+ */
+export const createDateWithHourWIB = (baseDate: Date, hour: number): Date => {
+  const zonedDate = toZonedTime(baseDate, TIMEZONE);
+  // Set jam spesifik dan reset menit, detik, milidetik
+  const dateWithHour = setMilliseconds(setSeconds(setMinutes(setHours(zonedDate, hour), 0), 0), 0);
+  return dateWithHour;
+};
+
+/**
+ * Mendapatkan jam lokal (WIB) dari Date UTC
+ * @param utcDate - Date dalam UTC
+ * @returns Jam dalam integer (0-23) dalam timezone WIB
+ */
+export const getLocalHourFromUTC = (utcDate: Date): number => {
+  return parseInt(format(toZonedTime(utcDate, TIMEZONE), 'H'));
+};
+
+/**
+ * Mengkonversi waktu UTC ke format jam WIB
+ * @param utcDate - Date dalam UTC
+ * @returns String jam format "HH:00" dalam timezone WIB
+ */
+export const formatUTCtoWIBHour = (utcDate: Date): string => {
+  const localHour = getLocalHourFromUTC(utcDate);
+  return `${localHour.toString().padStart(2, '0')}:00`;
 };

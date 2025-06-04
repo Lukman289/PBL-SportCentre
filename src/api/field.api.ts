@@ -11,6 +11,7 @@ import {
 } from '../types';
 import { bookingApi } from './booking.api';
 import { Booking } from '../types';
+import { getLocalHourFromUTC } from '../utils/date.utils';
 
 // Type guards for better type checking
 function isStandardResponse(data: unknown): data is { status: boolean; data: Field } {
@@ -243,21 +244,31 @@ class FieldApi {
             // Buat set dari jam yang tersedia
             const availableHoursSet = new Set<string>();
             fieldData.availableTimeSlots.forEach((slot) => {
-              const startTime = new Date(slot.start);
-              const endTime = new Date(slot.end);
+              // Parse ISO string ke objek Date
+              const startTimeUTC = new Date(slot.start);
+              const endTimeUTC = new Date(slot.end);
 
-              // Dapatkan jam dalam timezone lokal
-              const localStartHour = startTime.getHours();
-              const localEndHour = endTime.getHours();
+              // Gunakan utility function untuk mendapatkan jam lokal (WIB)
+              const localStartHour = getLocalHourFromUTC(startTimeUTC);
+              const localEndHour = getLocalHourFromUTC(endTimeUTC);
 
-              // Tambahkan semua jam di antara waktu mulai dan selesai
-              for (let hour = localStartHour; hour < localEndHour; hour++) {
-                availableHoursSet.add(`${hour.toString().padStart(2, '0')}:00`);
-              }
+              console.log(`Slot hours WIB - start: ${localStartHour}:00, end: ${localEndHour}:00`);
 
-              // Kasus khusus: jika endTime adalah 00:00, tambahkan 23:00
-              if (localEndHour === 0 && endTime.getMinutes() === 0) {
-                availableHoursSet.add("23:00");
+              // Handle kasus di mana end hour lebih kecil dari start hour (melewati tengah malam)
+              if (localEndHour < localStartHour) {
+                // Dari start hour sampai tengah malam
+                for (let hour = localStartHour; hour < 24; hour++) {
+                  availableHoursSet.add(`${hour.toString().padStart(2, '0')}:00`);
+                }
+                // Dari tengah malam sampai end hour
+                for (let hour = 0; hour < localEndHour; hour++) {
+                  availableHoursSet.add(`${hour.toString().padStart(2, '0')}:00`);
+                }
+              } else {
+                // Kasus normal: start hour lebih kecil dari end hour
+                for (let hour = localStartHour; hour < localEndHour; hour++) {
+                  availableHoursSet.add(`${hour.toString().padStart(2, '0')}:00`);
+                }
               }
             });
 
@@ -323,7 +334,7 @@ class FieldApi {
         const responseData = response.data;
 
         if (responseData && responseData.success && Array.isArray(responseData.data)) {
-          // console.log('Successfully fetched availability data:', responseData.data.length, 'fields');
+          console.log('Successfully fetched availability data:', responseData.data.length, 'fields');
 
           // Iterasi setiap lapangan dalam respons
           responseData.data.forEach((fieldAvailability) => {
@@ -335,37 +346,45 @@ class FieldApi {
             const availableHoursSet = new Set<string>();
 
             // Iterasi setiap slot waktu tersedia
-            // PENTING: Backend menyimpan waktu dalam UTC, kita perlu mengkonversinya ke lokal
             availableTimeSlots.forEach((slot) => {
-              // Parse ISO string ke objek Date (tetap dalam UTC)
-              const startTime = new Date(slot.start);
-              const endTime = new Date(slot.end);
+              // Parse ISO string ke objek Date
+              const startTimeUTC = new Date(slot.start);
+              const endTimeUTC = new Date(slot.end);
 
               // Log untuk debugging
-              // console.log(`Slot original UTC - start: ${startTime.toISOString()}, end: ${endTime.toISOString()}`);
+              console.log(`Slot original UTC - start: ${startTimeUTC.toISOString()}, end: ${endTimeUTC.toISOString()}`);
 
-              // Gunakan timezone lokal untuk mendapatkan jam yang sesuai
-              const localStartHour = startTime.getHours();
-              const localEndHour = endTime.getHours();
+              // Gunakan utility function untuk mendapatkan jam lokal (WIB)
+              const localStartHour = getLocalHourFromUTC(startTimeUTC);
+              const localEndHour = getLocalHourFromUTC(endTimeUTC);
 
-              // console.log(`Slot hours - start: ${localStartHour}:00, end: ${localEndHour}:00`);
+              console.log(`Slot hours WIB - start: ${localStartHour}:00, end: ${localEndHour}:00`);
 
               // Penanganan khusus: jika slot mencakup 00:00-24:00 (seluruh hari)
-              if (startTime.getHours() === 0 && endTime.getHours() === 0 &&
-                startTime.getDate() === endTime.getDate() - 1) {
+              if (localStartHour === 0 && localEndHour === 0 &&
+                startTimeUTC.getUTCDate() === endTimeUTC.getUTCDate() - 1) {
                 // Seluruh hari tersedia, tambahkan semua jam
                 times.forEach(time => availableHoursSet.add(time));
               } else {
                 // Dapatkan semua jam di antara waktu mulai dan selesai (end time exclusive)
                 // PENTING: endTime bersifat exclusive sehingga booking 8:00-10:00 berarti 
                 // hanya jam 8:00 dan 9:00 yang terpesan, sementara jam 10:00 masih tersedia
-                for (let hour = localStartHour; hour < localEndHour; hour++) {
-                  availableHoursSet.add(`${hour.toString().padStart(2, '0')}:00`);
-                }
-
-                // Kasus khusus: jika endTime adalah 00:00 (tengah malam), tambahkan 23:00
-                if (localEndHour === 0 && endTime.getMinutes() === 0) {
-                  availableHoursSet.add("23:00");
+                
+                // Handle kasus di mana end hour lebih kecil dari start hour (melewati tengah malam)
+                if (localEndHour < localStartHour) {
+                  // Dari start hour sampai tengah malam
+                  for (let hour = localStartHour; hour < 24; hour++) {
+                    availableHoursSet.add(`${hour.toString().padStart(2, '0')}:00`);
+                  }
+                  // Dari tengah malam sampai end hour
+                  for (let hour = 0; hour < localEndHour; hour++) {
+                    availableHoursSet.add(`${hour.toString().padStart(2, '0')}:00`);
+                  }
+                } else {
+                  // Kasus normal: start hour lebih kecil dari end hour
+                  for (let hour = localStartHour; hour < localEndHour; hour++) {
+                    availableHoursSet.add(`${hour.toString().padStart(2, '0')}:00`);
+                  }
                 }
               }
             });
@@ -374,8 +393,8 @@ class FieldApi {
             const bookedHours = times.filter(time => !Array.from(availableHoursSet).includes(time));
 
             // Debug output
-            // console.log(`Field #${fieldId}: Available hours:`, Array.from(availableHoursSet));
-            // console.log(`Field #${fieldId}: Booked hours:`, bookedHours);
+            console.log(`Field #${fieldId}: Available hours:`, Array.from(availableHoursSet));
+            console.log(`Field #${fieldId}: Booked hours:`, bookedHours);
 
             // Simpan jam yang terpesan untuk lapangan ini
             booked[fieldId] = bookedHours;
@@ -406,7 +425,7 @@ class FieldApi {
             return bookingDate === selectedDate;
           });
 
-          // console.log('Relevant bookings found:', relevantBookings.length);
+          console.log('Relevant bookings found:', relevantBookings.length);
 
           // Kelompokkan booking berdasarkan lapangan
           relevantBookings.forEach((booking: Booking) => {
@@ -416,15 +435,36 @@ class FieldApi {
               booked[fieldId] = [];
             }
 
-            const startTime = new Date(booking.startTime);
-            const endTime = new Date(booking.endTime);
+            // Konversi waktu dengan benar ke zona waktu lokal menggunakan utility function
+            const startTimeUTC = new Date(booking.startTime);
+            const endTimeUTC = new Date(booking.endTime);
+            
+            const localStartHour = getLocalHourFromUTC(startTimeUTC);
+            const localEndHour = getLocalHourFromUTC(endTimeUTC);
 
             // Tandai semua jam dalam rentang sebagai terpesan (inclusive startTime, exclusive endTime)
             // Contoh: Booking 21:00-23:00 akan menandai jam 21:00 dan 22:00 sebagai terpesan
-            for (let hour = startTime.getHours(); hour < endTime.getHours(); hour++) {
-              const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
-              if (!booked[fieldId].includes(timeSlot)) {
-                booked[fieldId].push(timeSlot);
+            if (localEndHour < localStartHour) {
+              // Kasus melewati tengah malam
+              for (let hour = localStartHour; hour < 24; hour++) {
+                const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+                if (!booked[fieldId].includes(timeSlot)) {
+                  booked[fieldId].push(timeSlot);
+                }
+              }
+              for (let hour = 0; hour < localEndHour; hour++) {
+                const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+                if (!booked[fieldId].includes(timeSlot)) {
+                  booked[fieldId].push(timeSlot);
+                }
+              }
+            } else {
+              // Kasus normal
+              for (let hour = localStartHour; hour < localEndHour; hour++) {
+                const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+                if (!booked[fieldId].includes(timeSlot)) {
+                  booked[fieldId].push(timeSlot);
+                }
               }
             }
           });
@@ -433,7 +473,7 @@ class FieldApi {
         }
       }
 
-      // console.log('Final booked slots:', booked);
+      console.log('Final booked slots:', booked);
       return booked;
     } catch (error) {
       console.error("Error fetching booked time slots:", error);

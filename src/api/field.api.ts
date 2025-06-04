@@ -4,8 +4,6 @@ import {
   FieldReview,
   FieldType,
   FieldReviewResponseWithMeta,
-  StandardFieldResponse as StandardResponse,
-  LegacyFieldResponse,
   FieldCreateResponse,
   AvailabilityResponse,
   FieldListParams,
@@ -15,16 +13,16 @@ import { bookingApi } from './booking.api';
 import { Booking } from '../types';
 
 // Type guards for better type checking
-function isStandardResponse(data: any): data is { status: boolean; data: Field } {
-  return data && typeof data === 'object' && 'status' in data && 'data' in data;
+function isStandardResponse(data: unknown): data is { status: boolean; data: Field } {
+  return !!data && typeof data === 'object' && 'status' in data && 'data' in data;
 }
 
-function isLegacyResponse(data: any): data is { field: Field } {
-  return data && typeof data === 'object' && 'field' in data;
+function isLegacyResponse(data: unknown): data is { field: Field } {
+  return !!data && typeof data === 'object' && 'field' in data;
 }
 
-function isField(data: any): data is Field {
-  return data && typeof data === 'object' && 'id' in data && 'name' in data;
+function isField(data: unknown): data is Field {
+  return !!data && typeof data === 'object' && 'id' in data && 'name' in data;
 }
 
 class FieldApi {
@@ -190,8 +188,12 @@ class FieldApi {
     fieldId: number,
     data: { rating: number; review?: string }
   ): Promise<FieldReview> {
-    const response = await axiosInstance.post<{ review: FieldReview }>(`/fields/${fieldId}/reviews`, data);
-    return response.data.review;
+    const response = await axiosInstance.post<{ data: FieldReview }>(`/field-reviews/field/${fieldId}`, {
+      fieldId,
+      ...data
+    });
+    console.log("create field review response: ", response.data);
+    return response.data.data;
   }
 
   /**

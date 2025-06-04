@@ -173,7 +173,7 @@ export default function FieldPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <Input
             type="text"
-            placeholder="Cari cabang berdasarkan nama atau lokasi..."
+            placeholder="Cari lapangan berdasarkan nama atau tipe..."
             name="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

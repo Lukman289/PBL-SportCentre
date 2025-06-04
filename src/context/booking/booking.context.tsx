@@ -16,7 +16,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth/auth.context";
-import useGlobalLoading from "@/hooks/useGlobalLoading.hook";
 
 // Schema untuk form booking
 const bookingSchema = z.object({
@@ -77,16 +76,24 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   
   const router = useRouter();
   const { user } = useAuth();
-  const { withLoading, showLoading, hideLoading } = useGlobalLoading();
+  
+  // Dummy functions to replace useGlobalLoading
+  const withLoading = async <T,>(promise: Promise<T>): Promise<T> => {
+    return await promise;
+  };
+  const showLoading = () => { /* NextTopLoader handles this automatically */ };
+  const hideLoading = () => { /* NextTopLoader handles this automatically */ };
+  
   const limit = 1000;
   
+  // Efek untuk menunjukkan loading state
   useEffect(() => {
     if (loading) {
       showLoading();
     } else {
       hideLoading();
     }
-  }, [loading, showLoading, hideLoading]);
+  }, [loading]);
   
   const times = useMemo(() => [
     "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
@@ -181,7 +188,6 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
               setSelectedBranchName(branches[0].name);
             }
           } else {
-            // Untuk user biasa, pilih cabang pertama
             setSelectedBranch(branches[0].id);
             setSelectedBranchName(branches[0].name);
           }

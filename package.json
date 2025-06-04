@@ -36,13 +36,14 @@
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.507.0",
     "next": "15.3.1",
+    "nextjs-toploader": "^3.8.16",
     "react": "^19.0.0",
     "react-apexcharts": "^1.7.0",
     "react-day-picker": "^9.6.7",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.56.2",
     "socket.io-client": "^4.8.1",
-    "tailwind-merge": "^3.2.0",
+    "tailwind-merge": "^3.3.0",
     "zod": "^3.24.4"
   },
   "devDependencies": {

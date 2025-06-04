@@ -28,7 +28,7 @@ class BookingApi {
    * @param userId - ID user (opsional untuk admin)
    * @returns Promise dengan array data booking
    */
-  async getUserBookings(userId?: number): Promise<Booking[]> {
+  async getUserBookings(userId?: number, statusPayment?: string): Promise<Booking[]> {
     try {
       let endpoint = '';
       if (userId) {
@@ -41,7 +41,10 @@ class BookingApi {
       }
       
       // Gunakan endpoint yang benar sesuai dengan backend
-      const response = await axiosInstance.get<BookingResponseWithMeta | { bookings: Booking[] } | Booking[]>(endpoint);
+      const response = await axiosInstance.get<BookingResponseWithMeta | { bookings: Booking[] } | Booking[]>(
+        endpoint, 
+        {params: { statusPayment: statusPayment }}
+      );
       
       // Handle format respons yang berbeda-beda
       if (response.data && typeof response.data === 'object') {

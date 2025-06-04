@@ -17,6 +17,7 @@ const menuItemsByRole = {
   [Role.SUPER_ADMIN]: [
     { label: 'Dashboard', href: '/dashboard', icon: 'home' },
     { label: 'Cabang', href: '/dashboard/branches', icon: 'building' },
+    { label: 'Jenis Lapangan', href: '/dashboard/fieldtypes', icon: 'layout' },
     { label: 'Pengguna', href: '/dashboard/users', icon: 'users' },
   ],
   [Role.OWNER_CABANG]: [

@@ -395,7 +395,7 @@ export default function CreateFieldPage() {
                   </div>
                   <div>
                     {previewUrl && (
-                      <Image
+                      <img
                         src={previewUrl}
                         alt="Preview"
                         className="mt-2 max-h-40 rounded"

@@ -211,7 +211,7 @@ export default function BranchesPage() {
                         <TableCell>{branch.owner?.name || '-'}</TableCell>
                         <TableCell>
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             onClick={() => handleViewBranch(branch.id)}
                             className="text-primary hover:text-primary"

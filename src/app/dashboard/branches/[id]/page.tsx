@@ -375,7 +375,7 @@ export default function BranchDetailPage() {
   };
 
   const handleEdit = () => {
-    // router.push(/dashboard/branches/${branchId}/edit);
+    router.push(`/dashboard/branches/${branchId}/edit`);
   };
 
   const handleDelete = async () => {
@@ -712,7 +712,7 @@ export default function BranchDetailPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => router.push(`/dashboard/branches/${branchId}/fields/`)}
+                              onClick={() => router.push(`/dashboard/branches/${branchId}/fields/${field.id}`)}
                             >
                               Detail
                             </Button>

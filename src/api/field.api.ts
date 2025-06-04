@@ -145,10 +145,10 @@ class FieldApi {
    * @param id - ID lapangan
    * @returns Promise dengan pesan sukses
    */
-  async deleteField(id: number): Promise<{ message: string }> {
-    const response = await axiosInstance.delete<{ message: string }>(`/fields/${id}`);
+  async deleteField(fieldId: number): Promise<{ message: string }> {
+    const response = await axiosInstance.delete<{ message: string }>(`/fields/${fieldId}`);
     return response.data;
-  }
+}
 
   /**
    * Upload gambar untuk lapangan

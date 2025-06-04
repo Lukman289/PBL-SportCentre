@@ -7,17 +7,18 @@ import { id } from "date-fns/locale";
 interface BookingHeaderProps {
   bookingId: number;
   createdAt: string;
+  url: string;
 }
 
 /**
  * Header komponen untuk halaman detail booking
  */
-export const BookingDetailHeader = ({ bookingId, createdAt }: BookingHeaderProps) => (
+export const BookingDetailHeader = ({ bookingId, createdAt, url }: BookingHeaderProps) => (
   <div className="bg-white dark:bg-gray-950 rounded-lg p-4 mb-6 shadow-sm border border-gray-100 dark:border-gray-800">
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <div>
         <Button variant="ghost" size="sm" asChild className="mb-2">
-          <Link href="/dashboard/bookings" className="text-muted-foreground hover:text-primary transition-colors">
+          <Link href={url} className="text-muted-foreground hover:text-primary transition-colors">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Kembali ke Daftar Booking
           </Link>

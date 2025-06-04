@@ -5,11 +5,18 @@ import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/context/auth/auth.context";
 import { Booking, PaymentMethod, PaymentStatus } from "@/types/booking.types";
 import { bookingApi } from "@/api/booking.api";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { Role, User } from "@/types";
-import { XCircle, ArrowLeft } from "lucide-react";
+import { XCircle, ArrowLeft, Check } from "lucide-react";
 import useGlobalLoading from "@/hooks/useGlobalLoading.hook";
 
 // Import komponen-komponen yang sudah dipisahkan
@@ -19,10 +26,10 @@ import {
   BookingTimeCard,
   UserInfoCard,
   PaymentInfoCard,
-  BookingActions
+  BookingActions,
 } from "@/components/booking";
 
-export default function BookingDetailPage() {
+export default function MyBookingDetailPage() {
   const router = useRouter();
   const { user } = useAuth();
   const params = useParams();
@@ -65,42 +72,25 @@ export default function BookingDetailPage() {
           description: "Data pengguna tidak ditemukan. Silakan login kembali.",
           variant: "destructive",
         });
-        router.push('/auth/login');
+        router.push("/auth/login");
         return;
       }
-      
-      // Memastikan hanya SUPER_ADMIN dan ADMIN_CABANG yang dapat mengakses
-      if (user.role !== Role.SUPER_ADMIN && user.role !== Role.ADMIN_CABANG) {
+
+      // Memastikan hanya User yang dapat mengakses halaman ini
+      if (user.role !== Role.USER) {
         toast({
           title: "Akses Ditolak",
           description: "Anda tidak memiliki izin untuk mengakses halaman ini",
           variant: "destructive",
         });
-        router.push('/dashboard');
+        router.push("/dashboard");
         return;
       }
-      
-      const roleParam = user.role;
-      
-      let data;
-      if (user.role === Role.SUPER_ADMIN) {
-        // Super admin tidak membutuhkan branchId
-        data = await withLoading(bookingApi.getBookingById(bookingId, roleParam));
-      } else if (user.role === Role.ADMIN_CABANG && user.branches && user.branches.length > 0) {
-        // Admin cabang membutuhkan branchId
-        // Ambil branchId dari cabang pertama yang dimiliki admin
-        const branchId = user.branches[0].branchId;
-        data = await withLoading(bookingApi.getBookingById(bookingId, roleParam, branchId));
-      } else {
-        toast({
-          title: "Error",
-          description: "Data cabang tidak ditemukan untuk admin cabang",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      setBooking(data);
+      const bookingData = await withLoading(
+        bookingApi.getBookingById(bookingId)
+      );
+
+      setBooking(bookingData);
     } catch (error) {
       console.error("Error fetching booking details:", error);
       toast({
@@ -127,7 +117,12 @@ export default function BookingDetailPage() {
       switch (confirmDialog.action) {
         case "approve":
           if (booking.payment?.id) {
-            await withLoading(bookingApi.updatePaymentStatus(booking.payment.id, PaymentStatus.PAID));
+            await withLoading(
+              bookingApi.updatePaymentStatus(
+                booking.payment.id,
+                PaymentStatus.PAID
+              )
+            );
             toast({
               title: "Sukses",
               description: "Pembayaran berhasil dikonfirmasi",
@@ -136,7 +131,12 @@ export default function BookingDetailPage() {
           break;
         case "reject":
           if (booking.payment?.id) {
-            await withLoading(bookingApi.updatePaymentStatus(booking.payment.id, PaymentStatus.FAILED));
+            await withLoading(
+              bookingApi.updatePaymentStatus(
+                booking.payment.id,
+                PaymentStatus.FAILED
+              )
+            );
             toast({
               title: "Sukses",
               description: "Pembayaran berhasil ditolak",
@@ -182,7 +182,9 @@ export default function BookingDetailPage() {
     }
   };
 
-  const openConfirmDialog = (action: "approve" | "reject" | "cancel" | "complete" | "pay") => {
+  const openConfirmDialog = (
+    action: "approve" | "reject" | "cancel" | "complete" | "pay"
+  ) => {
     const dialogConfig = {
       approve: {
         title: "Konfirmasi Pembayaran",
@@ -194,7 +196,8 @@ export default function BookingDetailPage() {
       },
       cancel: {
         title: "Batalkan Booking",
-        description: "Anda yakin ingin membatalkan booking ini? Tindakan ini tidak dapat dibatalkan.",
+        description:
+          "Anda yakin ingin membatalkan booking ini? Tindakan ini tidak dapat dibatalkan.",
       },
       complete: {
         title: "Selesaikan Booking",
@@ -223,45 +226,29 @@ export default function BookingDetailPage() {
   };
 
   // Tentukan apakah booking adalah booking manual (cash)
-  const isManualBooking = booking?.payment?.paymentMethod === PaymentMethod.CASH && 
-                         booking?.payment?.status === PaymentStatus.PAID;
+  const isManualBooking =
+    booking?.payment?.paymentMethod === PaymentMethod.CASH &&
+    booking?.payment?.status === PaymentStatus.PAID;
 
   const handleCancelBooking = async () => {
     if (!booking) return;
-    
+
     setCancelLoading(true);
     try {
-      await withLoading(bookingApi.cancelBooking(booking.id));
-      
+      await bookingApi.cancelBooking(booking.id);
+
       toast({
-        title: "Berhasil",
-        description: "Booking berhasil dibatalkan",
+        title: "Sukses",
+        description: "Booking berhasil dibatalkan.",
       });
-      
-      // Reload data booking setelah berhasil dibatalkan
-      if (user?.role) {
-        const roleParam = user.role;
-        
-        let updatedBooking;
-        if (user.role === Role.SUPER_ADMIN) {
-          updatedBooking = await withLoading(bookingApi.getBookingById(bookingId, roleParam));
-        } else if (user.role === Role.ADMIN_CABANG && user.branches && user.branches.length > 0) {
-          // Admin cabang membutuhkan branchId
-          const branchId = user.branches[0].branchId;
-          updatedBooking = await withLoading(bookingApi.getBookingById(bookingId, roleParam, branchId));
-        }
-        
-        if (updatedBooking) {
-          setBooking(updatedBooking);
-        }
-      }
-      
-      setOpenCancelDialog(false);
+
+      // Redirect to bookings list
+      router.push("/dashboard/my-bookings");
     } catch (error) {
-      console.error("Error canceling booking:", error);
+      console.error("Error cancelling booking:", error);
       toast({
-        title: "Gagal",
-        description: "Terjadi kesalahan saat membatalkan booking",
+        title: "Error",
+        description: "Gagal membatalkan booking. Silakan coba lagi.",
         variant: "destructive",
       });
     } finally {
@@ -279,9 +266,18 @@ export default function BookingDetailPage() {
         <div className="max-w-3xl mx-auto flex flex-col items-center justify-center h-[calc(100vh-200px)]">
           <div className="bg-white dark:bg-gray-950 rounded-lg p-8 shadow-sm border border-gray-100 dark:border-gray-800 text-center">
             <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Data Booking Tidak Ditemukan</h2>
-            <p className="text-muted-foreground mb-6">Booking dengan ID ini tidak dapat ditemukan atau Anda tidak memiliki akses untuk melihatnya.</p>
-            <Button onClick={() => router.back()} variant="outline" className="flex items-center gap-2 mx-auto">
+            <h2 className="text-xl font-semibold mb-2">
+              Data Booking Tidak Ditemukan
+            </h2>
+            <p className="text-muted-foreground mb-6">
+              Booking dengan ID ini tidak dapat ditemukan atau Anda tidak
+              memiliki akses untuk melihatnya.
+            </p>
+            <Button
+              onClick={() => router.back()}
+              variant="outline"
+              className="flex items-center gap-2 mx-auto"
+            >
               <ArrowLeft size={16} />
               Kembali
             </Button>
@@ -291,41 +287,49 @@ export default function BookingDetailPage() {
     );
   }
 
-  const canCancel = booking.payment?.status === PaymentStatus.PENDING ||
-    booking.payment?.status === PaymentStatus.DP_PAID;
-
   return (
     <div className="container py-6 px-4">
       <div className="max-w-5xl mx-auto">
-        <BookingDetailHeader bookingId={booking.id} createdAt={booking.createdAt} url="/dashboard/bookings"/>
-        
+        <BookingDetailHeader
+          bookingId={booking.id}
+          createdAt={booking.createdAt}
+          url="/dashboard/my-bookings"
+        />
+
         <div className="grid md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-6">
             <FieldInfoCard booking={booking} />
             <BookingTimeCard booking={booking} />
             {booking.user && <UserInfoCard user={booking.user} />}
           </div>
-          
+
           <div className="space-y-6">
             <PaymentInfoCard
               booking={booking}
               isManualBooking={isManualBooking}
               formatCurrency={formatCurrency}
             />
-            
-            <BookingActions
-              user={user as User}
-              booking={booking}
-              openConfirmDialog={openConfirmDialog}
-              setOpenCancelDialog={setOpenCancelDialog}
-              canCancel={canCancel}
-            />
+
+            {booking.payment?.status !== PaymentStatus.PAID &&
+              booking.payment?.status !== PaymentStatus.FAILED && (
+                <Button
+                  onClick={handleCancelBooking}
+                  className="w-full text-white"
+                  variant="destructive"
+                >
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Batalkan Booking
+                </Button>
+              )}
           </div>
         </div>
       </div>
 
       {/* Dialog konfirmasi tindakan */}
-      <Dialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}>
+      <Dialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{confirmDialog.title}</DialogTitle>
@@ -334,7 +338,9 @@ export default function BookingDetailPage() {
           <DialogFooter className="flex gap-2 justify-end">
             <Button
               variant="outline"
-              onClick={() => setConfirmDialog({ ...confirmDialog, open: false })}
+              onClick={() =>
+                setConfirmDialog({ ...confirmDialog, open: false })
+              }
               disabled={actionLoading}
             >
               Batal
@@ -352,20 +358,21 @@ export default function BookingDetailPage() {
           <DialogHeader>
             <DialogTitle>Batalkan Booking</DialogTitle>
             <DialogDescription>
-              Apakah Anda yakin ingin membatalkan booking ini? Tindakan ini tidak dapat dibatalkan.
+              Apakah Anda yakin ingin membatalkan booking ini? Tindakan ini
+              tidak dapat dibatalkan.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2 justify-end">
-            <Button 
-              variant="outline" 
-              onClick={() => setOpenCancelDialog(false)} 
+            <Button
+              variant="outline"
+              onClick={() => setOpenCancelDialog(false)}
               disabled={cancelLoading}
             >
               Batal
             </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleCancelBooking} 
+            <Button
+              variant="destructive"
+              onClick={handleCancelBooking}
               disabled={cancelLoading}
             >
               {cancelLoading ? "Memproses..." : "Ya, Batalkan"}
@@ -375,4 +382,4 @@ export default function BookingDetailPage() {
       </Dialog>
     </div>
   );
-} 
+}

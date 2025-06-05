@@ -32,25 +32,37 @@ interface BookingCancelledEvent {
  */
 export const subscribeToBookingUpdates = (callback: (data: BookingCreatedEvent | BookingUpdatedEvent) => void) => {
   const socket = getRootSocket();
-  if (!socket) return () => {};
+  if (!socket) {
+    console.error('Tidak dapat berlangganan pembaruan booking: socket tidak tersedia');
+    return () => {};
+  }
+
+  console.log('Berlangganan pembaruan booking dengan socket ID:', socket.id);
 
   const handleBookingCreated = (data: BookingCreatedEvent) => {
-    console.log('Booking created:', data);
+    console.log('Booking created event received:', data);
     callback(data);
   };
 
   const handleBookingUpdated = (data: BookingUpdatedEvent) => {
-    console.log('Booking updated:', data);
+    console.log('Booking updated event received:', data);
     callback(data);
   };
+
+  // Tambahkan listener untuk debugging semua event
+  socket.onAny((eventName, ...args) => {
+    console.log(`Socket event received on root socket: ${eventName}`, args);
+  });
 
   socket.on('booking:created', handleBookingCreated);
   socket.on('booking:updated', handleBookingUpdated);
 
   // Return unsubscribe function
   return () => {
+    console.log('Berhenti berlangganan pembaruan booking');
     socket.off('booking:created', handleBookingCreated);
     socket.off('booking:updated', handleBookingUpdated);
+    socket.offAny();
   };
 };
 

@@ -3,6 +3,9 @@ import { io, Socket } from 'socket.io-client';
 // Base URL API
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
+// Ekstrak base URL tanpa path /api untuk koneksi socket
+const SOCKET_BASE_URL = API_URL.replace('/api', '');
+
 // Socket.io namespace - harus konsisten dengan backend
 export const SOCKET_NAMESPACE = {
   PREFIX: 'sportcenter',
@@ -28,13 +31,14 @@ let notificationSocket: Socket | null = null;
  */
 export const initRootSocket = (): Socket => {
   if (!rootSocket) {
-    console.log('Initializing root socket connection to:', API_URL);
-    rootSocket = io(API_URL, {
+    console.log('Initializing root socket connection to:', SOCKET_BASE_URL);
+    rootSocket = io(SOCKET_BASE_URL, {
       transports: ['websocket', 'polling'], // Support polling sebagai fallback
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      path: '/socket.io', // Pastikan path sesuai dengan konfigurasi backend
     });
 
     setupSocketListeners(rootSocket, 'ROOT');
@@ -51,13 +55,14 @@ export const initFieldsSocket = (): Socket => {
   if (!fieldsSocket) {
     // Gunakan SOCKET_KEYS untuk memastikan konsistensi dengan backend
     const fieldsNamespace = SOCKET_KEYS.FIELDS;
-    console.log('Initializing fields socket connection to:', `${API_URL}/${fieldsNamespace}`);
-    fieldsSocket = io(`${API_URL}/${fieldsNamespace}`, {
+    console.log('Initializing fields socket connection to:', `${SOCKET_BASE_URL}/${fieldsNamespace}`);
+    fieldsSocket = io(`${SOCKET_BASE_URL}/${fieldsNamespace}`, {
       transports: ['websocket', 'polling'],
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      path: '/socket.io', // Pastikan path sesuai dengan konfigurasi backend
     });
 
     setupSocketListeners(fieldsSocket, 'FIELDS');
@@ -73,13 +78,14 @@ export const initFieldsSocket = (): Socket => {
 export const initNotificationSocket = (): Socket => {
   if (!notificationSocket) {
     const notificationNamespace = SOCKET_KEYS.NOTIFICATION;
-    console.log('Initializing notification socket connection to:', `${API_URL}/${notificationNamespace}`);
-    notificationSocket = io(`${API_URL}/${notificationNamespace}`, {
+    console.log('Initializing notification socket connection to:', `${SOCKET_BASE_URL}/${notificationNamespace}`);
+    notificationSocket = io(`${SOCKET_BASE_URL}/${notificationNamespace}`, {
       transports: ['websocket', 'polling'],
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      path: '/socket.io', // Pastikan path sesuai dengan konfigurasi backend
     });
 
     setupSocketListeners(notificationSocket, 'NOTIFICATION');

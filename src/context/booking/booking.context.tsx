@@ -200,7 +200,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         
         // Ambil data lapangan
         const fields = await fieldApi.getAllFields({limit});
-        const normalizedFields: Field[] = fields.data.map((field: any) => ({
+        const normalizedFields: Field[] = fields.data.map((field: Field) => ({
           ...field,
           priceDay: field.priceDay || 0,
           priceNight: field.priceNight || 0,
@@ -302,10 +302,10 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         }
       });
       
-      // Set up interval untuk meminta pembaruan data setiap 30 detik
+      // Set up interval untuk meminta pembaruan data setiap 5 detik
       const refreshInterval = setInterval(() => {
         requestAvailabilityUpdate(selectedDate, selectedBranch);
-      }, 30000); // 30 detik
+      }, 5000); // 5 detik
       
       // Cleanup subscription dan interval saat unmount atau dependency berubah
       return () => {

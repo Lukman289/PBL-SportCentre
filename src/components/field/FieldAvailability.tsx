@@ -5,6 +5,8 @@ import { id } from "date-fns/locale";
 import { format } from "date-fns";
 import { Field } from "@/types";
 import { useBookingContext } from "@/context/booking/booking.context";
+import { useEffect } from "react";
+import { subscribeToFieldAvailabilityChanges, joinFieldRoom } from "@/services/socket";
 
 interface FieldAvailabilityProps {
   field: Field;
@@ -22,6 +24,7 @@ export default function FieldAvailability({ field }: FieldAvailabilityProps) {
       selectedDate,
       dateValueHandler,
       showPicker,
+      refreshAvailability
     } = useBookingContext();
 
   const renderIcon = (iconHTML: string) => {
@@ -31,6 +34,33 @@ export default function FieldAvailability({ field }: FieldAvailabilityProps) {
   };
 
   console.log("field: ", field);
+
+  // Gabung ke room lapangan saat komponen dimount
+  useEffect(() => {
+    if (field && field.id) {
+      joinFieldRoom(field.id);
+      
+      // Berlangganan perubahan ketersediaan lapangan
+      const unsubscribe = subscribeToFieldAvailabilityChanges((data) => {
+        if (data.fieldId === field.id) {
+          console.log("Ketersediaan lapangan berubah:", data);
+          // Refresh data ketersediaan saat ada perubahan
+          refreshAvailability();
+        }
+      });
+      
+      // Tambahkan interval pembaruan setiap 3 detik
+      const refreshIntervalId = setInterval(() => {
+        refreshAvailability();
+      }, 3000);
+      
+      // Bersihkan saat komponen di-unmount
+      return () => {
+        unsubscribe();
+        clearInterval(refreshIntervalId);
+      };
+    }
+  }, [field, refreshAvailability]);
 
   return (
     <div className="grid grid-cols-1">

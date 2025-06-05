@@ -148,9 +148,12 @@ jobs:
 
             echo "=> Memeriksa file yang disalin"
             ls -la
+            echo "=> Memeriksa direktori src dan components"
+            ls -la src/ || echo "Direktori src tidak ada"
+            ls -la src/components/ || echo "Direktori components tidak ada"
 
-            echo "=> Install dependencies production"
-            npm install --production
+            echo "=> Install dependencies (termasuk dev dependencies)"
+            npm ci
 
             echo "=> Build aplikasi"
             npm run build

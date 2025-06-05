@@ -135,17 +135,16 @@ jobs:
             echo "=> Menghentikan aplikasi frontend jika berjalan"
             pm2 stop frontend || true
 
-            echo "=> Menyalin file dari artifact"
-            cp -r /tmp/frontend-artifact/* .
+            echo "=> Clone repository (fresh)"
+            git clone https://github.com/${{ github.repository }}.git temp_repo
             
-            # Pastikan direktori .next ada dan salin jika tersedia
-            if [ -d "/tmp/frontend-artifact/.next" ]; then
-              echo "=> Menyalin direktori .next"
-              cp -r /tmp/frontend-artifact/.next .
-            else
-              echo "=> Direktori .next tidak ditemukan di artifact"
-            fi
-
+            echo "=> Menyalin file dari repository"
+            cp -r temp_repo/frontend/* .
+            cp -r temp_repo/frontend/.* . 2>/dev/null || true
+            
+            echo "=> Membersihkan repository temporary"
+            rm -rf temp_repo
+            
             echo "=> Memeriksa file yang disalin"
             ls -la
             echo "=> Memeriksa direktori src dan components"
@@ -164,7 +163,7 @@ jobs:
             npm run build
 
             echo "=> Restart aplikasi dengan PM2"
-            pm2 reload frontend --update-env || pm2 start npm --name frontend --  
+            pm2 reload frontend --update-env || pm2 start npm --name frontend -- start
 
             echo "=> Status aplikasi:"
             pm2 list

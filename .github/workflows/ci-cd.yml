@@ -74,8 +74,9 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           source: "artifact/*"
-          target: "/pbl/frontend"
+          target: "/tmp/frontend-artifact"
           strip_components: 1
+          overwrite: true
 
       - name: Run deployment script
         uses: appleboy/ssh-action@v1.0.3
@@ -90,7 +91,18 @@ jobs:
             cd /pbl/frontend
 
             echo "=> Membersihkan folder kecuali .env"
-            find . -mindepth 1 ! -name '.env' -exec rm -rf {} +
+            # Simpan .env jika ada
+            if [ -f .env ]; then
+              mv .env .env.backup
+            fi
+            
+            # Hapus semua file dan folder (dengan pengecualian untuk file tersembunyi)
+            rm -rf *
+            
+            # Kembalikan .env
+            if [ -f .env.backup ]; then
+              mv .env.backup .env
+            fi
 
             echo "=> Memeriksa direktori setelah bersih"
             ls -la
@@ -112,6 +124,12 @@ jobs:
             NEXT_PUBLIC_API_URL=${{ secrets.FRONTEND_API_URL }}
             NEXT_PUBLIC_SOCKET_URL=${{ secrets.FRONTEND_API_URL }}
             EOF
+
+            echo "=> Menghentikan aplikasi frontend jika berjalan"
+            pm2 stop frontend || true
+
+            echo "=> Menyalin file dari artifact"
+            cp -r /tmp/frontend-artifact/* .
 
             echo "=> Install dependencies production"
             npm install --production

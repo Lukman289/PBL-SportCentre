@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import TerserPlugin from "terser-webpack-plugin";
 
 const nextConfig: NextConfig = {
   eslint: {
@@ -42,6 +43,20 @@ const nextConfig: NextConfig = {
         destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/:path*`,
       },
     ];
+  },
+  webpack(config, { isServer, dev }) {
+    if (!dev && !isServer) {
+      config.optimization.minimizer.push(
+        new TerserPlugin({
+          terserOptions: {
+            compress: {
+              drop_console: true, // <- ini untuk hapus console.*
+            },
+          },
+        })
+      );
+    }
+    return config;
   },
 };
 

@@ -151,6 +151,11 @@ jobs:
             echo "=> Memeriksa direktori src dan components"
             ls -la src/ || echo "Direktori src tidak ada"
             ls -la src/components/ || echo "Direktori components tidak ada"
+            
+            echo "=> Memeriksa file konfigurasi"
+            ls -la *.json *.ts *.mjs || echo "Tidak ada file konfigurasi"
+            cat components.json || echo "File components.json tidak ada"
+            cat tailwind.config.ts || echo "File tailwind.config.ts tidak ada"
 
             echo "=> Install dependencies (termasuk dev dependencies)"
             npm ci

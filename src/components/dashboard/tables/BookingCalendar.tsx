@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, addDays, isSameDay, addMonths, subMonths, parseISO } from "date-fns";
 import { id } from "date-fns/locale";
-import { Booking } from "@/types/booking.types";
+import { Booking, PaymentStatus } from "@/types/booking.types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -11,6 +11,8 @@ import { formatTimeRange } from "@/utils/date.utils";
 import Link from "next/link";
 import { getDetailLink } from "./BookingTableUtils";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface BookingCalendarProps {
   bookings: Booking[];
@@ -20,6 +22,9 @@ interface BookingCalendarProps {
 export default function BookingCalendar({ bookings, userRole }: BookingCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [isDataAvailable, setIsDataAvailable] = useState(false);
+  const [selectedDayBookings, setSelectedDayBookings] = useState<Booking[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [showAllBookings, setShowAllBookings] = useState(false);
   
   useEffect(() => {
     // Periksa apakah data booking tersedia
@@ -32,6 +37,12 @@ export default function BookingCalendar({ bookings, userRole }: BookingCalendarP
       console.log("Tidak ada data booking tersedia");
     }
   }, [bookings]);
+  
+  const handleShowAllBookings = (date: string, dayBookings: Booking[]) => {
+    setSelectedDate(date);
+    setSelectedDayBookings(dayBookings);
+    setShowAllBookings(true);
+  };
   
   const daysInMonth = useMemo(() => {
     const start = startOfMonth(currentMonth);
@@ -193,13 +204,10 @@ export default function BookingCalendar({ bookings, userRole }: BookingCalendarP
           {prevDays.map((date) => (
             <div 
               key={`prev-${date.toString()}`}
-              className="min-h-[100px] p-2 bg-gray-50 border-b border-r text-gray-400"
+              className="min-h-[90px] p-2 bg-gray-50 border-b border-r text-gray-400"
             >
               <div className="text-right">
                 {format(date, "d")}
-              </div>
-              <div className="text-xs text-center mt-8 text-gray-400">
-                Tidak ada booking
               </div>
             </div>
           ))}
@@ -214,7 +222,7 @@ export default function BookingCalendar({ bookings, userRole }: BookingCalendarP
               <div 
                 key={dateStr}
                 className={cn(
-                  "min-h-[100px] p-2 bg-white border-b border-r relative",
+                  "min-h-[90px] p-2 bg-white border-b border-r relative",
                   isToday ? "bg-blue-50" : ""
                 )}
               >
@@ -226,32 +234,94 @@ export default function BookingCalendar({ bookings, userRole }: BookingCalendarP
                 </div>
                 
                 <div className="mt-1 space-y-1">
-                  {dayBookings.map((booking) => (
-                    <Link 
-                      href={getDetailLink(booking, userRole)}
-                      key={booking.id}
-                      className="block"
-                    >
-                      <div 
-                        className={cn(
-                          "text-xs p-1 rounded",
-                          getBookingColor(booking.field?.name)
-                        )}
-                      >
-                        <div className="font-medium">
-                          {formatTimeRange(booking.startTime, booking.endTime)}
-                        </div>
-                        <div className="truncate">
-                          {booking.field?.name || 'Lapangan'}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                  
-                  {dayBookings.length === 0 && (
-                    <div className="text-xs text-center mt-8 text-gray-400">
+                  {dayBookings.length > 0 ? (
+                    dayBookings.slice(0, 3).map((booking) => (
+                      <TooltipProvider key={booking.id}>
+                        <Tooltip delayDuration={300}>
+                          <TooltipTrigger asChild>
+                            <Link 
+                              href={getDetailLink(booking, userRole)}
+                              className="block"
+                            >
+                              <div 
+                                className={cn(
+                                  "text-xs p-1 rounded border-l-2",
+                                  getBookingColor(booking.field?.name)
+                                )}
+                              >
+                                <div className="flex justify-between items-center">
+                                  <span className="font-medium">{formatTimeRange(booking.startTime, booking.endTime)}</span>
+                                  {booking.payment?.status === PaymentStatus.PAID && (
+                                    <span className="ml-1">✓</span>
+                                  )}
+                                </div>
+                                <div className="truncate flex items-center gap-1">
+                                  <span className="font-medium">{booking.field?.name || 'Lapangan'}</span>
+                                  <span className="text-gray-500">•</span>
+                                  <span className="truncate text-gray-500">{booking.user?.name || 'Pengguna'}</span>
+                                </div>
+                              </div>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="p-3 max-w-[250px]">
+                            <div className="space-y-2">
+                              <div className="font-bold">{booking.field?.name || 'Lapangan'}</div>
+                              <div className="space-y-1 text-xs">
+                                <div><span className="font-semibold">ID:</span> #{booking.id}</div>
+                                <div><span className="font-semibold">Tanggal:</span> {format(new Date(booking.bookingDate), "dd MMMM yyyy", { locale: id })}</div>
+                                <div><span className="font-semibold">Waktu:</span> {formatTimeRange(booking.startTime, booking.endTime)}</div>
+                                <div><span className="font-semibold">Penyewa:</span> {booking.user?.name || '-'}</div>
+                                {booking.field?.branch?.name && (
+                                  <div><span className="font-semibold">Cabang:</span> {booking.field.branch.name}</div>
+                                )}
+                                <div>
+                                  <span className="font-semibold">Status:</span> 
+                                  <Badge 
+                                    variant="outline" 
+                                    className={cn(
+                                      "ml-1 text-[9px] py-0 px-1 h-4",
+                                      booking.payment?.status === PaymentStatus.PAID 
+                                        ? "bg-green-50 text-green-700 border-green-200" 
+                                        : booking.payment?.status === PaymentStatus.PENDING 
+                                          ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                                          : booking.payment?.status === PaymentStatus.FAILED
+                                            ? "bg-red-50 text-red-700 border-red-200"
+                                            : "bg-gray-50 text-gray-700 border-gray-200"
+                                    )}
+                                  >
+                                    {booking.payment?.status === PaymentStatus.PAID 
+                                      ? "Lunas" 
+                                      : booking.payment?.status === PaymentStatus.PENDING 
+                                        ? "Menunggu"
+                                        : booking.payment?.status === PaymentStatus.DP_PAID
+                                          ? "DP Terbayar"
+                                          : booking.payment?.status === PaymentStatus.FAILED
+                                            ? "Gagal"
+                                            : booking.payment?.status || '-'}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ))
+                  ) : (
+                    <div className="text-xs text-center mt-6 text-gray-400">
                       Tidak ada booking
                     </div>
+                  )}
+                  
+                  {dayBookings.length > 3 && (
+                    <button 
+                      className="text-xs text-center w-full mt-1 bg-gray-100 hover:bg-gray-200 rounded-sm py-0.5 transition-colors"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleShowAllBookings(dateStr, dayBookings);
+                      }}
+                    >
+                      +{dayBookings.length - 3} lainnya
+                    </button>
                   )}
                 </div>
               </div>
@@ -262,18 +332,83 @@ export default function BookingCalendar({ bookings, userRole }: BookingCalendarP
           {nextDays.map((date) => (
             <div 
               key={`next-${date.toString()}`}
-              className="min-h-[100px] p-2 bg-gray-50 border-b border-r text-gray-400"
+              className="min-h-[90px] p-2 bg-gray-50 border-b border-r text-gray-400"
             >
               <div className="text-right">
                 {format(date, "d")}
-              </div>
-              <div className="text-xs text-center mt-8 text-gray-400">
-                Tidak ada booking
               </div>
             </div>
           ))}
         </div>
       </div>
+      
+      {/* Dialog untuk menampilkan semua booking */}
+      <Dialog open={showAllBookings} onOpenChange={setShowAllBookings}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedDate ? format(new Date(selectedDate), "EEEE, dd MMMM yyyy", { locale: id }) : "Daftar Booking"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 mt-2">
+            {selectedDayBookings.map((booking) => (
+              <Link 
+                href={getDetailLink(booking, userRole)}
+                key={booking.id}
+                className="block"
+              >
+                <div 
+                  className={cn(
+                    "text-sm p-3 rounded border-l-4 border hover:bg-gray-50 transition-colors",
+                    getBookingColor(booking.field?.name)
+                  )}
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">{formatTimeRange(booking.startTime, booking.endTime)}</span>
+                    <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">#{booking.id}</span>
+                  </div>
+                  <div className="flex items-center gap-1 mt-1">
+                    <span className="font-medium">{booking.field?.name || 'Lapangan'}</span>
+                  </div>
+                  <div className="flex justify-between items-center mt-1">
+                    <div className="flex items-center text-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      <span className="text-gray-700">{booking.user?.name || 'Pengguna'}</span>
+                    </div>
+                    {booking.payment?.status && (
+                      <Badge 
+                        variant="outline" 
+                        className={cn(
+                          "text-xs",
+                          booking.payment.status === PaymentStatus.PAID 
+                            ? "bg-green-50 text-green-700 border-green-200" 
+                            : booking.payment.status === PaymentStatus.PENDING 
+                              ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                              : booking.payment.status === PaymentStatus.FAILED
+                                ? "bg-red-50 text-red-700 border-red-200"
+                                : "bg-gray-50 text-gray-700 border-gray-200"
+                        )}
+                      >
+                        {booking.payment.status === PaymentStatus.PAID 
+                          ? "Lunas" 
+                          : booking.payment.status === PaymentStatus.PENDING 
+                            ? "Menunggu"
+                            : booking.payment.status === PaymentStatus.DP_PAID
+                              ? "DP Terbayar"
+                              : booking.payment.status === PaymentStatus.FAILED
+                                ? "Gagal"
+                                : booking.payment.status}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

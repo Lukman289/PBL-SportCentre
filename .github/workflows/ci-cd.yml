@@ -67,33 +67,15 @@ jobs:
           name: frontend-build
           path: frontend-build/
 
-      - name: Copy package files
+      - name: Copy all files to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          source: "package.json,package-lock.json,next.config.ts"
+          source: "frontend-build/*"
           target: "/pbl/frontend/"
-
-      - name: Copy build files to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          source: "frontend-build/"
-          target: "/pbl/frontend/.next/"
           strip_components: 1
-
-      - name: Copy public directory
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          source: "public/"
-          target: "/pbl/frontend/"
 
       - name: Deploy to Production Server
         uses: appleboy/ssh-action@v1.0.3

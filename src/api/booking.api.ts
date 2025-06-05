@@ -351,7 +351,7 @@ class BookingApi {
    */
   async markPaymentAsPaid(paymentId: number): Promise<Payment> {
     try {
-      const response = await axiosInstance.post<{ data: Payment } | Payment>(`/payments/${paymentId}/mark-paid`);
+      const response = await axiosInstance.post<{ data: Payment } | Payment>(`/bookings/payments/${paymentId}/mark-paid`);
       
       if ('data' in response.data) {
         return response.data.data;
@@ -373,7 +373,7 @@ class BookingApi {
   async updatePaymentStatus(paymentId: number, status: PaymentStatus): Promise<Payment> {
     try {
       const response = await axiosInstance.post<{ data: Payment } | Payment>(
-        `/payments/${paymentId}/update-status`,
+        `/bookings/payments/${paymentId}/update-status`,
         { status }
       );
       

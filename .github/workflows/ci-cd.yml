@@ -38,19 +38,18 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: List build directory
-        run: ls -la
+      - name: Create artifact directory
+        run: |
+          mkdir -p artifact
+          cp -r .next artifact/
+          cp -r public artifact/
+          cp package.json package-lock.json next.config.ts artifact/
 
-      - name: Upload build artifacts
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-build
-          path: |
-            .next/**
-            public/**
-            package.json
-            package-lock.json
-            next.config.ts
+          name: frontend-artifact
+          path: artifact
           if-no-files-found: error
 
   deploy:
@@ -59,25 +58,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Download build artifacts
+      - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: frontend-build
-          path: frontend-build/
+          name: frontend-artifact
+          path: artifact
 
-      - name: Copy all files to server
+      - name: List downloaded artifact
+        run: ls -la artifact/
+
+      - name: Deploy to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          source: "frontend-build/*"
-          target: "/pbl/frontend/"
+          source: "artifact/*"
+          target: "/pbl/frontend"
           strip_components: 1
 
-      - name: Deploy to Production Server
+      - name: Run deployment script
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
@@ -87,34 +87,29 @@ jobs:
             set -e
             echo "=== Memulai deployment frontend pada $(date) ==="
 
-            source ~/.profile
-            source ~/.bashrc
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
-            echo "Node version: $(node -v)"
-            echo "NPM version: $(npm -v)"
-
             cd /pbl/frontend
+            
+            echo "=> Memeriksa direktori"
+            ls -la
 
             echo "=> Menyiapkan dependensi"
             if ! command -v pm2 &> /dev/null; then
-              echo "PM2 tidak ditemukan, menginstall..."
               npm install -g pm2
             fi
 
-            echo "=> Menghentikan aplikasi frontend lama (jika ada)"
+            echo "=> Menghentikan aplikasi frontend lama"
             pm2 stop frontend || true
 
             echo "=> Membuat file .env"
             cat > .env << EOF
-            NEXT_PUBLIC_API_URL=${{ secrets.FRONTEND_API_URL || 'https://api.sportcenter.mywire.org' }}
+            NEXT_PUBLIC_API_URL=${{ secrets.FRONTEND_API_URL }}
+            NEXT_PUBLIC_SOCKET_URL=${{ secrets.FRONTEND_API_URL }}
             EOF
 
-            echo "=> Install ulang dependensi"
-            npm install --no-fund --no-audit --production
+            echo "=> Menginstall dependensi"
+            npm install --production
 
-            echo "=> Menjalankan ulang aplikasi dengan PM2"
+            echo "=> Menjalankan aplikasi dengan PM2"
             pm2 reload frontend --update-env || pm2 start npm --name frontend -- start
 
             echo "=> Status aplikasi:"

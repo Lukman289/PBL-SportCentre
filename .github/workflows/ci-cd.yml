@@ -137,7 +137,14 @@ jobs:
 
             echo "=> Menyalin file dari artifact"
             cp -r /tmp/frontend-artifact/* .
-            cp -r /tmp/frontend-artifact/.next . 2>/dev/null || mkdir -p .next
+            
+            # Pastikan direktori .next ada dan salin jika tersedia
+            if [ -d "/tmp/frontend-artifact/.next" ]; then
+              echo "=> Menyalin direktori .next"
+              cp -r /tmp/frontend-artifact/.next .
+            else
+              echo "=> Direktori .next tidak ditemukan di artifact"
+            fi
 
             echo "=> Memeriksa file yang disalin"
             ls -la
@@ -145,8 +152,11 @@ jobs:
             echo "=> Install dependencies production"
             npm install --production
 
+            echo "=> Build aplikasi"
+            npm run build
+
             echo "=> Restart aplikasi dengan PM2"
-            pm2 reload frontend --update-env || pm2 start npm --name frontend -- start
+            pm2 reload frontend --update-env || pm2 start npm --name frontend --  
 
             echo "=> Status aplikasi:"
             pm2 list

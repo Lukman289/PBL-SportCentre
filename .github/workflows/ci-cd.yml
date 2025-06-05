@@ -38,11 +38,20 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: List build directory
+        run: ls -la
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
-          path: .next/
+          path: |
+            .next/**
+            public/**
+            package.json
+            package-lock.json
+            next.config.ts
+          if-no-files-found: error
 
   deploy:
     needs: build

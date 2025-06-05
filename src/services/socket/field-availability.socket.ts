@@ -19,6 +19,17 @@ export interface FieldAvailabilityData {
 }
 
 /**
+ * Struktur data untuk perubahan ketersediaan lapangan
+ */
+export interface FieldAvailabilityChangeEvent {
+  fieldId: number;
+  date: string;
+  startTime: string;
+  endTime: string;
+  available: boolean;
+}
+
+/**
  * Gabung ke room untuk pembaruan ketersediaan lapangan
  * @param branchId - ID cabang (opsional)
  * @param date - Tanggal dalam format YYYY-MM-DD (opsional)
@@ -29,6 +40,18 @@ export const joinFieldAvailabilityRoom = (branchId?: number, date?: string) => {
   
   // Minta update ketersediaan lapangan terbaru segera setelah join room
   requestAvailabilityUpdate(date, branchId);
+};
+
+/**
+ * Gabung ke room untuk lapangan tertentu
+ * @param fieldId - ID lapangan
+ */
+export const joinFieldRoom = (fieldId: number) => {
+  if (!fieldId) return;
+  
+  const roomId = `field-${fieldId}`;
+  joinFieldsRoom(roomId);
+  console.log('Joined field room:', fieldId);
 };
 
 /**
@@ -66,10 +89,36 @@ export const subscribeToFieldAvailability = (callback: (data: FieldAvailabilityD
   };
 };
 
+/**
+ * Berlangganan perubahan ketersediaan lapangan tertentu
+ * @param callback - Fungsi yang akan dipanggil saat ada perubahan ketersediaan
+ * @returns Fungsi untuk berhenti berlangganan
+ */
+export const subscribeToFieldAvailabilityChanges = (callback: (data: FieldAvailabilityChangeEvent) => void) => {
+  const socket = getFieldsSocket();
+  if (!socket) return () => {};
+
+  const handleChange = (data: FieldAvailabilityChangeEvent) => {
+    console.log('Field availability changed:', data);
+    callback(data);
+  };
+
+  socket.on('field:availability-changed', handleChange);
+  socket.on('availability-update', handleChange);
+
+  // Return unsubscribe function
+  return () => {
+    socket.off('field:availability-changed', handleChange);
+    socket.off('availability-update', handleChange);
+  };
+};
+
 const fieldAvailabilitySocket = {
   joinFieldAvailabilityRoom,
+  joinFieldRoom,
   requestAvailabilityUpdate,
   subscribeToFieldAvailability,
+  subscribeToFieldAvailabilityChanges
 };
 
 export default fieldAvailabilitySocket; 

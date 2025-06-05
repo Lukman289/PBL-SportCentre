@@ -25,8 +25,10 @@ export {
 // Export dari modul ketersediaan lapangan
 export {
   joinFieldAvailabilityRoom,
+  joinFieldRoom,
   requestAvailabilityUpdate,
   subscribeToFieldAvailability,
+  subscribeToFieldAvailabilityChanges,
 } from './field-availability.socket';
 
 // Export dari modul notifikasi
@@ -41,6 +43,7 @@ export {
   subscribeToBookingUpdates,
   subscribeToBookingCancellations,
   joinBookingRoom,
+  joinUserBookingRoom,
 } from './booking.socket';
 
 // Export default untuk backward compatibility

@@ -32,7 +32,7 @@ export function CtaSection({
 
   return (
     <motion.section 
-      className="py-20 bg-primary rounded-3xl my-16"
+      className="py-20 bg-primary my-16"
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
@@ -62,7 +62,7 @@ export function CtaSection({
             <Button
               size="lg"
               variant="outline"
-              className="bg-transparent text-white border-white hover:bg-white/20"
+              className="bg-transparent text-white border-white hover:bg-white/20 hover:text-white"
             >
               {secondaryButtonText}
             </Button>

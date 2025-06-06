@@ -15,18 +15,13 @@ import {
 } from '@/components/ui/table';
 import { User, Role } from '@/types';
 import { useAuth } from '@/context/auth/auth.context';
-import axiosInstance from '@/config/axios.config';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
-
-interface UsersResponse {
-  status: boolean;
-  message: string;
-  data: User[];
-}
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search, X } from 'lucide-react';
+import { userApi } from '@/api';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,25 +37,15 @@ export default function UsersPage() {
     try {
       setIsLoading(true);
       
-      // Tambahkan timestamp untuk bypass cache
-      const response = await axiosInstance.get<UsersResponse>('/users', {
-        params: { 
-          q: searchQuery,
-          _t: Date.now() // timestamp untuk bypass cache
-        },
-        // Force fresh request
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
+      const response = await userApi.getAllUsers();
       
       // Filter out super_admin jika user yang login bukan super_admin
       const allFilteredUsers = user?.role === Role.SUPER_ADMIN
-        ? response.data.data.filter(u => u.role !== Role.SUPER_ADMIN)
-        : response.data.data.filter(u => u.role !== Role.SUPER_ADMIN);
+        ? response.filter(u => u.role !== Role.SUPER_ADMIN)
+        : response.filter(u => u.role !== Role.SUPER_ADMIN);
       
       setUsers(allFilteredUsers);
+      setFilteredUsers(allFilteredUsers);
       
       // Calculate total pages based on all filtered data
       const totalItems = allFilteredUsers.length;
@@ -81,7 +66,7 @@ export default function UsersPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, user?.role, currentPage]);
+  }, [user?.role, currentPage]);
 
   // Handle refresh parameter dari URL
   useEffect(() => {
@@ -95,14 +80,14 @@ export default function UsersPage() {
       // Kemudian fetch data
       fetchUsers(true);
     }
-  }, [searchParams, router, fetchUsers]);
+  }, [router, fetchUsers]);
 
   // Initial load
   useEffect(() => {
     if (user && !searchParams.get('refresh')) {
       fetchUsers();
     }
-  }, [searchQuery, user?.role, fetchUsers, searchParams]);
+  }, [user?.role, fetchUsers, searchParams]);
 
   // Debounced search - reset to page 1 when searching
   useEffect(() => {
@@ -113,17 +98,28 @@ export default function UsersPage() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, user]);
+  }, [user]);
 
   // Separate effect for page changes (no debounce needed)
   useEffect(() => {
     if (user && users.length > 0) {
       // No need to fetch again, just update the display
     }
-  }, [currentPage, user, users.length]);
+  }, [user, users.length]);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const query = searchQuery.trim().toLowerCase();
+    if (query === '') {
+      setFilteredUsers(users);
+    } else {
+      const lowerCaseQuery = query.toLowerCase();
+      const results = users.filter(user => 
+        user.name.toLowerCase().includes(lowerCaseQuery) || 
+        user.email.toLowerCase().includes(lowerCaseQuery)
+      );
+      setFilteredUsers(results);
+    }
   };
 
   const handleAddUser = () => {
@@ -165,7 +161,7 @@ export default function UsersPage() {
   const getCurrentPageData = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return users.slice(startIndex, endIndex);
+    return filteredUsers.slice(startIndex, endIndex);
   };
 
   // Generate page numbers for pagination
@@ -241,27 +237,45 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Cari Pengguna</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <form onSubmit={handleSearch} className="flex items-center gap-2 mb-8">
+        <div className="relative w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <Input
+            type="text"
             placeholder="Cari berdasarkan nama atau email..."
+            name="search"
             value={searchQuery}
-            onChange={handleSearch}
-            className="max-w-md"
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-20"
           />
-        </CardContent>
-      </Card>
+          {searchQuery && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 h-6 w-6 text-gray-500 hover:text-red-600"
+              onClick={() => {fetchUsers}}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+        <Button
+          type={searchQuery.trim() !== '' ? 'submit' : 'button'}
+          variant="default"
+          className="p-3 h-10 w-10 flex items-center justify-center"
+          // disabled={loading}
+        >
+          <Search className="w-5 h-5" />
+        </Button>
+      </form>
 
       <Card>
         <CardHeader>
           <CardTitle>
-            Daftar Pengguna ({users.length})
-            {users.length > 0 && (
+            Daftar Pengguna ({filteredUsers.length})
+            {filteredUsers.length > 0 && (
               <span className="text-sm font-normal text-muted-foreground ml-2">
-                Menampilkan {startIndex}-{endIndex} dari {users.length} pengguna
+                Menampilkan {startIndex}-{endIndex} dari {filteredUsers.length} pengguna
               </span>
             )}
           </CardTitle>
@@ -271,7 +285,7 @@ export default function UsersPage() {
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
             </div>
-          ) : users.length === 0 ? (
+          ) : filteredUsers.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {searchQuery ? 'Tidak ada pengguna yang sesuai dengan pencarian' : 'Belum ada pengguna'}
             </div>
@@ -280,7 +294,7 @@ export default function UsersPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>ID</TableHead>
+                    <TableHead>No</TableHead>
                     <TableHead>Nama</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Peran</TableHead>
@@ -289,9 +303,9 @@ export default function UsersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {currentPageData.map((userItem) => (
+                  {currentPageData.map((userItem, index) => (
                     <TableRow key={userItem.id}>
-                      <TableCell>{userItem.id}</TableCell>
+                      <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                       <TableCell>{userItem.name}</TableCell>
                       <TableCell>{userItem.email}</TableCell>
                       <TableCell>
@@ -327,7 +341,7 @@ export default function UsersPage() {
               </Table>
 
               {/* Pagination Controls */}
-              {totalPages > 1 && (
+              {totalPages > 1 && filteredUsers.length > itemsPerPage && (
                 <div className="flex items-center justify-between mt-6">
                   <div className="text-sm text-muted-foreground">
                     Halaman {currentPage} dari {totalPages}

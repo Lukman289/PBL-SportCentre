@@ -348,21 +348,11 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       
       console.log("Hasil booking:", result);
       
-      // Periksa paymentUrl dalam berbagai kemungkinan format respons
+      // Cari URL pembayaran dari backend
       let paymentUrl = '';
       
       if (result.payment?.paymentUrl) {
-        // Format 1: payment.paymentUrl
         paymentUrl = result.payment.paymentUrl;
-      } else if (result.payment?.payment_url) {
-        // Format 2: payment.payment_url (camelCase vs snake_case)
-        paymentUrl = result.payment.payment_url;
-      } else if ((result as unknown as Record<string, string>).paymentUrl) {
-        // Format 3: paymentUrl langsung pada objek booking
-        paymentUrl = (result as unknown as Record<string, string>).paymentUrl;
-      } else if ((result as unknown as Record<string, string>).payment_url) {
-        // Format 4: payment_url langsung pada objek booking
-        paymentUrl = (result as unknown as Record<string, string>).payment_url;
       }
       
       if (paymentUrl) {

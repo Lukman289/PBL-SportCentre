@@ -49,7 +49,7 @@ export interface Payment {
   createdAt: string;
   expiresDate?: string;
   transactionId?: string;
-  payment_url?: string;
+  paymentUrl?: string;
 }
 
 export interface BookingWithPayment extends Booking {

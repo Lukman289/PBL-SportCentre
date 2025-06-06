@@ -1,6 +1,6 @@
 import axiosInstance from '../config/axios.config';
 import { Booking, BookingRequest, Payment, PaymentMethod, PaymentStatus, Role } from '../types';
-import { combineDateAndTime } from '@/utils/date.utils';
+import { combineDateAndTime } from '../utils/timezone.utils';
 
 // Interface untuk format respons dengan data dan meta
 interface BookingResponseWithMeta {
@@ -13,13 +13,6 @@ interface BookingResponseWithMeta {
     hasNextPage: boolean;
     hasPrevPage: boolean;
   }
-}
-
-// Menambahkan interface untuk semua kemungkinan format respons booking
-interface BookingResponseVariants {
-  data?: Booking[];
-  bookings?: Booking[];
-  status?: string;
 }
 
 class BookingApi {
@@ -408,6 +401,13 @@ class BookingApi {
       const { branchId, ...bookingData } = data;
       
       console.log(`Creating manual booking for branch ID ${branchId}:`, bookingData);
+      
+      // Gabungkan tanggal dan waktu dalam timezone WIB
+      const startDateTime = combineDateAndTime(data.bookingDate, data.startTime);
+      const endDateTime = combineDateAndTime(data.bookingDate, data.endTime);
+      
+      console.log('Local date/time (WIB) - Start:', startDateTime.toString());
+      console.log('Local date/time (WIB) - End:', endDateTime.toString());
       
       const response = await axiosInstance.post<
         { data: Booking } | { booking: Booking } | Booking

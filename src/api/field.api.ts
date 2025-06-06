@@ -11,7 +11,7 @@ import {
 } from '../types';
 import { bookingApi } from './booking.api';
 import { Booking } from '../types';
-import { getLocalHourFromUTC } from '../utils/date.utils';
+import { getLocalHourFromDate } from '../utils/timezone.utils';
 
 // Type guards for better type checking
 function isStandardResponse(data: unknown): data is { status: boolean; data: Field } {
@@ -249,8 +249,8 @@ class FieldApi {
               const endTimeUTC = new Date(slot.end);
 
               // Gunakan utility function untuk mendapatkan jam lokal (WIB)
-              const localStartHour = getLocalHourFromUTC(startTimeUTC);
-              const localEndHour = getLocalHourFromUTC(endTimeUTC);
+              const localStartHour = getLocalHourFromDate(startTimeUTC);
+              const localEndHour = getLocalHourFromDate(endTimeUTC);
 
               console.log(`Slot hours WIB - start: ${localStartHour}:00, end: ${localEndHour}:00`);
 
@@ -355,8 +355,8 @@ class FieldApi {
               console.log(`Slot original UTC - start: ${startTimeUTC.toISOString()}, end: ${endTimeUTC.toISOString()}`);
 
               // Gunakan utility function untuk mendapatkan jam lokal (WIB)
-              const localStartHour = getLocalHourFromUTC(startTimeUTC);
-              const localEndHour = getLocalHourFromUTC(endTimeUTC);
+              const localStartHour = getLocalHourFromDate(startTimeUTC);
+              const localEndHour = getLocalHourFromDate(endTimeUTC);
 
               console.log(`Slot hours WIB - start: ${localStartHour}:00, end: ${localEndHour}:00`);
 
@@ -439,8 +439,8 @@ class FieldApi {
             const startTimeUTC = new Date(booking.startTime);
             const endTimeUTC = new Date(booking.endTime);
             
-            const localStartHour = getLocalHourFromUTC(startTimeUTC);
-            const localEndHour = getLocalHourFromUTC(endTimeUTC);
+            const localStartHour = getLocalHourFromDate(startTimeUTC);
+            const localEndHour = getLocalHourFromDate(endTimeUTC);
 
             // Tandai semua jam dalam rentang sebagai terpesan (inclusive startTime, exclusive endTime)
             // Contoh: Booking 21:00-23:00 akan menandai jam 21:00 dan 22:00 sebagai terpesan

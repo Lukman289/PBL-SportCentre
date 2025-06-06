@@ -16,7 +16,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { getPaymentStatusBadge } from "@/components/dashboard/tables/BookingTableUtils";
-import { formatTimeRange } from "@/utils/date.utils";
+import { formatTimeRange } from "@/utils/timezone.utils";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { 

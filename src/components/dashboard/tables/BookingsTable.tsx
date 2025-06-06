@@ -34,7 +34,7 @@ import { bookingApi } from "@/api/booking.api";
 import EmptyState from "@/components/ui/EmptyState";
 import { Role } from "@/types";
 import { getDetailLink, getPaymentStatusBadge } from "./BookingTableUtils";
-import { formatTimeRange } from "@/utils/date.utils";
+import { formatTimeRange } from "@/utils/timezone.utils";
 
 interface BookingsTableProps {
   bookings: Booking[];

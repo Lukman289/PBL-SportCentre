@@ -3,7 +3,7 @@ import { Calendar, Clock } from "lucide-react";
 import { Booking } from "@/types/booking.types";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { formatTimeRange } from "@/utils/date.utils";
+import { formatTimeRange } from "@/utils/timezone.utils";
 
 interface BookingTimeCardProps {
   booking: Booking;

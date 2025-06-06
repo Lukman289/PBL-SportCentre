@@ -7,7 +7,7 @@ import { Booking, PaymentStatus } from "@/types/booking.types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { formatTimeRange } from "@/utils/date.utils";
+import { formatTimeRange } from "@/utils/timezone.utils";
 import Link from "next/link";
 import { getDetailLink } from "./BookingTableUtils";
 import { Badge } from "@/components/ui/badge";

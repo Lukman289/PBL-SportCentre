@@ -10,6 +10,7 @@ import { Calendar, MapPin, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { PeriodFilter, PeriodType } from './filters/PeriodFilter';
 import { BookingChart } from './charts/BookingChart';
+import Link from 'next/link';
 
 export const UserDashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('monthly');
@@ -53,13 +54,29 @@ export const UserDashboard = () => {
             defaultValue={selectedPeriod}
             isLoading={isLoading}
           />
-          <Button variant="outline" size="sm" className="gap-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-1"
+          >
+            <Link
+              href="/fields"
+              className="flex items-center gap-1"
+            >
             <Search className="h-4 w-4" />
             <span className="hidden md:inline">Cari Lapangan</span>
+            </Link>
           </Button>
-          <Button className="gap-1">
+          <Button 
+            className="gap-1"
+          >
+            <Link
+            href="/bookings"
+            className="flex items-center gap-1"
+            >
             <Plus className="h-4 w-4" />
             <span className="hidden md:inline">Booking Baru</span>
+            </Link>
           </Button>
         </div>
       </div>

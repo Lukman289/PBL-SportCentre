@@ -64,8 +64,6 @@ export default function FieldReviewsClient({ fieldId }: { fieldId: number }) {
     <div className="space-y-4">
       <AddFieldReview fieldId={fieldId} onReviewAdded={fetchReviews} />
       
-      <h2 className="text-xl font-bold mb-4">Ulasan Pengguna</h2>
-      
       {reviews.length === 0 ? (
         <p className="text-center text-gray-500 py-6">Belum ada ulasan</p>
       ) : (

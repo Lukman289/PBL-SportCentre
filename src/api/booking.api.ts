@@ -287,20 +287,30 @@ class BookingApi {
       console.log('Sending booking data to server:', requestData);
       
       const response = await axiosInstance.post<
+        { booking: Booking & { payment?: Payment & { paymentUrl?: string } } } |
         { data: Booking & { payment?: Payment & { paymentUrl?: string } } } |
-        { booking: Booking & { payment?: Payment & { paymentUrl?: string } } }
+        (Booking & { payment?: Payment & { paymentUrl?: string } })
       >('/bookings', requestData);
-
-      // Format 1: { data: {...} }
-      if ('data' in response.data) {
-        return response.data.data;
+      
+      console.log('Booking API response:', response.data);
+      
+      // Periksa format respons dan ekstrak data booking dengan benar
+      if (response.data && typeof response.data === 'object') {
+        // Format 1: { booking: {...} }
+        if ('booking' in response.data) {
+          return response.data.booking;
+        }
+        // Format 2: { data: {...} }
+        else if ('data' in response.data) {
+          return response.data.data;
+        }
+        // Format 3: Objek booking langsung yang berisi id, bookingDate, dll.
+        else if ('id' in response.data) {
+          return response.data as Booking;
+        }
       }
-      // Format 2: { booking: {...} }
-      else if ('booking' in response.data) {
-        return response.data.booking;
-      }
 
-      throw new Error('Unexpected response format');
+      throw new Error('Format respons tidak valid: ' + JSON.stringify(response.data));
     } catch (error) {
       console.error('Error creating booking:', error);
       throw error;

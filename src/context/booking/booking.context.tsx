@@ -77,10 +77,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const { user } = useAuth();
   
-  // Dummy functions to replace useGlobalLoading
-  const withLoading = async <T,>(promise: Promise<T>): Promise<T> => {
-    return await promise;
-  };
+  // Dummy functions untuk UI loading
   const showLoading = () => { /* NextTopLoader handles this automatically */ };
   const hideLoading = () => { /* NextTopLoader handles this automatically */ };
   
@@ -346,17 +343,40 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const result = await withLoading(bookingApi.createBooking(bookingData));
+      setLoading(true);
+      const result = await bookingApi.createBooking(bookingData);
+      
+      console.log("Hasil booking:", result);
+      
+      // Periksa paymentUrl dalam berbagai kemungkinan format respons
+      let paymentUrl = '';
       
       if (result.payment?.paymentUrl) {
-        window.location.href = result.payment.paymentUrl;
+        // Format 1: payment.paymentUrl
+        paymentUrl = result.payment.paymentUrl;
+      } else if (result.payment?.payment_url) {
+        // Format 2: payment.payment_url (camelCase vs snake_case)
+        paymentUrl = result.payment.payment_url;
+      } else if ((result as unknown as Record<string, string>).paymentUrl) {
+        // Format 3: paymentUrl langsung pada objek booking
+        paymentUrl = (result as unknown as Record<string, string>).paymentUrl;
+      } else if ((result as unknown as Record<string, string>).payment_url) {
+        // Format 4: payment_url langsung pada objek booking
+        paymentUrl = (result as unknown as Record<string, string>).payment_url;
+      }
+      
+      if (paymentUrl) {
+        console.log("Mengarahkan ke URL pembayaran:", paymentUrl);
+        window.location.href = paymentUrl;
       } else {
-        console.error("No payment URL returned from API");
+        console.error("Tidak ada URL pembayaran yang dikembalikan dari API:", result);
         alert("Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi.");
       }
     } catch (error) {
       console.error("Error creating booking:", error);
       alert("Gagal membuat booking. Silakan coba lagi nanti.");
+    } finally {
+      setLoading(false);
     }
   };
 

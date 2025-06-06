@@ -1,5 +1,5 @@
 import { useDashboardStats, SuperAdminStats } from '@/hooks/useDashboardStats.hook';
-import { Role } from '@/types';
+import { Role, BranchAdmin, BranchStatus } from '@/types';
 import { StatCard } from './StatCard';
 import { Icons } from './DashboardIcons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,14 +8,16 @@ import { Button } from '@/components/ui/button';
 import { CircleUser, Download, Globe, MapPin, Plus, Rocket } from 'lucide-react';
 import { BranchesTable } from './tables/BranchesTable';
 import { BranchAdminsTable } from './tables/BranchAdminsTable';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PeriodFilter, PeriodType } from './filters/PeriodFilter';
 import { useRouter } from 'next/navigation';
+import { userApi } from '@/api';
 
 export const SuperAdminDashboard = () => {
   // State untuk toggle view dan periode
   const [showAdmins, setShowAdmins] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('monthly');
+  const [admins, setAdmins] = useState<BranchAdmin[]>([]);
   
   const { stats, isLoading, error } = useDashboardStats(Role.SUPER_ADMIN, selectedPeriod);
   const typedStats = stats as SuperAdminStats;
@@ -26,17 +28,37 @@ export const SuperAdminDashboard = () => {
   };
   
   // Fungsi untuk mengkonversi data cabang dari API ke format yang diharapkan oleh komponen
-  const formatBranches = (branches: SuperAdminStats['branches'] = []): { id: string; name: string; location: string; status: 'active' | 'inactive'; adminCount: number; fieldCount: number; }[] => {
+  const formatBranches = (branches: SuperAdminStats['branches'] = []): { id: string; name: string; location: string; status: BranchStatus.ACTIVE | BranchStatus.INACTIVE; adminCount: number; fieldCount: number; }[] => {
     return branches.map(branch => ({
       id: branch.id,
       name: branch.name,
       location: branch.location,
       adminCount: branch.adminCount,
       fieldCount: branch.fieldCount,
-      // Mengkonversi status string menjadi "active" | "inactive"
-      status: branch.status.toLowerCase() === 'active' ? 'active' : 'inactive'
+      status: branch.status.toLowerCase() === 'active' ? BranchStatus.ACTIVE : BranchStatus.INACTIVE,
     }));
   };
+
+  const getAdmins = async () => {
+    try {
+      const response = await (userApi.getUserBranchAdmins());
+      if (response && response.data) {
+        return response.data;
+      }
+      return [];
+    } catch (error) {
+      console.error('Error fetching branch admins:', error);
+      return [];
+    }
+  }
+
+  useEffect(() => {
+  const fetchAdmins = async () => {
+    const data = await getAdmins();
+    setAdmins(data);
+  };
+  fetchAdmins();
+}, []);
 
   // Fungsi untuk mendapatkan teks periode
   const getPeriodText = (period: PeriodType): string => {
@@ -143,7 +165,7 @@ export const SuperAdminDashboard = () => {
       <div className="mb-6">
         {showAdmins ? (
           <BranchAdminsTable 
-            admins={[]} // API belum menyediakan data admin untuk SuperAdmin
+            admins={admins} // API belum menyediakan data admin untuk SuperAdmin
             isLoading={isLoading} 
             title={`Daftar Admin Cabang - Data ${selectedPeriod === 'daily' ? 'Harian' : selectedPeriod === 'yearly' ? 'Tahunan' : 'Bulanan'}`} 
             caption={`Daftar admin dari semua cabang ${getPeriodText(selectedPeriod)}`}

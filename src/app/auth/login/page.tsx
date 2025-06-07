@@ -87,6 +87,12 @@ export default function LoginPage() {
               )}
             />
 
+            <div className="text-right">
+              <Link href="/auth/forgot-password" className="text-primary text-sm hover:underline">
+                Lupa password?
+              </Link>
+            </div>
+
             <Button type="submit" className="w-full">
               Masuk
             </Button>
@@ -104,4 +110,4 @@ export default function LoginPage() {
       </div>
     </>
   );
-} 
+}

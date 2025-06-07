@@ -1,5 +1,5 @@
 import axiosInstance from '../config/axios.config';
-import { LoginRequest, RegisterRequest, UserWithToken } from '../types';
+import { ForgotPasswordRequest, LoginRequest, RegisterRequest, ResetPasswordRequest, UserWithToken } from '../types';
 import { hasAuthCookie } from '@/utils/cookie.utils';
 import Cookies from 'js-cookie';
 
@@ -9,6 +9,13 @@ interface AxiosErrorResponse {
     status?: number;
     data?: unknown;
   };
+}
+
+// Interface untuk response forgot password
+interface ForgotPasswordResponse {
+  message: string;
+  resetUrl?: string; // Opsional, hanya ada di mode development
+  token?: string; // Opsional, hanya ada di mode development
 }
 
 class AuthApi {
@@ -141,6 +148,36 @@ class AuthApi {
       
       throw error;
     }
+  }
+
+  /**
+   * Kirim permintaan reset password
+   * @param data - Data berupa email
+   * @returns Promise dengan pesan sukses
+   */
+  async forgotPassword(data: ForgotPasswordRequest): Promise<ForgotPasswordResponse> {
+    const response = await axiosInstance.post<ForgotPasswordResponse>('/auth/forgot-password', data, {
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
+    return response.data;
+  }
+
+  /**
+   * Reset password dengan token dari email
+   * @param data - Data berupa token, password baru, dan konfirmasi password
+   * @returns Promise dengan pesan sukses
+   */
+  async resetPassword(data: ResetPasswordRequest): Promise<{ message: string }> {
+    const response = await axiosInstance.post<{ message: string }>('/auth/reset-password', data, {
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
+    return response.data;
   }
 }
 

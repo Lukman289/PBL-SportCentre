@@ -10,6 +10,7 @@ import { Branch } from '@/types';
 import { Search, X } from 'lucide-react';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import useToastHandler from '@/hooks/useToastHandler';
+import { motion } from 'framer-motion';
 
 export default function BranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -39,11 +40,10 @@ export default function BranchesPage() {
       } else {
         setBranches([]);
       }
-    } catch (error) {
+    } catch {
       const errorMsg = 'Gagal memuat daftar cabang. Silakan coba lagi nanti.';
       setError(errorMsg);
-      showError(error, errorMsg);
-      console.error('Error fetching branches:', error);
+      showError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -67,6 +67,26 @@ export default function BranchesPage() {
     fetchBranches(maxData, 1);
   };
 
+  // Animasi variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { type: "spring", stiffness: 100 }
+    }
+  };
+
   if (loading) {
     return null;
   }
@@ -84,15 +104,31 @@ export default function BranchesPage() {
   }
 
   return (
-    <div className="container mx-auto mt-8 py-8 px-4">
-      <div className="flex justify-between items-center mb-6">
+    <motion.div 
+      className="container mx-auto mt-8 py-8 px-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.div 
+        className="flex justify-between items-center mb-6"
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
         <h1 className="text-3xl font-bold">Daftar Cabang</h1>
         <Button variant="outline" onClick={handleRefresh}>
           Muat Ulang
         </Button>
-      </div>
+      </motion.div>
 
-      <form onSubmit={handleSearch} className="flex items-center gap-2 mb-8">
+      <motion.form 
+        onSubmit={handleSearch} 
+        className="flex items-center gap-2 mb-8"
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
         <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <Input
@@ -127,10 +163,15 @@ export default function BranchesPage() {
         >
           <Search className="w-5 h-5" />
         </Button>
-      </form>
+      </motion.form>
 
       {branches.length === 0 ? (
-        <div className="text-center py-12">
+        <motion.div 
+          className="text-center py-12"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
           <p className="text-gray-500 mb-4">
             {searchQuery.trim() !== '' 
               ? 'Tidak ada cabang yang sesuai dengan pencarian Anda.' 
@@ -138,8 +179,8 @@ export default function BranchesPage() {
           </p>
           {searchQuery.trim() !== '' && (
             <Button 
-            variant="outline" 
-            onClick={() => {
+              variant="outline" 
+              onClick={() => {
                 setSearchQuery('');
                 fetchBranches(maxData, 1);
                 setCurrentPage(1);
@@ -148,55 +189,71 @@ export default function BranchesPage() {
               Reset Pencarian
             </Button>
           )}
-        </div>
+        </motion.div>
       ) : (
-        <div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {branches.map((branch) => (
-              <Card key={branch.id} className="overflow-hidden">
-                <div className="relative h-48 bg-muted">
-                  <img
-                    src={branch.imageUrl || "images/img_not_found.png"}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.onerror = null;
-                      target.src = "images/img_not_found.png";
-                      target.className = "h-full w-full object-contain";
-                    }}
-                    alt={branch.name}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <CardContent className="p-4">
-                  <h2 className="text-xl font-bold mb-2">{branch.name}</h2>
-                  <p className="text-gray-700 mb-2 line-clamp-2" title={branch.location}>{branch.location}</p>
-                  <div className="mb-2">
-                    <span
-                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        branch.status === 'active'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {branch.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
-                    </span>
+              <motion.div 
+                key={branch.id}
+                variants={itemVariants}
+                whileHover={{ y: -5 }}
+                transition={{ type: "spring", stiffness: 300, damping: 10 }}
+              >
+                <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                  <div className="relative h-48 bg-muted">
+                    <img
+                      src={branch.imageUrl || "images/img_not_found.png"}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = "images/img_not_found.png";
+                        target.className = "h-full w-full object-contain";
+                      }}
+                      alt={branch.name}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
-                  {branch.owner && (
-                    <p className="text-sm text-gray-500">
-                      Pemilik: {branch.owner.name}
-                    </p>
-                  )}
-                </CardContent>
-                <CardFooter className="pt-0 pb-4 px-4">
-                  <Button asChild className="w-full">
-                    <Link href={`/branches/${branch.id}`}>Lihat Detail</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
+                  <CardContent className="p-4">
+                    <h2 className="text-xl font-bold mb-2">{branch.name}</h2>
+                    <p className="text-gray-700 mb-2 line-clamp-2" title={branch.location}>{branch.location}</p>
+                    <div className="mb-2">
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          branch.status === 'active'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {branch.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
+                      </span>
+                    </div>
+                    {branch.owner && (
+                      <p className="text-sm text-gray-500">
+                        Pemilik: {branch.owner.name}
+                      </p>
+                    )}
+                  </CardContent>
+                  <CardFooter className="pt-0 pb-4 px-4">
+                    <Button asChild className="w-full">
+                      <Link href={`/branches/${branch.id}`}>Lihat Detail</Link>
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
           {totalItems > maxData && !searched &&(
-            <div className="flex justify-between items-center gap-4 mt-8">
+            <motion.div 
+              className="flex justify-between items-center gap-4 mt-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
               <Button 
                 variant="outline" 
                 disabled={currentPage === 1} 
@@ -212,10 +269,10 @@ export default function BranchesPage() {
               >
                 Selanjutnya
               </Button>
-            </div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

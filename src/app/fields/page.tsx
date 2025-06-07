@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import Image from 'next/image';
 import useToastHandler from '@/hooks/useToastHandler';
+import { motion } from 'framer-motion';
 
 export default function FieldPage() {
   const [fields, setFields] = useState<Field[]>([]);
@@ -78,7 +79,7 @@ export default function FieldPage() {
           setFields([]);
         }
       }
-    } catch (error) {
+    } catch {
       showError('Gagal memuat daftar lapangan. Silakan coba lagi.');
     } finally {
       setLoading(false);
@@ -95,7 +96,7 @@ export default function FieldPage() {
       } else {
         setBranches([]);
       }
-    } catch (error) {
+    } catch {
       showError('Gagal memuat daftar cabang. Silakan coba lagi.');
     } finally {
       setLoading(false);
@@ -127,6 +128,26 @@ export default function FieldPage() {
     fetchFields(maxData, 1);
   };
 
+  // Animasi variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { type: "spring", stiffness: 100 }
+    }
+  };
+
   if (loading) {
     return null;
   }
@@ -144,11 +165,21 @@ export default function FieldPage() {
   }
 
   return (
-    <div className="container mx-auto mt-8 py-8 px-4">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+    <motion.div 
+      className="container mx-auto mt-8 py-8 px-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.div 
+        className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4"
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
         <h1 className="text-3xl font-bold">Daftar Lapangan</h1>
         
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+        <motion.div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <select
             value={selectedBranch}
             onChange={handleBranchChange}
@@ -165,10 +196,16 @@ export default function FieldPage() {
           <Button variant="outline" onClick={handleRefresh}>
             Muat Ulang
           </Button>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
-      <form onSubmit={handleSearch} className="flex items-center gap-2 mb-8">
+      <motion.form 
+        onSubmit={handleSearch} 
+        className="flex items-center gap-2 mb-8"
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
         <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <Input
@@ -203,10 +240,15 @@ export default function FieldPage() {
         >
           <Search className="w-5 h-5" />
         </Button>
-      </form>
+      </motion.form>
 
       {fields.length === 0 ? (
-        <div className="text-center py-12">
+        <motion.div 
+          className="text-center py-12"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
           <p className="text-gray-500 mb-4">
             {searchQuery.trim() !== '' || selectedBranch !== 0
               ? 'Tidak ada lapangan yang sesuai dengan filter yang dipilih.'
@@ -226,88 +268,104 @@ export default function FieldPage() {
               Reset Filter
             </Button>
           )}
-        </div>
+        </motion.div>
       ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {fields.map(field => (
-              <Card key={field.id} className="overflow-hidden">
-                <div className="relative h-48 bg-muted">
-                  <Image 
-                    src={field.imageUrl || "/images/field-placeholder.jpg"}
-                    alt={field.name}
-                    width={500}
-                    height={300}
-                    className="h-full w-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.onerror = null;
-                      target.src = "/images/field-placeholder.jpg";
-                    }}
-                  />
-                </div>
-                
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start">
-                    <h2 className="text-xl font-bold mb-1">{field.name}</h2>
-                    <span className="text-xl font-semibold text-primary">
-                      {field.priceDay.toLocaleString('id-ID', {
-                        style: 'currency',
-                        currency: 'IDR',
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0,
-                      })}
-                      <span className="text-sm text-gray-500">/jam</span>
-                    </span>
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {fields.map((field) => (
+              <motion.div 
+                key={field.id}
+                variants={itemVariants}
+                whileHover={{ y: -5 }}
+                transition={{ type: "spring", stiffness: 300, damping: 10 }}
+              >
+                <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                  <div className="relative h-48 bg-muted">
+                    <Image 
+                      src={field.imageUrl || "/images/field-placeholder.jpg"}
+                      alt={field.name}
+                      width={500}
+                      height={300}
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = "/images/field-placeholder.jpg";
+                      }}
+                    />
                   </div>
                   
-                  <p className="text-sm text-gray-600 mb-2">
-                    {field.branch?.name}
-                  </p>
-                  
-                  {field.type?.name && (
-                    <p className="text-gray-700 mt-2 line-clamp-3">
-                      {field.type?.name}
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <h2 className="text-xl font-bold mb-1">{field.name}</h2>
+                      <span className="text-xl font-semibold text-primary">
+                        {field.priceDay.toLocaleString('id-ID', {
+                          style: 'currency',
+                          currency: 'IDR',
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
+                        })}
+                        <span className="text-sm text-gray-500">/jam</span>
+                      </span>
+                    </div>
+                    
+                    <p className="text-sm text-gray-600 mb-2">
+                      {field.branch?.name}
                     </p>
-                  )}
+                    
+                    {field.type?.name && (
+                      <p className="text-gray-700 mt-2 line-clamp-3">
+                        {field.type?.name}
+                      </p>
+                    )}
+                    
+                    <div className="flex items-center mt-3 gap-2 flex-wrap">
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          field.status === 'available'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {field.status === 'available' ? 'Tersedia' : 'Tidak Tersedia'}
+                      </span>
+                      
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {field.type?.name || '-'}
+                      </span>
+                    </div>
+                  </CardContent>
                   
-                  <div className="flex items-center mt-3 gap-2 flex-wrap">
-                    <span
-                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        field.status === 'available'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {field.status === 'available' ? 'Tersedia' : 'Tidak Tersedia'}
-                    </span>
-                    
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {field.type?.name || '-'}
-                    </span>
-                  </div>
-                </CardContent>
-                
-                <CardFooter className="pt-0 px-4 pb-4">
-                  <div className="flex flex-col sm:flex-row gap-2 w-full">
-                    <Button asChild className="flex-1">
-                      <Link href="/bookings">
-                        Booking Sekarang
-                      </Link>
-                    </Button>
-                    
-                    <Button asChild variant="outline" className="flex-1">
-                      <Link href={`/fields/${field.id}`}>
-                        Detail
-                      </Link>
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
+                  <CardFooter className="pt-0 px-4 pb-4">
+                    <div className="flex flex-col sm:flex-row gap-2 w-full">
+                      <Button asChild className="flex-1">
+                        <Link href="/bookings">
+                          Booking Sekarang
+                        </Link>
+                      </Button>
+                      
+                      <Button asChild variant="outline" className="flex-1">
+                        <Link href={`/fields/${field.id}`}>
+                          Detail
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardFooter>
+                </Card>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
           {totalItems > maxData && !searched &&(
-            <div className="flex justify-between items-center gap-4 mt-8">
+            <motion.div 
+              className="flex justify-between items-center gap-4 mt-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
               <Button 
                 variant="outline" 
                 disabled={currentPage === 1} 
@@ -323,10 +381,10 @@ export default function FieldPage() {
               >
                 Selanjutnya
               </Button>
-            </div>
+            </motion.div>
           )}
-        </>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 } 

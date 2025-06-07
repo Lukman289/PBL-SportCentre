@@ -45,11 +45,54 @@ export const removeIsLoggedInCookie = (): void => {
   Cookies.remove('is_logged_in', { path: '/' });
 };
 
+/**
+ * Menyimpan token reset password ke dalam cookie
+ * @param token Token reset password
+ */
+export const setResetPasswordToken = (token: string): void => {
+  if (typeof window === 'undefined') {
+    return; 
+  }
+  
+  Cookies.set('reset_password_token', token, { 
+    expires: 1/24, // 1 jam
+    path: '/',
+    secure: window.location.protocol === 'https:',
+    sameSite: 'strict'
+  });
+};
+
+/**
+ * Mengambil token reset password dari cookie
+ * @returns string Token reset password atau undefined jika tidak ada
+ */
+export const getResetPasswordToken = (): string | undefined => {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+  
+  return Cookies.get('reset_password_token');
+};
+
+/**
+ * Menghapus token reset password dari cookie
+ */
+export const removeResetPasswordToken = (): void => {
+  if (typeof window === 'undefined') {
+    return; 
+  }
+  
+  Cookies.remove('reset_password_token', { path: '/' });
+};
+
 const cookieUtils = {
   hasCookie,
   hasAuthCookie,
   setIsLoggedInCookie,
-  removeIsLoggedInCookie
+  removeIsLoggedInCookie,
+  setResetPasswordToken,
+  getResetPasswordToken,
+  removeResetPasswordToken
 };
 
 export default cookieUtils; 

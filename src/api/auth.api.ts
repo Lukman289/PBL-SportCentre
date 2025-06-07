@@ -1,6 +1,6 @@
 import axiosInstance from '../config/axios.config';
 import { ForgotPasswordRequest, LoginRequest, RegisterRequest, ResetPasswordRequest, UserWithToken } from '../types';
-import { hasAuthCookie } from '@/utils/cookie.utils';
+import { hasAuthCookie, setResetPasswordToken, getResetPasswordToken } from '@/utils/cookie.utils';
 import Cookies from 'js-cookie';
 
 // Interface untuk error Axios
@@ -162,22 +162,49 @@ class AuthApi {
         'Pragma': 'no-cache'
       }
     });
+    
+    // Jika dalam mode development dan ada token, simpan di cookie
+    if (response.data.token) {
+      setResetPasswordToken(response.data.token);
+    }
+    
     return response.data;
   }
 
   /**
-   * Reset password dengan token dari email
-   * @param data - Data berupa token, password baru, dan konfirmasi password
+   * Reset password dengan token dari cookie atau parameter
+   * @param data - Data berupa token (opsional jika sudah di cookie), password baru, dan konfirmasi password
    * @returns Promise dengan pesan sukses
    */
   async resetPassword(data: ResetPasswordRequest): Promise<{ message: string }> {
-    const response = await axiosInstance.post<{ message: string }>('/auth/reset-password', data, {
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-      }
-    });
-    return response.data;
+    // Ambil token dari cookie jika tidak disediakan di data
+    const tokenToUse = data.token || getResetPasswordToken();
+    
+    if (!tokenToUse) {
+      throw new Error('Token reset password tidak ditemukan');
+    }
+    
+    const requestData = {
+      ...data,
+      token: tokenToUse
+    };
+    
+    try {
+      const response = await axiosInstance.post<{ message: string }>('/auth/reset-password', requestData, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
+      // Hapus token dari cookie setelah berhasil reset password
+      Cookies.remove('reset_password_token', { path: '/' });
+      
+      return response.data;
+    } catch (error) {
+      // Jangan hapus token jika terjadi error
+      throw error;
+    }
   }
 }
 

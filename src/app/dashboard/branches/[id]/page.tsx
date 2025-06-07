@@ -51,14 +51,6 @@ interface BranchAdmin {
   };
 }
 
-// Interface untuk pagination
-interface PaginationData<T> {
-  data: T[];
-  total: number;
-  page: number;
-  totalPages: number;
-}
-
 // Validasi form untuk tambah lapangan
 const createFieldSchema = z.object({
   name: z.string().min(3, 'Nama lapangan minimal 3 karakter'),
@@ -179,7 +171,7 @@ export default function BranchDetailPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const branchId = parseInt(params.id as string);
+  const branchId = parseInt(params?.id as string);
 
   // Form untuk tambah lapangan
   const fieldForm = useForm<CreateFieldFormValues>({

@@ -6,7 +6,6 @@ import useGlobalLoading from "@/hooks/useGlobalLoading.hook";
 import { PaymentStatus, BookingWithPayment } from "@/types";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import {
@@ -18,20 +17,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Eye, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<BookingWithPayment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | "all">("all");
   const { user } = useAuth();
   const userId = user?.id || 0;
   const { showLoading, hideLoading, withLoading } = useGlobalLoading();
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
+  const [totalItems] = useState(0);
   const maxData = 10;
 
   useEffect(() => {
@@ -65,12 +63,6 @@ export default function MyBookingsPage() {
     const status = e.target.value as PaymentStatus | "all";
     setStatusFilter(status);
   }
-
-  const handleViewBooking = (id: number) => {
-    // Navigate to booking details page
-    // router.push(`/histories/${id}`);
-    console.log(`View booking with ID: ${id}`);
-  };
 
   const getStatusColor = (status?: PaymentStatus) => {
     switch (status) {
@@ -106,7 +98,7 @@ export default function MyBookingsPage() {
     }
   };
 
-  const paymentStatusOptions = Object.entries(PaymentStatus).map(([key, value]) => ({
+  const paymentStatusOptions = Object.entries(PaymentStatus).map(([value]) => ({
     label: getStatusText(value),
     value: value,
   }));

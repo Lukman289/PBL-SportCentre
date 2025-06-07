@@ -33,6 +33,16 @@ interface CreateUserResponse {
   };
 }
 
+interface ApiError {
+  response?: {
+    status?: number;
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
 export default function CreateUserPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -110,22 +120,23 @@ export default function CreateUserPage() {
       } else {
         toast.error(response.data.message || 'Terjadi kesalahan');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating user:', error);
+      const apiError = error as ApiError;
       
-      if (error.response?.data?.message) {
+      if (apiError.response?.data?.message) {
         // Handle specific validation errors from backend
-        if (error.response.data.message.includes('Email sudah digunakan')) {
+        if (apiError.response.data.message.includes('Email sudah digunakan')) {
           setErrors({ email: 'Email sudah digunakan' });
-        } else if (error.response.data.message.includes('Peran yang diizinkan')) {
-          setErrors({ role: error.response.data.message });
+        } else if (apiError.response.data.message.includes('Peran yang diizinkan')) {
+          setErrors({ role: apiError.response.data.message });
         } else {
-          toast.error(error.response.data.message);
+          toast.error(apiError.response.data.message);
         }
-      } else if (error.response?.status === 401) {
+      } else if (apiError.response?.status === 401) {
         toast.error('Anda tidak memiliki izin untuk melakukan aksi ini');
         router.push('/login');
-      } else if (error.response?.status === 403) {
+      } else if (apiError.response?.status === 403) {
         toast.error('Anda tidak memiliki akses untuk membuat user dengan role tersebut');
       } else {
         toast.error('Terjadi kesalahan saat membuat user');

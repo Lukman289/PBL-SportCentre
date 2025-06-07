@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BookingWithPayment, Field, PaymentMethod, PaymentStatus } from '@/types';
+import { BookingWithPayment, Field, PaymentStatus } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { use } from 'react';
@@ -31,8 +31,6 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const [field, setField] = useState<Field | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.MIDTRANS);
-  const [processingPayment, setProcessingPayment] = useState(false);
   const [processingCancel, setProcessingCancel] = useState(false);
 
   useEffect(() => {

@@ -12,11 +12,23 @@ import { useAuth } from '@/context/auth/auth.context';
 import { toast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 
+// Tipe untuk error
+interface ApiError {
+  response?: {
+    status?: number;
+    data?: {
+      message?: string;
+      errors?: string[];
+    };
+  };
+  message?: string;
+}
+
 export default function EditFieldTypePage() {
   const params = useParams();
   const router = useRouter();
   const { user: authUser } = useAuth();
-  const fieldTypeId = Number(params.id);
+  const fieldTypeId = Number(params?.id);
   const [fieldType, setFieldType] = useState<FieldType | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -32,17 +44,18 @@ export default function EditFieldTypePage() {
         setFormData({
           name: fieldTypeData.name,
         });
-      } catch (err: any) {
+      } catch (err) {
         console.error('Failed to fetch field type:', err);
+        const error = err as ApiError;
         
-        if (err.response?.status === 403) {
+        if (error.response?.status === 403) {
           toast({
             title: 'Access Denied',
             description: 'You do not have permission to view this field type',
             variant: 'destructive',
           });
           router.push('/dashboard');
-        } else if (err.response?.status === 404) {
+        } else if (error.response?.status === 404) {
           toast({
             title: 'Field Type Not Found',
             description: 'The field type you requested was not found',
@@ -75,7 +88,7 @@ export default function EditFieldTypePage() {
     try {
       setUpdating(true);
       
-      const updatedFieldType = await fieldApi.updateFieldType(fieldTypeId, formData);
+      await fieldApi.updateFieldType(fieldTypeId, formData);
       
       toast({
         title: 'Success',
@@ -83,11 +96,12 @@ export default function EditFieldTypePage() {
       });
       
       router.push(`/dashboard/fieldtypes/${fieldTypeId}`);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to update field type:', error);
+      const apiError = error as ApiError;
       
-      const errorMessage = error.response?.data?.message || 
-        error.response?.data?.errors?.join('\n') || 
+      const errorMessage = apiError.response?.data?.message || 
+        apiError.response?.data?.errors?.join('\n') || 
         'Failed to update field type. Please try again.';
       
       toast({

@@ -10,11 +10,22 @@ import { userApi } from '@/api/user.api';
 import axiosInstance from '@/config/axios.config';
 import { toast } from '@/components/ui/use-toast';
 
+// Tipe untuk error
+interface ApiError {
+  response?: {
+    status?: number;
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
 export default function UserDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user: authUser } = useAuth();
-  const userId = Number(params.id);
+  const userId = Number(params?.id);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
@@ -24,17 +35,18 @@ export default function UserDetailPage() {
       try {
         const userData = await userApi.getUserById(userId);
         setUser(userData);
-      } catch (err: any) {
+      } catch (err) {
         console.error('Failed to fetch user:', err);
+        const error = err as ApiError;
         
-        if (err.response?.status === 403) {
+        if (error.response?.status === 403) {
           toast({
             title: 'Akses Ditolak',
             description: 'Anda tidak memiliki izin untuk melihat pengguna ini',
             variant: 'destructive',
           });
           router.push('/dashboard');
-        } else if (err.response?.status === 404) {
+        } else if (error.response?.status === 404) {
           toast({
             title: 'Pengguna Tidak Ditemukan',
             description: 'Pengguna yang Anda cari tidak ditemukan',
@@ -77,10 +89,11 @@ export default function UserDetailPage() {
         });
         
         router.push('/dashboard/users');
-      } catch (error: any) {
+      } catch (error) {
         console.error('Failed to delete user:', error);
+        const apiError = error as ApiError;
         
-        const errorMessage = error.response?.data?.message || 
+        const errorMessage = apiError.response?.data?.message || 
           'Gagal menghapus pengguna. Silakan coba lagi.';
         
         toast({

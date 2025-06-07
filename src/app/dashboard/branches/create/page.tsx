@@ -26,15 +26,9 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/context/auth/auth.context';
 import { branchApi } from '@/api/branch.api';
-import { Role } from '@/types';
+import { BranchStatus, Role } from '@/types';
 import { Loader2, X } from 'lucide-react';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
-
-// Enum untuk status cabang
-enum BranchStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-}
 
 // Validasi form menggunakan Zod - disesuaikan dengan database schema
 const createBranchSchema = z.object({
@@ -157,14 +151,12 @@ export default function CreateBranchPage() {
         : '/dashboard/my-branches';
 
       router.push(redirectPath);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error creating branch:', err);
 
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else if (err.response?.data?.errors) {
-        const errorMessages = Object.values(err.response.data.errors).flat();
-        setError(`Validasi gagal: ${errorMessages.join(', ')}`);
+      // Perbaiki cara penanganan error
+      if (err && typeof err === 'object' && 'message' in err) {
+        setError((err as Error).message || 'Gagal membuat cabang. Silakan coba lagi.');
       } else {
         setError('Gagal membuat cabang. Silakan coba lagi.');
       }

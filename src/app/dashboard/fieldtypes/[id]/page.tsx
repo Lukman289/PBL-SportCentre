@@ -10,11 +10,22 @@ import { fieldApi } from '@/api/field.api';
 import axiosInstance from '@/config/axios.config';
 import { toast } from '@/components/ui/use-toast';
 
+// Tipe untuk error
+interface ApiError {
+  response?: {
+    status?: number;
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
 export default function FieldTypeDetailPage() {
     const params = useParams();
     const router = useRouter();
     const { user: authUser } = useAuth();
-    const fieldTypeId = Number(params.id);
+    const fieldTypeId = Number(params?.id);
     const [fieldType, setFieldType] = useState<FieldType | null>(null);
     const [loading, setLoading] = useState(true);
     const [deleting, setDeleting] = useState(false);
@@ -24,17 +35,18 @@ export default function FieldTypeDetailPage() {
             try {
                 const fieldTypeData = await fieldApi.getFieldTypeById(fieldTypeId);
                 setFieldType(fieldTypeData);
-            } catch (err: any) {
+            } catch (err) {
                 console.error('Failed to fetch field type:', err);
+                const error = err as ApiError;
 
-                if (err.response?.status === 403) {
+                if (error.response?.status === 403) {
                     toast({
                         title: 'Access Denied',
                         description: 'You do not have permission to view this field type',
                         variant: 'destructive',
                     });
                     router.push('/dashboard');
-                } else if (err.response?.status === 404) {
+                } else if (error.response?.status === 404) {
                     toast({
                         title: 'Field Type Not Found',
                         description: 'The field type you requested was not found',
@@ -77,10 +89,11 @@ export default function FieldTypeDetailPage() {
                 });
 
                 router.push('/dashboard/fieldtypes');
-            } catch (error: any) {
+            } catch (error) {
                 console.error('Failed to delete field type:', error);
+                const apiError = error as ApiError;
 
-                const errorMessage = error.response?.data?.message ||
+                const errorMessage = apiError.response?.data?.message ||
                     'Failed to delete field type. Please try again.';
 
                 toast({

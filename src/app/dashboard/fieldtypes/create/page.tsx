@@ -20,6 +20,16 @@ import { fieldApi } from '@/api/field.api';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 
+// Tipe untuk error
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
 // Form schema
 const formSchema = z.object({
   name: z.string().min(1, 'Nama tipe field harus diisi'),
@@ -40,7 +50,7 @@ export default function CreateFieldTypePage() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsSubmitting(true);
-      const response = await fieldApi.createFieldType(values);
+      await fieldApi.createFieldType(values);
       
       toast({
         title: 'Berhasil',
@@ -48,11 +58,12 @@ export default function CreateFieldTypePage() {
       });
       
       router.push('/dashboard/fieldtypes');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating field type:', error);
+      const apiError = error as ApiError;
       toast({
         title: 'Gagal',
-        description: error?.response?.data?.message || 'Gagal membuat tipe field',
+        description: apiError?.response?.data?.message || 'Gagal membuat tipe field',
         variant: 'destructive',
       });
     } finally {

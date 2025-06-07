@@ -12,6 +12,17 @@ import { Input } from '@/components/ui/input';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import Image from 'next/image';
 
+// Tipe untuk error
+interface ApiError {
+  message?: string;
+  response?: {
+    data?: {
+      message?: string;
+    };
+    status?: number;
+  };
+}
+
 export default function FieldPage() {
   const [fields, setFields] = useState<Field[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -52,7 +63,7 @@ export default function FieldPage() {
           q 
         }));
         if (response && response.data) {
-          const normalizedFields: Field[] = response.data.map((field: any) => ({
+          const normalizedFields: Field[] = response.data.map((field: Field) => ({
             ...field,
             priceDay: field.priceDay || 0,
             priceNight: field.priceNight || 0,
@@ -65,7 +76,7 @@ export default function FieldPage() {
       } else {
         const response = await withLoading(fieldApi.getAllFields({ limit, page, q, branchId }));
         if (response && response.data) {
-          const normalizedFields: Field[] = response.data.map((field: any) => ({
+          const normalizedFields: Field[] = response.data.map((field: Field) => ({
             ...field,
             priceDay: field.priceDay || 0,
             priceNight: field.priceNight || 0,
@@ -77,7 +88,8 @@ export default function FieldPage() {
         }
       }
     } catch (error) {
-      console.error('Error fetching fields:', error);
+      const apiError = error as ApiError;
+      console.error('Error fetching fields:', apiError);
       setError('Gagal memuat daftar lapangan. Silakan coba lagi.');
     } finally {
       setLoading(false);
@@ -95,7 +107,8 @@ export default function FieldPage() {
         setBranches([]);
       }
     } catch (error) {
-      console.error('Error fetching branches:', error);
+      const apiError = error as ApiError;
+      console.error('Error fetching branches:', apiError);
       setError('Gagal memuat daftar cabang. Silakan coba lagi.');
     } finally {
       setLoading(false);

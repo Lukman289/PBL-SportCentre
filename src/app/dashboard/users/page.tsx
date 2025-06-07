@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search, X } from 'lucide-react';
 import { userApi } from '@/api';
 
-export default function UsersPage() {
+function UsersContent() {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -70,7 +70,7 @@ export default function UsersPage() {
 
   // Handle refresh parameter dari URL
   useEffect(() => {
-    const refresh = searchParams.get('refresh');
+    const refresh = searchParams?.get('refresh');
     if (refresh === 'true') {
       // Clean URL tanpa refresh parameter terlebih dahulu
       const url = new URL(window.location.href);
@@ -84,7 +84,7 @@ export default function UsersPage() {
 
   // Initial load
   useEffect(() => {
-    if (user && !searchParams.get('refresh')) {
+    if (user && !searchParams?.get('refresh')) {
       fetchUsers();
     }
   }, [user?.role, fetchUsers, searchParams]);
@@ -253,7 +253,10 @@ export default function UsersPage() {
               type="button"
               variant="ghost"
               className="absolute right-3 top-1/2 -translate-y-1/2 p-1 h-6 w-6 text-gray-500 hover:text-red-600"
-              onClick={() => {fetchUsers}}
+              onClick={() => {
+                setSearchQuery('');
+                fetchUsers();
+              }}
             >
               <X className="w-4 h-4" />
             </Button>
@@ -408,5 +411,17 @@ export default function UsersPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function UsersPage() {
+  return (
+    <Suspense fallback={
+      <div className="p-4">
+        <h1 className="text-xl font-semibold">Memuat Data Pengguna...</h1>
+      </div>
+    }>
+      <UsersContent />
+    </Suspense>
   );
 }

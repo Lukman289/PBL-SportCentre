@@ -28,6 +28,7 @@ import { branchApi } from '@/api/branch.api';
 import { useAuth } from '@/context/auth/auth.context';
 import { Loader2, X, Upload } from 'lucide-react';
 import { Role } from '@/types';
+import Image from 'next/image';
 
 // Validasi form menggunakan Zod
 const editBranchSchema = z.object({
@@ -48,7 +49,8 @@ interface Owner {
 }
 
 export default function EditBranchPage() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
   const router = useRouter();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -140,11 +142,12 @@ export default function EditBranchPage() {
             setImagePreview(branch.imageUrl);
             setCurrentImageUrl(branch.imageUrl);
           }
-        } catch (err: any) {
+        } catch (err) {
           console.error('Error loading branch data:', err);
-          if (err.response?.status === 404) {
+          const error = err as { response?: { status?: number } };
+          if (error.response?.status === 404) {
             setError('Cabang tidak ditemukan');
-          } else if (err.response?.status === 403) {
+          } else if (error.response?.status === 403) {
             setError('Anda tidak memiliki akses ke cabang ini');
           } else {
             setError('Gagal memuat data cabang. Silakan coba lagi.');
@@ -264,7 +267,7 @@ export default function EditBranchPage() {
 
       // Debug: Log FormData contents
       console.log('📤 FormData contents:');
-      for (let [key, value] of formData.entries()) {
+      for (const [key, value] of formData.entries()) {
         console.log(`  ${key}:`, value instanceof File ? `File: ${value.name}` : value);
       }
 
@@ -272,10 +275,11 @@ export default function EditBranchPage() {
       console.log('✅ Update result:', result);
       
       router.push(isSuperAdmin ? '/dashboard/branches' : '/dashboard/my-branches');
-    } catch (err: any) {
+    } catch (err) {
       console.error('❌ Update error:', err);
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
+      const error = err as { response?: { data?: { message?: string } } };
+      if (error.response?.data?.message) {
+        setError(error.response.data.message);
       } else {
         setError('Gagal memperbarui cabang. Silakan coba lagi.');
       }
@@ -443,7 +447,7 @@ export default function EditBranchPage() {
               <FormField
                 control={form.control}
                 name="imageUrl"
-                render={({ field }) => (
+                render={() => (
                   <FormItem>
                     <FormLabel>Gambar Cabang (Opsional)</FormLabel>
                     <FormControl>
@@ -451,7 +455,7 @@ export default function EditBranchPage() {
                         {/* Current/Preview Image */}
                         {imagePreview && !removeImage && (
                           <div className="relative inline-block">
-                            <img
+                            <Image
                               src={imagePreview}
                               alt="Preview"
                               className="w-40 h-32 object-cover rounded border"

@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import { Role, User } from "@/types";
-import { XCircle, ArrowLeft, Check } from "lucide-react";
+import { Role } from "@/types";
+import { XCircle, ArrowLeft } from "lucide-react";
 import useGlobalLoading from "@/hooks/useGlobalLoading.hook";
 
 // Import komponen-komponen yang sudah dipisahkan
@@ -26,7 +26,6 @@ import {
   BookingTimeCard,
   UserInfoCard,
   PaymentInfoCard,
-  BookingActions,
 } from "@/components/booking";
 
 export default function MyBookingDetailPage() {
@@ -51,7 +50,7 @@ export default function MyBookingDetailPage() {
   const [cancelLoading, setCancelLoading] = useState(false);
   const { showLoading, hideLoading, withLoading } = useGlobalLoading();
 
-  const bookingId = Number(params.id);
+  const bookingId = Number(params?.id);
 
   // Mengelola loading state
   useEffect(() => {

@@ -1,7 +1,7 @@
 // Updated code for fields/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { branchApi } from '@/api/branch.api';
 import { Button } from '@/components/ui/button';

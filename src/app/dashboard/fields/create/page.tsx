@@ -29,7 +29,7 @@ import { fieldApi } from '@/api/field.api';
 import { branchApi } from '@/api/branch.api';
 import { Role, Branch, FieldType, FieldStatus } from '@/types';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
-import Image from 'next/image';
+import { Suspense } from 'react';
 
 // Validasi form menggunakan Zod
 const createFieldSchema = z.object({
@@ -43,7 +43,7 @@ const createFieldSchema = z.object({
 
 type CreateFieldFormValues = z.infer<typeof createFieldSchema>;
 
-export default function CreateFieldPage() {
+function CreateFieldContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -52,7 +52,7 @@ export default function CreateFieldPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [fieldTypes, setFieldTypes] = useState<FieldType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const defaultBranchId = searchParams.get('branchId');
+  const defaultBranchId = searchParams?.get('branchId');
   const { showLoading, hideLoading } = useGlobalLoading();
   
   // For file handling
@@ -418,5 +418,17 @@ export default function CreateFieldPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function CreateFieldPage() {
+  return (
+    <Suspense fallback={
+      <div className="p-4">
+        <h1 className="text-xl font-semibold">Memuat Form Pembuatan Lapangan...</h1>
+      </div>
+    }>
+      <CreateFieldContent />
+    </Suspense>
   );
 }

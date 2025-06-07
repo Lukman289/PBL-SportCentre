@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, use } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -47,7 +47,6 @@ export default function FieldEditPage() {
     const params = useParams<{ id: string; fieldId: string }>(); // Updated to match URL structure
     
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [field, setField] = useState<Field | null>(null);
     const [branches, setBranches] = useState<Branch[]>([]);
@@ -64,8 +63,8 @@ export default function FieldEditPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Extract both branch ID and field ID from URL
-    const branchId = Number(params.id);
-    const fieldId = Number(params.fieldId);
+    const branchId = Number(params?.id);
+    const fieldId = Number(params?.fieldId);
 
     const form = useForm<UpdateFieldFormValues>({
         resolver: zodResolver(updateFieldSchema),
@@ -81,12 +80,12 @@ export default function FieldEditPage() {
 
     // Effect to manage global loading state
     useEffect(() => {
-        if (isLoading || isSubmitting || isDeleting) {
+        if (isLoading || isSubmitting) {
             showLoading();
         } else {
             hideLoading();
         }
-    }, [isLoading, isSubmitting, isDeleting, showLoading, hideLoading]);
+    }, [isLoading, isSubmitting, showLoading, hideLoading]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -509,7 +508,6 @@ export default function FieldEditPage() {
                                 <Button
                                     variant="outline"
                                     onClick={() => setShowDeleteDialog(false)}
-                                    disabled={isDeleting}
                                 >
                                     Batal
                                 </Button>

@@ -1,12 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getResetPasswordToken } from "@/utils/cookie.utils";
 
-export default function ResetPasswordRedirectPage() {
+function ResetPasswordContent() {
   const router = useRouter();
 
   useEffect(() => {
@@ -39,5 +39,24 @@ export default function ResetPasswordRedirectPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function ResetPasswordRedirectPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Reset Password</CardTitle>
+            <CardDescription>
+              Memuat...
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   );
 } 

@@ -277,7 +277,7 @@ class BookingApi {
         userId: data.userId || JSON.parse(localStorage.getItem('user') || '{}').id
       };
       
-      console.log('Sending booking data to server:', requestData);
+      console.log('Sending booking data to server:', JSON.stringify(requestData, null, 2));
       
       const response = await axiosInstance.post<
         { booking: Booking & { payment?: Payment & { paymentUrl?: string } } } |
@@ -396,11 +396,13 @@ class BookingApi {
    * @param data - Data booking manual
    * @returns Promise dengan data booking yang berhasil dibuat
    */
-  async createManualBooking(data: BookingRequest): Promise<Booking> {
+  async createManualBooking(data: BookingRequest): Promise<Booking & { payment?: Payment & { paymentUrl?: string } }> {
     try {
-      const { branchId, ...bookingData } = data;
+      const { branchId, paymentStatus, paymentMethod, ...bookingData } = data;
       
       console.log(`Creating manual booking for branch ID ${branchId}:`, bookingData);
+      console.log('Payment Status:', paymentStatus);
+      console.log('Payment Method:', paymentMethod);
       
       // Gabungkan tanggal dan waktu dalam timezone WIB
       const startDateTime = combineDateAndTime(data.bookingDate, data.startTime);
@@ -409,17 +411,60 @@ class BookingApi {
       console.log('Local date/time (WIB) - Start:', startDateTime.toString());
       console.log('Local date/time (WIB) - End:', endDateTime.toString());
       
+      // Gunakan endpoint baru untuk booking admin
       const response = await axiosInstance.post<
-        { data: Booking } | { booking: Booking } | Booking
-      >(`/bookings/branches/${branchId}/bookings/manual`, bookingData);
+        { data: { booking: Booking; payment: Payment & { paymentUrl?: string }; paymentUrl?: string } } |
+        { booking: Booking; payment: Payment & { paymentUrl?: string }; paymentUrl?: string } |
+        (Booking & { payment?: Payment & { paymentUrl?: string }; paymentUrl?: string })
+      >(`/bookings/admin`, {
+        ...bookingData,
+        branchId, // Sertakan branchId dalam request body
+        paymentStatus, // Sertakan status pembayaran
+        paymentMethod // Sertakan metode pembayaran
+      });
 
-      // Handle berbagai format respon
+      console.log("Response dari API backend:", response.data);
+
+      // Handle berbagai format respons dan pastikan payment dan paymentUrl disertakan
       if ('data' in response.data) {
-        return response.data.data;
-      } else if ('booking' in response.data) {
-        return response.data.booking;
-      } else {
-        return response.data as Booking;
+        // Format: { data: { booking, payment, paymentUrl } }
+        if ('booking' in response.data.data && 'payment' in response.data.data) {
+          const paymentUrl = response.data.data.paymentUrl || 
+                            (response.data.data.payment && response.data.data.payment.paymentUrl);
+                            
+          console.log("Extracted paymentUrl from response.data.data:", paymentUrl);
+                            
+          const result = {
+            ...response.data.data.booking,
+            payment: {
+              ...response.data.data.payment,
+              paymentUrl: paymentUrl
+            }
+          };
+          return result;
+        }
+        // Format: { data: Booking }
+        return response.data.data as Booking & { payment?: Payment & { paymentUrl?: string } };
+      } 
+      // Format: { booking, payment, paymentUrl }
+      else if ('booking' in response.data && 'payment' in response.data) {
+        const paymentUrl = response.data.paymentUrl || 
+                          (response.data.payment && response.data.payment.paymentUrl);
+                          
+        console.log("Extracted paymentUrl from response.data:", paymentUrl);
+                          
+        const result = {
+          ...response.data.booking,
+          payment: {
+            ...response.data.payment,
+            paymentUrl: paymentUrl
+          }
+        };
+        return result;
+      } 
+      // Format: Booking
+      else {
+        return response.data as Booking & { payment?: Payment & { paymentUrl?: string } };
       }
     } catch (error) {
       console.error('Error creating manual booking:', error);

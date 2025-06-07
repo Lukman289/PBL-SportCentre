@@ -55,7 +55,7 @@ export const setResetPasswordToken = (token: string): void => {
   }
   
   Cookies.set('reset_password_token', token, { 
-    expires: 1/24, // 1 jam
+    expires: 1, // 24 jam (1 hari)
     path: '/',
     secure: window.location.protocol === 'https:',
     sameSite: 'strict'

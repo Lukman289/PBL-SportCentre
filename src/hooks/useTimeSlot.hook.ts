@@ -101,10 +101,10 @@ export const useTimeSlot = () => {
     // Prioritaskan status seleksi
     if (selectedFieldId === field.id) {
       if (selectedStartTime === time) {
-        return "Waktu Mulai";
+        return "Dipilih";
       }
       if (selectedEndTime === time) {
-        return "Waktu Selesai";
+        return "Dipilih";
       }
       if (selectedStartTime && selectedEndTime && 
           times.indexOf(time) > times.indexOf(selectedStartTime) &&
@@ -116,10 +116,13 @@ export const useTimeSlot = () => {
     // Cek apakah slot waktu terpesan
     const isTimeBooked = bookedTimeSlots[field.id]?.includes(time);
     
+    // Pastikan field.status selalu memiliki nilai
+    const fieldStatus = field.status || "available";
+    
     // Prioritaskan status lapangan dan ketersediaan
     if (isTimeBooked) return "Terpesan";
-    if (field.status !== "available") {
-      return field.status === "maintenance" ? "Maintenance" : field.status;
+    if (fieldStatus !== "available") {
+      return fieldStatus === "maintenance" ? "Maintenance" : fieldStatus;
     }
     
     // Slot tersedia jika tidak termasuk kategori di atas
@@ -131,12 +134,8 @@ export const useTimeSlot = () => {
     const status = getTimeSlotStatus(field, time);
     
     switch(status) {
-      case "Waktu Mulai":
-        return "bg-black text-white";
-      case "Waktu Selesai":
-        return "bg-black text-white";
       case "Dipilih":
-        return "bg-amber-100 text-amber-900";
+        return "bg-black text-white";
       case "Terpesan":
         return "bg-red-100 text-red-700";
       case "Maintenance":
@@ -167,10 +166,8 @@ export const useTimeSlot = () => {
     `;
     
     switch(status) {
-      case "Waktu Mulai":
-      case "Waktu Selesai":
-      case "Tersedia":
       case "Dipilih":
+      case "Tersedia":
         return checkIcon;
       case "Terpesan":
         return xIcon;
@@ -185,7 +182,9 @@ export const useTimeSlot = () => {
     // 2. Status lapangan bukan 'available'
     const isTimeBooked = bookedTimeSlots[field.id]?.includes(time);
     
-    return field.status !== "available" || isTimeBooked;
+    // Perbaikan: pastikan status field diperiksa dengan benar
+    const fieldStatus = field.status || "available";
+    return fieldStatus !== "available" || !!isTimeBooked;
   };
   
   const isValidEndTime = (time: string, field: Field) => {
@@ -248,23 +247,25 @@ export const useTimeSlot = () => {
         setSelectedEndTime(time);
         setSelectionMode('start');
         
-        // Inform parent component about the selected time range with endTime
+        // Kirim informasi waktu mulai dan akhir
         handleTimeSelection(selectedStartTime, field.id, field.name, time);
       } else {
-        console.log(`Invalid end time: ${time}. There are booked slots between start and end.`);
+        console.log(`Invalid end time: ${time}`);
       }
     }
   };
 
   return {
     filteredFields,
-    selectedStartTime,
-    selectedEndTime,
-    selectedFieldId,
     getTimeSlotStatus,
     getTimeSlotClass,
     getStatusIcon,
     isTimeSlotDisabled,
-    handleTimeClick
+    isValidEndTime,
+    selectedStartTime,
+    selectedEndTime,
+    selectedFieldId,
+    handleTimeClick,
+    resetSelection
   };
 }; 

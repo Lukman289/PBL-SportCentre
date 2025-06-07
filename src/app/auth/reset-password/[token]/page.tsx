@@ -13,84 +13,95 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { ResetPasswordRequest } from "@/types";
-import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
-import { getResetPasswordToken } from "@/utils/cookie.utils";
+import { setResetPasswordToken, getResetPasswordToken } from "@/utils/cookie.utils";
+import useToastHandler from "@/hooks/useToastHandler";
 
 export default function ResetPasswordTokenPage() {
-  const { toast } = useToast();
   const router = useRouter();
+  const { showError, showSuccess } = useToastHandler();
+  const params = useParams<{ token: string }>();
   const [isLoading, setIsLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [isTokenValid, setIsTokenValid] = useState(false);
+  const [isTokenChecked, setIsTokenChecked] = useState(false);
 
   useEffect(() => {
-    // Cek apakah ada token reset password di cookie
-    const tokenFromCookie = getResetPasswordToken();
-    
-    if (!tokenFromCookie) {
-      toast({
-        variant: "destructive",
-        title: "Token Tidak Ditemukan",
-        description: "Link reset password tidak valid. Silakan minta link baru.",
-      });
-      setIsTokenValid(false);
-    } else {
+    if (params.token) {
+      const token = decodeURIComponent(params.token as string);
+      setResetPasswordToken(token);
       setIsTokenValid(true);
+      setIsTokenChecked(true);
+    } else {
+      const tokenFromCookie = getResetPasswordToken();
+      
+      if (!tokenFromCookie) {
+        showError("Token Tidak Ditemukan", "Link reset password tidak valid. Silakan minta link baru.");
+        setIsTokenValid(false);
+      } else {
+        setIsTokenValid(true);
+      }
+      setIsTokenChecked(true);
     }
-  }, [toast]);
+  }, [params]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (password.length < 6) {
-      toast({
-        variant: "destructive",
-        title: "Password Terlalu Pendek",
-        description: "Password harus minimal 6 karakter",
-      });
+      showError("Password Terlalu Pendek", "Password harus minimal 6 karakter");
       return;
     }
 
     if (password !== confirmPassword) {
-      toast({
-        variant: "destructive",
-        title: "Password Tidak Cocok",
-        description: "Password dan konfirmasi password harus sama",
-      });
+      showError("Password Tidak Cocok", "Password dan konfirmasi password harus sama");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // Token akan diambil dari cookie di dalam API
+      // Kirim token yang tersimpan di cookie atau dari params
+      const token = getResetPasswordToken() || (params.token ? decodeURIComponent(params.token as string) : "");
+      
       const data: ResetPasswordRequest = {
+        token,
         password,
         confirmPassword
       };
       
       await authApi.resetPassword(data);
       setIsSuccess(true);
-      toast({
-        title: "Berhasil",
-        description: "Password Anda telah diperbarui. Silakan login dengan password baru.",
-      });
+      showSuccess("Password Anda telah diperbarui. Silakan login dengan password baru.");
     } catch (error) {
       console.error("Reset password error:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Gagal mereset password. Token mungkin sudah kedaluwarsa.",
-      });
+      showError("Error", "Gagal mereset password. Token mungkin sudah kedaluwarsa.");
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (!isTokenChecked) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Memeriksa Token</CardTitle>
+            <CardDescription>
+              Mohon tunggu sebentar...
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!isTokenValid && !isSuccess) {
     return (

@@ -78,16 +78,16 @@ export default function ProfilePage() {
     
     setSavingProfile(true);
     try {
-      // Simulate API call since we don't have an update profile endpoint yet
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      updateUserProfile({
-        ...user,
+      const updatedUser = await authApi.updateProfile({
         name: profileData.name,
         phone: profileData.phone,
       });
 
-    showSuccess('Profil berhasil diperbarui.');
+      if (user && updatedUser) {
+        updateUserProfile(updatedUser);
+      }
+
+      showSuccess('Profil berhasil diperbarui.');
     } catch (error) {
       showError(error, 'Gagal memperbarui profil. Silakan coba lagi.');
     } finally {
@@ -98,7 +98,7 @@ export default function ProfilePage() {
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate new password
+    // Validasi new password
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       showError('Konfirmasi password baru tidak cocok.');
       return;
@@ -106,12 +106,14 @@ export default function ProfilePage() {
 
     setSavingPassword(true);
     try {
-      // Simulate API call since we don't have an update password endpoint yet
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await authApi.updatePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
 
       showSuccess('Password berhasil diperbarui.');
 
-      // Reset password form
+      // Reset form password
       setPasswordData({
         currentPassword: '',
         newPassword: '',

@@ -37,8 +37,9 @@ export const useAdminBooking = (branchId?: number) => {
     try {
       const bookings = await bookingApi.getBranchBookings(adminBranchId);
       setBranchBookings(bookings.data);
-    } catch (err) {
+    } catch (error) {
       showError("Gagal mengambil data booking cabang");
+      console.error("Error getting branch bookings:", error);
     } finally {
       setLoading(false);
     }
@@ -51,8 +52,8 @@ export const useAdminBooking = (branchId?: number) => {
     startTime: string;
     endTime: string;
     branchId: number;
-    paymentStatus?: PaymentStatus; // opsional, tidak dikirim ke backend
-    paymentMethod?: PaymentMethod; // opsional, tidak dikirim ke backend
+    paymentStatus?: PaymentStatus;
+    paymentMethod?: PaymentMethod;
   }) => {
     if (!data.branchId) {
       const errorMsg = "ID cabang tidak ditemukan";
@@ -77,7 +78,10 @@ export const useAdminBooking = (branchId?: number) => {
       bookingDate: data.bookingDate,
       startTime: data.startTime,
       endTime: data.endTime,
-      branchId
+      branchId,
+      // Tambahkan paymentStatus dan paymentMethod jika disediakan
+      ...(data.paymentStatus && { paymentStatus: data.paymentStatus }),
+      ...(data.paymentMethod && { paymentMethod: data.paymentMethod })
     };
     
     if (!userId) {
@@ -88,12 +92,29 @@ export const useAdminBooking = (branchId?: number) => {
 
     setLoading(true);
     try {
-      const booking = await bookingApi.createManualBooking(bookingData);
+      const response = await bookingApi.createManualBooking(bookingData);
       
-      showSuccess("Manual booking berhasil dibuat");
+      // Pastikan ada payment dan paymentUrl di respons
+      console.log("Response dari createManualBooking:", response);
       
+      // Sesuaikan pesan berdasarkan status pembayaran
+      const statusText = data.paymentStatus === PaymentStatus.PAID 
+        ? "lunas" 
+        : "DP";
+          
+      const methodText = data.paymentMethod === PaymentMethod.CASH 
+        ? "tunai" 
+        : "online (Midtrans)";
+        
+      showSuccess(`Manual booking berhasil dibuat dengan status ${statusText} dan metode ${methodText}`);
+      
+      // Jika metode online dan booking berhasil tetapi tidak ada paymentUrl, tampilkan peringatan
+      if (data.paymentMethod !== PaymentMethod.CASH && !response.payment?.paymentUrl) {
+        console.warn("Booking berhasil dibuat, tetapi tidak ada URL pembayaran Midtrans");
+        showError("Berhasil membuat booking, tetapi tidak bisa membuka halaman pembayaran. Hubungi admin.");
+      }
  
-      setBranchBookings(prevBookings => [...prevBookings, booking]);
+      setBranchBookings(prevBookings => [...prevBookings, response]);
 
       // Refresh ketersediaan lapangan setelah booking berhasil dibuat
       // Ini akan memperbarui grid ketersediaan lapangan tanpa perlu reload
@@ -102,8 +123,7 @@ export const useAdminBooking = (branchId?: number) => {
         await bookingContext.refreshAvailability();
       }
       
-      
-      return booking;
+      return response;
     } catch (error: unknown) {
 
       const err = error as {
@@ -141,8 +161,9 @@ export const useAdminBooking = (branchId?: number) => {
       await fetchBranchBookings();
       
       return updatedPayment;
-    } catch (err) {
+    } catch (error) {
       showError("Gagal mengubah status pembayaran");
+      console.error("Error updating payment status:", error);
       return null;
     } finally {
       setLoading(false);
@@ -193,7 +214,7 @@ export const useAdminBooking = (branchId?: number) => {
     joinFieldAvailabilityRoom(adminBranchId, bookingContext.selectedDate);
 
     // Subscribe ke pembaruan ketersediaan lapangan
-    const unsubscribe = subscribeToFieldAvailability((data) => {
+    const unsubscribe = subscribeToFieldAvailability(() => {
       // Tidak perlu melakukan apa-apa di sini karena BookingContext 
       // sudah meng-handle pembaruan ini
     });
@@ -221,8 +242,9 @@ export const useAdminBooking = (branchId?: number) => {
 
     try {
       return await bookingApi.createBooking(bookingData);
-    } catch (err) {
+    } catch (error) {
       showError("Gagal membuat booking");
+      console.error("Error creating booking:", error);
       return null;
     }
   }, [user?.id]);

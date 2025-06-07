@@ -32,11 +32,25 @@ export enum PaymentStatus {
 }
 
 export enum PaymentMethod {
-  MIDTRANS = 'midtrans',
   CASH = 'cash',
-  TRANSFER = 'transfer',
   CREDIT_CARD = 'credit_card',
-  EWALLET = 'ewallet'
+  BCA_VA = 'bca_va',
+  BNI_VA = 'bni_va',
+  BRI_VA = 'bri_va',
+  MANDIRI_VA = 'mandiri_va',
+  PERMATA_VA = 'permata_va',
+  CIMB_VA = 'cimb_va',
+  DANAMON_VA = 'danamon_va',
+  GOPAY = 'gopay',
+  SHOPEEPAY = 'shopeepay',
+  QRIS = 'qris',
+  DANA = 'dana',
+  INDOMARET = 'indomaret',
+  ALFAMART = 'alfamart',
+  AKULAKU = 'akulaku',
+  KREDIVO = 'kredivo',
+  PAYPAL = 'paypal',
+  GOOGLE_PAY = 'google_pay',
 }
 
 export interface Payment {
@@ -66,4 +80,6 @@ export interface BookingRequest {
   branchId?: number;
   sportId?: number;
   userId?: number;
+  paymentMethod?: PaymentMethod;
+  paymentStatus?: PaymentStatus;
 } 

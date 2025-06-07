@@ -1,5 +1,5 @@
 import axiosInstance from '../config/axios.config';
-import { ForgotPasswordRequest, LoginRequest, RegisterRequest, ResetPasswordRequest, UserWithToken } from '../types';
+import { ForgotPasswordRequest, LoginRequest, RegisterRequest, ResetPasswordRequest, UserWithToken, User } from '../types';
 import { hasAuthCookie, setResetPasswordToken, getResetPasswordToken } from '@/utils/cookie.utils';
 import Cookies from 'js-cookie';
 
@@ -16,6 +16,18 @@ interface ForgotPasswordResponse {
   message: string;
   resetUrl?: string; // Opsional, hanya ada di mode development
   token?: string; // Opsional, hanya ada di mode development
+}
+
+// Interface untuk update profile request
+export interface UpdateProfileRequest {
+  name?: string;
+  phone?: string;
+}
+
+// Interface untuk update password request
+export interface UpdatePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
 }
 
 class AuthApi {
@@ -205,6 +217,41 @@ class AuthApi {
       // Jangan hapus token jika terjadi error
       throw error;
     }
+  }
+
+  /**
+   * Update profil user
+   * @param data - Data profil yang akan diupdate
+   * @returns Promise dengan data user yang diperbarui
+   */
+  async updateProfile(data: UpdateProfileRequest): Promise<User> {
+    const response = await axiosInstance.put<{ data: User, status: boolean, message: string }>('/users/profile', data, {
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
+    
+    return response.data.data;
+  }
+
+  /**
+   * Update password user
+   * @param data - Data password baru dan password lama
+   * @returns Promise dengan pesan sukses
+   */
+  async updatePassword(data: UpdatePasswordRequest): Promise<{ message: string }> {
+    const response = await axiosInstance.put<{ message: string, status: boolean }>('/users/profile', {
+      currentPassword: data.currentPassword,
+      password: data.newPassword,
+    }, {
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
+    
+    return { message: response.data.message };
   }
 }
 

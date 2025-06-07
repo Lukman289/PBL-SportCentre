@@ -7,10 +7,11 @@ import useGlobalLoading from "@/hooks/useGlobalLoading.hook";
 
 // Komponen-komponen terpisah untuk halaman booking
 import TimeSlotSelector from "@/components/booking/TimeSlotSelector";
-import BookingHeader from "@/components/booking/BookingHeader";
 import BookingForm from "@/components/booking/BookingForm";
 import useToastHandler from "@/hooks/useToastHandler";
-import { Branch, Role } from "@/types";
+import { Branch, PaymentMethod } from "@/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MapPinIcon } from "lucide-react";
 
 export default function AdminBookingCreatePage() {
   const { user } = useAuth();
@@ -55,14 +56,18 @@ export default function AdminBookingCreatePage() {
   }, [user?.branches, branches, selectedBranchId, setSelectedBranch]);
 
   // Handler untuk perubahan cabang
-  const handleBranchChange = (branchId: number) => {
-    setSelectedBranchId(branchId);
-    setSelectedBranch(branchId);
+  const handleBranchChange = (branchId: string) => {
+    setSelectedBranchId(Number(branchId));
+    setSelectedBranch(Number(branchId));
   };
 
   // Handler untuk ketika booking berhasil dibuat
-  const handleBookingSuccess = () => {
-    showSuccess(`Booking manual telah berhasil dibuat dan dicatat sebagai ${user?.role === Role.ADMIN_CABANG ? "PAID" : "UNPAID"} dengan metode CASH.`);
+  const handleBookingSuccess = (paymentMethod?: PaymentMethod) => {
+    if (paymentMethod === PaymentMethod.CASH) {
+      showSuccess(`Booking manual telah berhasil dibuat dengan metode pembayaran tunai (cash).`);
+    } else {
+      showSuccess(`Booking manual telah berhasil dibuat dengan metode pembayaran online (Midtrans). Halaman pembayaran akan terbuka dalam tab baru.`);
+    }
   };
 
   // Render states
@@ -76,61 +81,48 @@ export default function AdminBookingCreatePage() {
 
   // Main render
   return (
-    <div className="w-full max-w-full xl:max-w-none py-6 px-4 sm:px-6">
-      <div className="mb-6">
-        <div className="bg-black py-8 px-6 rounded-t-xl">
-          <h1 className="text-3xl sm:text-4xl text-center font-bold text-white mb-2">
-            Buat Booking Manual
-          </h1>
-          <p className="text-gray-300 text-center max-w-xl mx-auto text-sm sm:text-base">
-            Pilih cabang, tanggal, dan waktu yang tersedia untuk membuat booking lapangan
-          </p>
-          <p className="text-gray-400 text-center max-w-xl mx-auto mt-2 text-xs sm:text-sm">
-            Booking manual akan otomatis menggunakan status pembayaran PAID dengan metode CASH
-          </p>
-        </div>
-      </div>
-
-      {/* Pemilihan cabang */}
+    <div className="w-full max-w-full xl:max-w-none p-4 sm:p-6 bg-gray-50 min-h-screen">
+      {/* Branch selector (jika admin mengelola lebih dari 1 cabang) */}
       {assignedBranches.length > 1 && (
-        <div className="mb-4">
-          <label htmlFor="adminBranch" className="block text-sm font-medium text-gray-700 mb-2">
+        <div className="mb-6 bg-white p-4 rounded-lg shadow-md border border-gray-100">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Pilih Cabang yang Dikelola:
           </label>
-          <select
-            id="adminBranch"
-            value={selectedBranchId}
-            onChange={(e) => handleBranchChange(Number(e.target.value))}
-            className="w-full p-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          <Select
+            value={selectedBranchId?.toString() || ""}
+            onValueChange={handleBranchChange}
           >
-            {assignedBranches.map((branch) => (
-              <option key={branch.id} value={branch.id}>
-                {branch.name} - {branch.location}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full sm:w-[300px] flex items-center">
+              <MapPinIcon className="h-4 w-4 mr-2 opacity-70" />
+              <SelectValue placeholder="Pilih cabang" />
+            </SelectTrigger>
+            <SelectContent>
+              {assignedBranches.map((branch) => (
+                <SelectItem key={branch.id} value={branch.id.toString()}>
+                  <div className="flex flex-col">
+                    <span>{branch.name}</span>
+                    {branch.location && (
+                      <span className="text-xs text-muted-foreground">{branch.location}</span>
+                    )}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 px-2">
-        <div className="font-medium text-gray-700 mb-4 sm:mb-0">
-          Pilih Tanggal
-        </div>
-      </div>
-
-      <section className="mb-8">
-        <BookingHeader hideSelectBranch={true} />
-        
-        <div className="bg-white p-4 rounded-b-xl shadow">
+      <div className="grid gap-6 md:grid-cols-3">
+        <div className="md:col-span-2">
           <TimeSlotSelector />
         </div>
-      </section>
-
-      <section className="flex justify-center">
-        <div className="w-full max-w-md">
-          <BookingForm isAdminBooking={true} onSuccess={handleBookingSuccess} />
+        
+        <div className="md:col-span-1">
+          <div className="sticky top-4">
+            <BookingForm isAdminBooking={true} onSuccess={handleBookingSuccess} />
+          </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 } 

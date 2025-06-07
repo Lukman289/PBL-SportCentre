@@ -2,7 +2,7 @@
 
 import { MainLayout } from '@/components/layout/MainLayout';
 
-export default function BranchesLayout({
+export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;

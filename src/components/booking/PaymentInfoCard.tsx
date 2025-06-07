@@ -13,6 +13,26 @@ interface PaymentInfoCardProps {
 }
 
 /**
+ * Format payment method menjadi nama yang lebih mudah dibaca
+ */
+const formatPaymentMethod = (method: string | undefined): string => {
+  if (!method) return "Tidak diketahui";
+  
+  // Ganti underscore dengan spasi dan capitalize setiap kata
+  const formatted = method
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+  
+  // Khusus untuk Virtual Account, tambahkan "VA" di belakang
+  if (method.endsWith('_va')) {
+    return formatted.replace(' Va', ' VA');
+  }
+  
+  return formatted;
+};
+
+/**
  * Komponen untuk menampilkan informasi pembayaran booking
  */
 export const PaymentInfoCard = ({
@@ -47,8 +67,8 @@ export const PaymentInfoCard = ({
               <CreditCard className="h-4 w-4 mr-2" />
               Metode
             </span>
-            <span className="font-medium capitalize">
-              {booking.payment.paymentMethod.replace("_", " ")}
+            <span className="font-medium">
+              {formatPaymentMethod(booking.payment.paymentMethod)}
               {isManualBooking && " (Booking Manual)"}
             </span>
           </div>

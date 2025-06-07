@@ -1,6 +1,16 @@
 "use client";
 
 import { useTimeSlot } from "@/hooks/useTimeSlot.hook";
+import { useBooking } from "@/hooks/bookings/useBooking.hook";
+import { CalendarIcon, CheckIcon, XIcon, ClockIcon, AlertTriangleIcon, ChevronRightIcon } from "lucide-react";
+import { Field } from "@/types";
+import { motion } from "framer-motion";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { 
+  formatDateShort, 
+  TIMEZONE, 
+  formatTimeRange
+} from "@/utils/timezone.utils";
 
 /**
  * Time Slot Selector Component
@@ -18,63 +28,202 @@ export default function TimeSlotSelector() {
   const {
     filteredFields,
     getTimeSlotStatus,
-    getTimeSlotClass,
-    getStatusIcon,
     isTimeSlotDisabled,
-    handleTimeClick
+    handleTimeClick,
+    selectedStartTime,
+    selectedEndTime,
+    selectedFieldId
   } = useTimeSlot();
-
-  // Render SVG icon menggunakan dangerouslySetInnerHTML
-  const renderIcon = (iconHTML: string) => {
-    return (
-      <div dangerouslySetInnerHTML={{ __html: iconHTML }} />
-    );
+  
+  // Mengambil selectedDate dari useBooking hook
+  const { selectedDate } = useBooking();
+  
+  // Membuat array untuk jam dari 08:00 sampai 23:00
+  const timeSlots = Array.from({ length: 16 }, (_, i) => 
+    `${(i + 8).toString().padStart(2, '0')}:00`
+  );
+  
+  // Format tanggal untuk header menggunakan timezone.utils
+  const formattedDate = selectedDate ? 
+    formatDateShort(new Date(selectedDate)) : 
+    "Pilih Tanggal";
+  
+  // Fungsi untuk memeriksa apakah slot waktu berada dalam rentang yang dipilih
+  const isInSelectedRange = (field: Field, time: string): boolean => {
+    if (selectedFieldId !== field.id || !selectedStartTime || !selectedEndTime) return false;
+    
+    const timeIndex = timeSlots.indexOf(time);
+    const startIndex = timeSlots.indexOf(selectedStartTime);
+    const endIndex = timeSlots.indexOf(selectedEndTime);
+    
+    return timeIndex > startIndex && timeIndex < endIndex;
   };
+  
+  // Handler khusus untuk mengimplementasikan logika pemilihan waktu yang fleksibel
+  const handleTimeSlotClick = (time: string, field: Field): void => {
+    if (isTimeSlotDisabled(field, time)) return;
+    
+    // Panggil handleTimeClick langsung untuk menangani pemilihan waktu
+    handleTimeClick(time, field);
+  };
+  
+  // Mendapatkan tooltip text berdasarkan status
+  const getTooltipText = (field: Field, time: string): string => {
+    const status = getTimeSlotStatus(field, time);
+    
+    // Format rentang waktu untuk menampilkan waktu mulai dan selesai
+    const displayTimeRange = (start: string, end: string): string => {
+      if (!selectedDate) return "";
+      
+      // Gunakan formatTimeRange dari timezone.utils untuk waktu yang sederhana
+      return formatTimeRange(start, end);
+    };
+    
+    if (selectedFieldId === field.id && selectedStartTime === time) {
+      return `Waktu Mulai: ${time}`;
+    }
+    
+    if (selectedFieldId === field.id && selectedEndTime === time) {
+      return `Waktu Selesai: ${time}`;
+    }
+    
+    if (isInSelectedRange(field, time)) {
+      if (selectedStartTime && selectedEndTime) {
+        return `Dalam Rentang: ${displayTimeRange(selectedStartTime, selectedEndTime)}`;
+      }
+      return `Dalam Rentang Booking: ${time}`;
+    }
+    
+    switch (status) {
+      case "Tersedia":
+        return `Tersedia untuk booking: ${time}`;
+      case "Terpesan":
+        return `Sudah terpesan: ${time}`;
+      case "Maintenance":
+        return `Dalam maintenance: ${time}`;
+      default:
+        return `Status: ${status} - ${time}`;
+    }
+  };
+  
+  if (filteredFields.length === 0) {
+    return (
+      <div className="col-span-full py-10 text-center bg-red-50 rounded-lg border border-red-100 shadow-md">
+        <AlertTriangleIcon className="h-16 w-16 mx-auto mb-3 text-red-400" />
+        <p className="text-red-500 font-semibold text-lg">Cabang Belum Memiliki Lapangan</p>
+        <p className="text-red-400 text-sm mt-1">Silakan pilih cabang lain atau hubungi admin</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-      {filteredFields.length > 0 ? (
-        filteredFields.map((field) => (
-          <div key={field.id} className="border border-gray-200 rounded overflow-hidden bg-white">
-            <div className="text-center py-2 font-semibold border-b border-gray-200">
-              {field.name}
-            </div>
-            <div className="max-h-[400px] overflow-y-auto">
-              {[...Array(16)].map((_, index) => {
-                const time = `${(index + 8).toString().padStart(2, '0')}:00`;
-                const status = getTimeSlotStatus(field, time);
-                const isDisabled = isTimeSlotDisabled(field, time);
-                const iconHTML = getStatusIcon(field, time);
-                
-                return (
-                  <div 
-                    key={index} 
-                    className={`flex justify-between items-center border-b border-gray-100 last:border-b-0 cursor-pointer ${isDisabled ? 'cursor-not-allowed' : ''}`}
-                    onClick={() => handleTimeClick(time, field)}
-                  >
-                    <div className="py-2 px-3 w-[30%] text-left border-r border-gray-100">
-                      {time}
-                    </div>
-                    <div className={`py-2 px-3 flex-1 flex justify-between items-center ${getTimeSlotClass(field, time)}`}>
-                      <span className="font-medium text-sm">
-                        {status}
-                      </span>
-                      {iconHTML && renderIcon(iconHTML)}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))
-      ) : (
-        <div className="col-span-full py-8 text-center bg-red-50 rounded border border-red-100">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto mb-2 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <p className="text-red-500 font-semibold">Cabang Belum Memiliki Lapangan</p>
+    <div className="overflow-visible rounded-lg shadow-md border border-gray-200 touch-pan-x">
+      {/* Header dengan informasi tanggal */}
+      <div className="sticky top-0 left-0 z-20 bg-blue-600 text-white p-3 flex items-center justify-between">
+        <div className="flex items-center">
+          <CalendarIcon className="h-5 w-5 mr-2" />
+          <span className="font-medium">{formattedDate}</span>
         </div>
-      )}
+        <div className="flex items-center bg-blue-500/50 px-2 py-1 rounded text-xs">
+          <ClockIcon className="h-3 w-3 mr-1" />
+          <span>Jadwal Lapangan ({TIMEZONE})</span>
+        </div>
+      </div>
+      
+      <div className="overflow-x-auto overscroll-x-contain scroll-smooth -webkit-overflow-scrolling-touch relative" style={{maxWidth: '100%', WebkitOverflowScrolling: 'touch'}}>
+        <table className="w-full border-collapse">
+          <thead>
+            <th className="min-w-[180px] w-[180px] max-w-[180px] border p-3 text-left font-medium bg-gray-50 sticky left-0 z-10">
+            </th>
+                {timeSlots.map((time, index) => (
+                <th key={index} className="min-w-[80px] w-[80px] border p-2 text-center font-medium text-xs sm:text-sm text-gray-700 bg-gray-200">
+                  {time}
+                </th>
+              ))}
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {filteredFields.map((field) => (
+              <tr 
+                key={field.id} 
+                className={`hover:bg-gray-50/80 transition-colors ${
+                  field.name.includes("Sepak Bola Mini A") ? "bg-blue-50" : ""
+                }`}
+              >
+                <td className={`min-w-[180px] w-[180px] max-w-[180px] border p-3 font-medium text-gray-800 sticky left-0 z-10 shadow-sm ${
+                  field.name.includes("Sepak Bola Mini A") ? "bg-blue-50 font-semibold" : "bg-gray-50"
+                }`}>
+                  <div className="truncate" title={field.name}>
+                    {field.name}
+                  </div>
+                </td>
+                {timeSlots.map((time, index) => {
+                  const status = getTimeSlotStatus(field, time);
+                  const isDisabled = isTimeSlotDisabled(field, time);
+                  const isInRange = isInSelectedRange(field, time);
+                  
+                  let cellClass = "";
+                  let content = null;
+                  
+                  if (selectedFieldId === field.id && selectedStartTime === time) {
+                    cellClass = "bg-black text-white";
+                    content = <div className="text-xs font-bold">Mulai</div>;
+                  } else if (selectedFieldId === field.id && selectedEndTime === time) {
+                    cellClass = "bg-black text-white";
+                    content = <div className="text-xs font-bold">Selesai</div>;
+                  } else if (isInRange) {
+                    cellClass = "bg-gray-800 text-white";
+                    content = <div className="w-2 h-2 rounded-full bg-white mx-auto"></div>;
+                  } else if (status === "Terpesan") {
+                    cellClass = "bg-red-100 text-red-700 border border-red-200";
+                    content = <XIcon className="h-4 w-4 mx-auto" />;
+                  } else if (status === "Maintenance") {
+                    cellClass = "bg-yellow-100 text-yellow-700 border border-yellow-200";
+                    content = <AlertTriangleIcon className="h-4 w-4 mx-auto" />;
+                  } else if (status === "Tersedia") {
+                    cellClass = "bg-green-100 text-green-700 border border-green-200";
+                    content = <CheckIcon className="h-4 w-4 mx-auto" />;
+                  } else {
+                    cellClass = "bg-gray-100 text-gray-600";
+                    content = <XIcon className="h-4 w-4 mx-auto" />;
+                  }
+                  
+                  return (
+                    <Tooltip key={index} delayDuration={300}>
+                      <TooltipTrigger asChild>
+                        <td 
+                          className={`min-w-[80px] w-[80px] border text-center h-[45px] ${cellClass} ${
+                            isDisabled 
+                            ? 'cursor-not-allowed opacity-80' 
+                            : 'cursor-pointer hover:opacity-90 active:scale-95'
+                          } transition-all duration-150`}
+                          onClick={() => !isDisabled && handleTimeSlotClick(time, field)}
+                        >
+                          <motion.div
+                            whileHover={!isDisabled ? { scale: 1.05 } : {}}
+                            whileTap={!isDisabled ? { scale: 0.95 } : {}}
+                            className="h-full flex items-center justify-center"
+                          >
+                            {content}
+                          </motion.div>
+                        </td>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs">
+                        {getTooltipText(field, time)}
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      
+      {/* Petunjuk scrolling */}
+      <div className="p-2 bg-gray-50 text-center border-t border-gray-200 text-xs text-gray-500 flex items-center justify-center">
+        <span>Geser ke kanan untuk melihat lebih banyak waktu</span>
+        <ChevronRightIcon className="h-4 w-4 ml-1 animate-pulse" />
+      </div>
     </div>
   );
 } 

@@ -331,7 +331,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       bookingData = {
         ...formData,
         userId: user.id,
-        branchId: selectedBranch
+        branchId: selectedBranch,
         };
     } else {
       bookingData = {
@@ -340,7 +340,8 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         bookingDate: selectedDate,
         startTime: selectedStartTime,
         endTime: selectedEndTime || calculateEndTime(selectedStartTime),
-        branchId: selectedBranch
+        branchId: selectedBranch,
+        // Tidak perlu mengirim paymentMethod, biarkan backend yang menentukan default
       };
     }
 

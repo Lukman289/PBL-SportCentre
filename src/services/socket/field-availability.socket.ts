@@ -51,7 +51,7 @@ export const joinFieldRoom = (fieldId: number) => {
   
   const roomId = `field-${fieldId}`;
   joinFieldsRoom(roomId);
-  console.log('Joined field room:', fieldId);
+  // console.log('Joined field room:', fieldId);
 };
 
 /**
@@ -64,7 +64,7 @@ export const requestAvailabilityUpdate = (date?: string, branchId?: number) => {
   if (!socket) return;
   
   socket.emit('request_availability_update', { date, branchId });
-  console.log('Requested availability update for date:', date || 'all dates');
+  // console.log('Requested availability update for date:', date || 'all dates');
 };
 
 /**
@@ -77,7 +77,7 @@ export const subscribeToFieldAvailability = (callback: (data: FieldAvailabilityD
   if (!socket) return () => {};
 
   const handleUpdate = (data: FieldAvailabilityData) => {
-    console.log('Received field availability update:', data);
+    // console.log('Received field availability update:', data);
     callback(data);
   };
 

@@ -18,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import useToastHandler from "@/hooks/useToastHandler";
 import Link from "next/link";
 
 export default function MyBookingsPage() {
@@ -31,6 +32,7 @@ export default function MyBookingsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems] = useState(0);
   const maxData = 10;
+  const { showError } = useToastHandler();
 
   useEffect(() => {
     if (isLoading) {
@@ -51,9 +53,7 @@ export default function MyBookingsPage() {
 
       setBookings(Array.isArray(response) ? response : []);
     } catch (error) {
-      console.error(
-        `Error: ${error instanceof Error ? error.message : String(error)}`
-      );
+      showError(error, 'Gagal memuat data booking. Silakan coba lagi nanti.');
     } finally {
       setIsLoading(false);
     }

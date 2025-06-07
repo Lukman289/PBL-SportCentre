@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth/auth.context';
 import { authApi } from '@/api/auth.api';
-import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +19,7 @@ import {
   DialogFooter, 
   DialogTrigger
 } from '@/components/ui/dialog';
+import useToastHandler from '@/hooks/useToastHandler';
 
 interface ProfileFormData {
   name: string;
@@ -36,7 +36,7 @@ interface PasswordFormData {
 export default function ProfilePage() {
   const router = useRouter();
   const { user, updateUserProfile, logout } = useAuth();
-  const { toast } = useToast();
+  const { showSuccess, showError } = useToastHandler();
 
   const [profileData, setProfileData] = useState<ProfileFormData>({
     name: '',
@@ -87,17 +87,9 @@ export default function ProfilePage() {
         phone: profileData.phone,
       });
 
-      toast({
-        title: 'Sukses',
-        description: 'Profil berhasil diperbarui.',
-      });
+    showSuccess('Profil berhasil diperbarui.');
     } catch (error) {
-      console.error('Error updating profile:', error);
-      toast({
-        title: 'Error',
-        description: 'Gagal memperbarui profil. Silakan coba lagi.',
-        variant: 'destructive',
-      });
+      showError(error, 'Gagal memperbarui profil. Silakan coba lagi.');
     } finally {
       setSavingProfile(false);
     }
@@ -108,11 +100,7 @@ export default function ProfilePage() {
     
     // Validate new password
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast({
-        title: 'Error',
-        description: 'Konfirmasi password baru tidak cocok.',
-        variant: 'destructive',
-      });
+      showError('Konfirmasi password baru tidak cocok.');
       return;
     }
 
@@ -121,10 +109,7 @@ export default function ProfilePage() {
       // Simulate API call since we don't have an update password endpoint yet
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      toast({
-        title: 'Sukses',
-        description: 'Password berhasil diperbarui.',
-      });
+      showSuccess('Password berhasil diperbarui.');
 
       // Reset password form
       setPasswordData({
@@ -133,12 +118,7 @@ export default function ProfilePage() {
         confirmPassword: '',
       });
     } catch (error) {
-      console.error('Error updating password:', error);
-      toast({
-        title: 'Error',
-        description: 'Gagal memperbarui password. Silakan coba lagi.',
-        variant: 'destructive',
-      });
+      showError(error, 'Gagal memperbarui password. Silakan coba lagi.');
     } finally {
       setSavingPassword(false);
     }
@@ -151,12 +131,7 @@ export default function ProfilePage() {
       logout();
       router.push('/auth/login');
     } catch (error) {
-      console.error('Error logging out:', error);
-      toast({
-        title: 'Error',
-        description: 'Gagal logout. Silakan coba lagi.',
-        variant: 'destructive',
-      });
+      showError(error, 'Gagal logout. Silakan coba lagi.');
     } finally {
       setLoading(false);
       setLogoutDialogOpen(false);

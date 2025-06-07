@@ -10,13 +10,13 @@ import { Field } from '@/types';
 import { useAuth } from '@/context/auth/auth.context';
 import { Role } from '@/types';
 import Image from 'next/image';
-import { toast } from '@/components/ui/use-toast';
+import useToastHandler from '@/hooks/useToastHandler';
 
 export default function FieldDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string; fieldId: string }>();
   const { user } = useAuth();
-  
+  const { showError, showSuccess } = useToastHandler();
   const [field, setField] = useState<Field | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -34,20 +34,11 @@ export default function FieldDetailPage() {
         if (fieldData) {
           setField(fieldData);
         } else {
-          toast({
-            title: 'Lapangan Tidak Ditemukan',
-            description: 'Lapangan yang Anda cari tidak ditemukan',
-            variant: 'destructive',
-          });
+          showError('Lapangan Tidak Ditemukan', 'Error Lapangan');
           router.push(`/dashboard/branches/${branchId}`);
         }
       } catch (err) {
-        console.error('Error fetching field:', err);
-        toast({
-          title: 'Terjadi Kesalahan',
-          description: 'Gagal memuat data lapangan',
-          variant: 'destructive',
-        });
+        showError(err, 'Gagal memuat data lapangan'); 
         router.push(`/dashboard/branches/${branchId}`);
       } finally {
         setIsLoading(false);
@@ -76,18 +67,10 @@ export default function FieldDetailPage() {
       // Pass both fieldId and branchId
       await fieldApi.deleteField(fieldId);
       
-      toast({
-        title: 'Berhasil',
-        description: `Lapangan ${field.name} berhasil dihapus`,
-      });
+      showSuccess(`Lapangan ${field.name} berhasil dihapus`);
       router.push(`/dashboard/branches/${branchId}`);
     } catch (err) {
-      console.error('Error deleting field:', err);
-      toast({
-        title: 'Gagal Menghapus',
-        description: 'Gagal menghapus lapangan. Silakan coba lagi.',
-        variant: 'destructive',
-      });
+      showError(err, 'Gagal menghapus lapangan. Silakan coba lagi.');
     } finally {
       setIsDeleting(false);
     }

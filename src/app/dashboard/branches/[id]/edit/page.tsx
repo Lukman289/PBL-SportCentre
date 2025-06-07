@@ -29,6 +29,8 @@ import { useAuth } from '@/context/auth/auth.context';
 import { Loader2, X, Upload } from 'lucide-react';
 import { Role } from '@/types';
 import Image from 'next/image';
+import useToastHandler from '@/hooks/useToastHandler';  
+
 
 // Validasi form menggunakan Zod
 const editBranchSchema = z.object({
@@ -57,6 +59,7 @@ export default function EditBranchPage() {
   const [error, setError] = useState<string | null>(null);
   const [owners, setOwners] = useState<Owner[]>([]);
   const [loadingOwners, setLoadingOwners] = useState(true);
+  const { showError } = useToastHandler();
   const [loadingBranch, setLoadingBranch] = useState(true);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
@@ -87,7 +90,7 @@ export default function EditBranchPage() {
 
         const branchId = Number(id);
         if (isNaN(branchId)) {
-          setError('ID cabang tidak valid');
+          showError('ID cabang tidak valid', 'Error ID Cabang');
           return;
         }
 
@@ -103,7 +106,7 @@ export default function EditBranchPage() {
             }));
             setOwners(ownersData);
           } catch (err) {
-            console.error('Error loading owners:', err);
+            showError(err, 'Gagal memuat data. Silakan coba lagi.');
             // Continue execution even if owners fail to load
           }
         }
@@ -115,7 +118,7 @@ export default function EditBranchPage() {
 
           // Pastikan response.data ada dan merupakan object
           if (!response.data) {
-            setError('Data cabang tidak ditemukan');
+            showError('Data cabang tidak ditemukan', 'Error Data Cabang');
             return;
           }
 
@@ -123,7 +126,7 @@ export default function EditBranchPage() {
 
           // Validasi bahwa branch memiliki properti yang diperlukan
           if (!branch.name || !branch.location) {
-            setError('Data cabang tidak lengkap');
+            showError('Data cabang tidak lengkap', 'Error Data Cabang');
             return;
           }
 
@@ -143,19 +146,18 @@ export default function EditBranchPage() {
             setCurrentImageUrl(branch.imageUrl);
           }
         } catch (err) {
-          console.error('Error loading branch data:', err);
+          showError(err, 'Gagal memuat data. Silakan coba lagi.');
           const error = err as { response?: { status?: number } };
           if (error.response?.status === 404) {
-            setError('Cabang tidak ditemukan');
+            showError('Cabang tidak ditemukan', 'Error Cabang');
           } else if (error.response?.status === 403) {
-            setError('Anda tidak memiliki akses ke cabang ini');
+            showError('Anda tidak memiliki akses ke cabang ini', 'Error Akses Cabang');
           } else {
-            setError('Gagal memuat data cabang. Silakan coba lagi.');
+            showError('Gagal memuat data cabang. Silakan coba lagi.', 'Error Cabang');
           }
         }
       } catch (err) {
-        console.error('Unexpected error:', err);
-        setError('Terjadi kesalahan yang tidak terduga');
+        showError(err, 'Terjadi kesalahan yang tidak terduga');
       } finally {
         setLoadingBranch(false);
         setLoadingOwners(false);
@@ -173,7 +175,7 @@ export default function EditBranchPage() {
       
       // Validasi ukuran file (maksimal 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        setError('Ukuran file maksimal 5MB');
+        showError('Ukuran file maksimal 5MB', 'Error Ukuran File');
         e.target.value = '';
         return;
       }
@@ -181,7 +183,7 @@ export default function EditBranchPage() {
       // Validasi tipe file
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
-        setError('Format file harus JPG, PNG, atau WebP');
+        showError('Format file harus JPG, PNG, atau WebP', 'Error Format File');
         e.target.value = '';
         return;
       }
@@ -279,9 +281,9 @@ export default function EditBranchPage() {
       console.error('❌ Update error:', err);
       const error = err as { response?: { data?: { message?: string } } };
       if (error.response?.data?.message) {
-        setError(error.response.data.message);
+        showError(error.response.data.message, 'Error Cabang');
       } else {
-        setError('Gagal memperbarui cabang. Silakan coba lagi.');
+        showError('Gagal memperbarui cabang. Silakan coba lagi.', 'Error Cabang');
       }
     } finally {
       setIsSubmitting(false);

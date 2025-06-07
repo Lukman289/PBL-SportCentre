@@ -11,21 +11,12 @@ import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import Image from 'next/image';
-
-// Tipe untuk error
-interface ApiError {
-  message?: string;
-  response?: {
-    data?: {
-      message?: string;
-    };
-    status?: number;
-  };
-}
+import useToastHandler from '@/hooks/useToastHandler';
 
 export default function FieldPage() {
   const [fields, setFields] = useState<Field[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
+  const { showError } = useToastHandler();
   const [selectedBranch, setSelectedBranch] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [searched, setSearched] = useState(false);
@@ -88,9 +79,7 @@ export default function FieldPage() {
         }
       }
     } catch (error) {
-      const apiError = error as ApiError;
-      console.error('Error fetching fields:', apiError);
-      setError('Gagal memuat daftar lapangan. Silakan coba lagi.');
+      showError('Gagal memuat daftar lapangan. Silakan coba lagi.');
     } finally {
       setLoading(false);
     }
@@ -107,9 +96,7 @@ export default function FieldPage() {
         setBranches([]);
       }
     } catch (error) {
-      const apiError = error as ApiError;
-      console.error('Error fetching branches:', apiError);
-      setError('Gagal memuat daftar cabang. Silakan coba lagi.');
+      showError('Gagal memuat daftar cabang. Silakan coba lagi.');
     } finally {
       setLoading(false);
     }

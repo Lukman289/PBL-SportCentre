@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Role } from '@/types';
 import axiosInstance from '@/config/axios.config';
-import { toast } from 'sonner';
+import useToastHandler from '@/hooks/useToastHandler';
 
 interface CreateUserRequest {
   name: string;
@@ -52,6 +52,7 @@ export default function CreateUserPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { showError, showSuccess } = useToastHandler();
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -103,7 +104,7 @@ export default function CreateUserPage() {
       const response = await axiosInstance.post<CreateUserResponse>('/users', payload);
 
       if (response.data.status) {
-        toast.success('User berhasil dibuat');
+        showSuccess('User berhasil dibuat');
         
         // Reset form
         setName('');
@@ -118,7 +119,7 @@ export default function CreateUserPage() {
           router.push('/dashboard/users?refresh=true');
         }, 100);
       } else {
-        toast.error(response.data.message || 'Terjadi kesalahan');
+        showError(response.data.message || 'Terjadi kesalahan');
       }
     } catch (error) {
       console.error('Error creating user:', error);
@@ -131,15 +132,15 @@ export default function CreateUserPage() {
         } else if (apiError.response.data.message.includes('Peran yang diizinkan')) {
           setErrors({ role: apiError.response.data.message });
         } else {
-          toast.error(apiError.response.data.message);
+          showError(apiError.response.data.message);
         }
       } else if (apiError.response?.status === 401) {
-        toast.error('Anda tidak memiliki izin untuk melakukan aksi ini');
+        showError('Anda tidak memiliki izin untuk melakukan aksi ini', 'Tidak Memiliki Akses');
         router.push('/login');
       } else if (apiError.response?.status === 403) {
-        toast.error('Anda tidak memiliki akses untuk membuat user dengan role tersebut');
+        showError('Anda tidak memiliki akses untuk membuat user dengan role tersebut', 'Akses Ditolak');
       } else {
-        toast.error('Terjadi kesalahan saat membuat user');
+        showError(error, 'Terjadi kesalahan saat membuat user');
       }
     } finally {
       setIsLoading(false);

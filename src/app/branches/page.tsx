@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Branch } from '@/types';
 import { Search, X } from 'lucide-react';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
+import useToastHandler from '@/hooks/useToastHandler';
 
 export default function BranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -19,6 +20,7 @@ export default function BranchesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const { withLoading } = useGlobalLoading();
+  const { showError } = useToastHandler();
   const maxData = 15;
 
   useEffect(() => {
@@ -38,7 +40,9 @@ export default function BranchesPage() {
         setBranches([]);
       }
     } catch (error) {
-      setError('Gagal memuat daftar cabang. Silakan coba lagi nanti.');
+      const errorMsg = 'Gagal memuat daftar cabang. Silakan coba lagi nanti.';
+      setError(errorMsg);
+      showError(error, errorMsg);
       console.error('Error fetching branches:', error);
     } finally {
       setLoading(false);

@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import useAuth from '@/hooks/useAuth.hook';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
+import useToastHandler from '@/hooks/useToastHandler';
 
 const loginSchema = z.object({
   identifier: z.string().min(1, 'Email atau nomor telepon wajib diisi'),
@@ -24,6 +25,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const { withLoading } = useGlobalLoading();
+  const { showError } = useToastHandler();
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<LoginFormValues>({
@@ -43,6 +45,7 @@ export default function LoginPage() {
     } catch (error) {
       console.error('Login error:', error);
       setError('Kredensial tidak valid. Silakan coba lagi.');
+      showError(error, 'Kredensial tidak valid. Silakan coba lagi.');
     }
   };
 

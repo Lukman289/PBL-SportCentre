@@ -14,10 +14,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/use-toast";
 import { Role } from "@/types";
 import { XCircle, ArrowLeft } from "lucide-react";
 import useGlobalLoading from "@/hooks/useGlobalLoading.hook";
+import useToastHandler from "@/hooks/useToastHandler";
 
 // Import komponen-komponen yang sudah dipisahkan
 import {
@@ -35,6 +35,7 @@ export default function MyBookingDetailPage() {
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const { showError, showSuccess } = useToastHandler();
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     action: "approve" | "reject" | "cancel" | "complete" | "pay";
@@ -66,22 +67,17 @@ export default function MyBookingDetailPage() {
       setLoading(true);
       // Memastikan user?.role ada sebelum memanggil API
       if (!user?.role) {
-        toast({
-          title: "Error",
-          description: "Data pengguna tidak ditemukan. Silakan login kembali.",
-          variant: "destructive",
-        });
+        showError("Data pengguna tidak ditemukan. Silakan login kembali.");
         router.push("/auth/login");
         return;
       }
 
       // Memastikan hanya User yang dapat mengakses halaman ini
       if (user.role !== Role.USER) {
-        toast({
-          title: "Akses Ditolak",
-          description: "Anda tidak memiliki izin untuk mengakses halaman ini",
-          variant: "destructive",
-        });
+        showError(
+          "Anda tidak memiliki izin untuk mengakses halaman ini",
+          "Akses Ditolak"
+        );
         router.push("/dashboard");
         return;
       }
@@ -91,12 +87,7 @@ export default function MyBookingDetailPage() {
 
       setBooking(bookingData);
     } catch (error) {
-      console.error("Error fetching booking details:", error);
-      toast({
-        title: "Error",
-        description: "Gagal memuat detail booking",
-        variant: "destructive",
-      });
+      showError(error, "Gagal memuat detail booking");
     } finally {
       setLoading(false);
     }
@@ -122,10 +113,7 @@ export default function MyBookingDetailPage() {
                 PaymentStatus.PAID
               )
             );
-            toast({
-              title: "Sukses",
-              description: "Pembayaran berhasil dikonfirmasi",
-            });
+            showSuccess("Pembayaran berhasil dikonfirmasi");
           }
           break;
         case "reject":
@@ -136,45 +124,28 @@ export default function MyBookingDetailPage() {
                 PaymentStatus.FAILED
               )
             );
-            toast({
-              title: "Sukses",
-              description: "Pembayaran berhasil ditolak",
-            });
+            showSuccess("Pembayaran berhasil ditolak");
           }
           break;
         case "cancel":
           await withLoading(bookingApi.cancelBooking(booking.id));
-          toast({
-            title: "Sukses",
-            description: "Booking berhasil dibatalkan",
-          });
+          showSuccess("Booking berhasil dibatalkan");
           break;
         case "complete":
           // Implementasi completedBooking jika diperlukan
-          toast({
-            title: "Sukses",
-            description: "Booking berhasil diselesaikan",
-          });
+          showSuccess("Booking berhasil diselesaikan");
           break;
         case "pay":
           if (booking.payment?.id) {
             await withLoading(bookingApi.markPaymentAsPaid(booking.payment.id));
-            toast({
-              title: "Sukses",
-              description: "Pembayaran berhasil dilunasi",
-            });
+            showSuccess("Pembayaran berhasil dilunasi");
           }
           break;
       }
       // Refresh data booking
       await fetchBookingDetails();
     } catch (error) {
-      console.error("Error performing action:", error);
-      toast({
-        title: "Error",
-        description: `Gagal melakukan aksi: ${confirmDialog.action}`,
-        variant: "destructive",
-      });
+      showError(error, `Gagal melakukan aksi: ${confirmDialog.action}`);
     } finally {
       setActionLoading(false);
       setConfirmDialog({ ...confirmDialog, open: false });
@@ -236,20 +207,12 @@ export default function MyBookingDetailPage() {
     try {
       await bookingApi.cancelBooking(booking.id);
 
-      toast({
-        title: "Sukses",
-        description: "Booking berhasil dibatalkan.",
-      });
+      showSuccess("Booking berhasil dibatalkan.");
 
       // Redirect to bookings list
       router.push("/dashboard/my-bookings");
     } catch (error) {
-      console.error("Error cancelling booking:", error);
-      toast({
-        title: "Error",
-        description: "Gagal membatalkan booking. Silakan coba lagi.",
-        variant: "destructive",
-      });
+      showError(error, "Gagal membatalkan booking. Silakan coba lagi.");
     } finally {
       setCancelLoading(false);
     }

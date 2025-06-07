@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
+import useToastHandler from '@/hooks/useToastHandler';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Select, 
@@ -26,7 +27,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/context/auth/auth.context';
 import { branchApi } from '@/api/branch.api';
 import { Branch, Role, User } from '@/types';
-
+import { userApi } from '@/api/user.api'; 
 // Validasi form menggunakan Zod
 const addAdminSchema = z.object({
   userId: z.string().min(1, 'Admin harus dipilih'),
@@ -34,38 +35,11 @@ const addAdminSchema = z.object({
 
 type AddAdminFormValues = z.infer<typeof addAdminSchema>;
 
-// Fungsi dummy untuk mendapatkan daftar pengguna dari API
-const getEligibleAdmins = async (): Promise<User[]> => {
-  // Simulasi API call, dalam implementasi nyata harus diganti dengan panggilan API sebenarnya
-  return [
-    {
-      id: 1,
-      name: 'Admin 1',
-      email: 'admin1@example.com',
-      role: Role.ADMIN_CABANG,
-      createdAt: '2023-01-01T00:00:00Z',
-    },
-    {
-      id: 2,
-      name: 'Admin 2',
-      email: 'admin2@example.com',
-      role: Role.ADMIN_CABANG,
-      createdAt: '2023-01-02T00:00:00Z',
-    },
-    {
-      id: 3,
-      name: 'Admin 3',
-      email: 'admin3@example.com',
-      role: Role.ADMIN_CABANG,
-      createdAt: '2023-01-03T00:00:00Z',
-    },
-  ];
-};
-
 export default function AddAdminPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { showError } = useToastHandler();
   const [branch, setBranch] = useState<Branch | null>(null);
   const [eligibleAdmins, setEligibleAdmins] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,14 +61,13 @@ export default function AddAdminPage() {
       try {
         // Dapatkan detail cabang
         const branchData = await branchApi.getBranchById(branchId);
-        setBranch(branchData);
+        setBranch(branchData.data);
 
         // Dapatkan daftar admin yang eligible (belum menjadi admin di cabang ini)
-        const admins = await getEligibleAdmins();
-        setEligibleAdmins(admins);
+        const admins = await userApi.getUsersByRole(Role.ADMIN_CABANG);
+        setEligibleAdmins(admins.data);
       } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Gagal memuat data. Silakan coba lagi.');
+        showError(err, 'Gagal memuat data. Silakan coba lagi.');    
       } finally {
         setIsLoading(false);
       }

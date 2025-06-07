@@ -8,18 +8,7 @@ import { FieldType, Role } from '@/types';
 import { useAuth } from '@/context/auth/auth.context';
 import { fieldApi } from '@/api/field.api';
 import axiosInstance from '@/config/axios.config';
-import { toast } from '@/components/ui/use-toast';
-
-// Tipe untuk error
-interface ApiError {
-  response?: {
-    status?: number;
-    data?: {
-      message?: string;
-    };
-  };
-  message?: string;
-}
+import useToastHandler from '@/hooks/useToastHandler';
 
 export default function FieldTypeDetailPage() {
     const params = useParams();
@@ -29,6 +18,7 @@ export default function FieldTypeDetailPage() {
     const [fieldType, setFieldType] = useState<FieldType | null>(null);
     const [loading, setLoading] = useState(true);
     const [deleting, setDeleting] = useState(false);
+    const { showError, showSuccess } = useToastHandler();
 
     useEffect(() => {
         const fetchFieldType = async () => {
@@ -37,30 +27,10 @@ export default function FieldTypeDetailPage() {
                 setFieldType(fieldTypeData);
             } catch (err) {
                 console.error('Failed to fetch field type:', err);
-                const error = err as ApiError;
-
-                if (error.response?.status === 403) {
-                    toast({
-                        title: 'Access Denied',
-                        description: 'You do not have permission to view this field type',
-                        variant: 'destructive',
-                    });
-                    router.push('/dashboard');
-                } else if (error.response?.status === 404) {
-                    toast({
-                        title: 'Field Type Not Found',
-                        description: 'The field type you requested was not found',
-                        variant: 'destructive',
-                    });
-                    router.push('/dashboard/fieldtypes');
-                } else {
-                    toast({
-                        title: 'Error',
-                        description: 'Failed to load field type data',
-                        variant: 'destructive',
-                    });
-                    router.push('/dashboard/fieldtypes');
-                }
+                showError(err, 'Gagal memuat data jenis lapangan');
+                
+                // Redirect ke halaman field types jika terjadi error
+                router.push('/dashboard/fieldtypes');
             } finally {
                 setLoading(false);
             }
@@ -69,13 +39,13 @@ export default function FieldTypeDetailPage() {
         if (authUser) {
             fetchFieldType();
         }
-    }, [fieldTypeId, router, authUser]);
+    }, [fieldTypeId, router, authUser, showError]);
 
     const handleDelete = async () => {
         if (!authUser || !fieldType) return;
 
         const confirmDelete = window.confirm(
-            `Are you sure you want to delete field type "${fieldType.name}"? This action cannot be undone.`
+            `Apakah Anda yakin ingin menghapus jenis lapangan "${fieldType.name}"? Tindakan ini tidak dapat dibatalkan.`
         );
 
         if (confirmDelete) {
@@ -83,24 +53,12 @@ export default function FieldTypeDetailPage() {
             try {
                 await axiosInstance.delete(`/fieldtypes/${fieldTypeId}`);
 
-                toast({
-                    title: 'Success',
-                    description: `Field type "${fieldType.name}" has been deleted`,
-                });
+                showSuccess(`Jenis lapangan "${fieldType.name}" berhasil dihapus`);
 
                 router.push('/dashboard/fieldtypes');
             } catch (error) {
                 console.error('Failed to delete field type:', error);
-                const apiError = error as ApiError;
-
-                const errorMessage = apiError.response?.data?.message ||
-                    'Failed to delete field type. Please try again.';
-
-                toast({
-                    title: 'Deletion Failed',
-                    description: errorMessage,
-                    variant: 'destructive',
-                });
+                showError(error, 'Gagal menghapus jenis lapangan');
             } finally {
                 setDeleting(false);
             }

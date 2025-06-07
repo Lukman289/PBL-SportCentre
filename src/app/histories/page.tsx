@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PaymentStatus, BookingWithPayment } from '@/types';
 import { useAuth } from '@/context/auth/auth.context';
+import useToastHandler from '@/hooks/useToastHandler';
 
 export default function HistoriesPage() {
   const [bookings, setBookings] = useState<BookingWithPayment[]>([]);
@@ -17,6 +18,7 @@ export default function HistoriesPage() {
   const [error, setError] = useState<string | null>(null);
   const user = useAuth();
   const userId = user?.user?.id || 0; 
+  const { showError } = useToastHandler();
 
   useEffect(() => {
     if (!userId || userId === 0) return;
@@ -27,8 +29,7 @@ export default function HistoriesPage() {
         const data = await bookingApi.getUserBookings(userId);
         setBookings(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error('Error fetching user bookings:', error);
-        setError('Gagal memuat daftar booking. Silakan coba lagi nanti.');
+        showError(error, 'Gagal memuat daftar booking. Silakan coba lagi nanti.');
       } finally {
         setLoading(false);
       }

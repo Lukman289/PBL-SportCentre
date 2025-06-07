@@ -6,6 +6,7 @@ import { Booking, PaymentMethod, PaymentStatus } from "@/types";
 import { BookingFormValues } from "@/context/booking/booking.context";
 import { subscribeToBookingUpdates } from "@/services/socket/booking.socket";
 import { subscribeToFieldAvailability, joinFieldAvailabilityRoom } from "@/services/socket";
+import useToastHandler from "../useToastHandler";
 
 /**
  * Hook untuk admin cabang yang mengelola booking
@@ -20,6 +21,7 @@ export const useAdminBooking = (branchId?: number) => {
   const [branchBookings, setBranchBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const { showError, showSuccess } = useToastHandler();
 
   // Ambil ID cabang dari user jika tidak disediakan
   const adminBranchId = branchId || (user?.branches && user.branches.length > 0 ? user.branches[0].branchId : 0);
@@ -34,10 +36,9 @@ export const useAdminBooking = (branchId?: number) => {
     setLoading(true);
     try {
       const bookings = await bookingApi.getBranchBookings(adminBranchId);
-      setBranchBookings(bookings);
+      setBranchBookings(bookings.data);
     } catch (err) {
-      console.error("Error fetching branch bookings:", err);
-      setError("Gagal mengambil data booking cabang");
+      showError("Gagal mengambil data booking cabang");
     } finally {
       setLoading(false);
     }
@@ -55,15 +56,13 @@ export const useAdminBooking = (branchId?: number) => {
   }) => {
     if (!data.branchId) {
       const errorMsg = "ID cabang tidak ditemukan";
-      console.error(errorMsg);
-      setError(errorMsg);
+      showError(errorMsg);
       return null;
     }
 
     if (!data.fieldId) {
       const errorMsg = "ID lapangan tidak ditemukan";
-      console.error(errorMsg);
-      setError(errorMsg);
+      showError(errorMsg);
       return null;
     }
 
@@ -83,19 +82,15 @@ export const useAdminBooking = (branchId?: number) => {
     
     if (!userId) {
       const errorMsg = "ID user tidak ditemukan";
-      console.error(errorMsg);
-      setError(errorMsg);
+      showError(errorMsg);
       return null;
     }
 
     setLoading(true);
     try {
-      console.log("Creating manual booking with data:", JSON.stringify(bookingData, null, 2));
-      console.log("API URL yang akan dipanggil:", `/bookings/branches/${branchId}/bookings/manual`);
-
       const booking = await bookingApi.createManualBooking(bookingData);
       
-      console.log("Manual booking berhasil dibuat:", booking);
+      showSuccess("Manual booking berhasil dibuat");
       
  
       setBranchBookings(prevBookings => [...prevBookings, booking]);
@@ -103,14 +98,14 @@ export const useAdminBooking = (branchId?: number) => {
       // Refresh ketersediaan lapangan setelah booking berhasil dibuat
       // Ini akan memperbarui grid ketersediaan lapangan tanpa perlu reload
       if (bookingContext.refreshAvailability) {
-        console.log("Merefresh ketersediaan lapangan setelah booking manual...");
+        showSuccess("Memperbarui ketersediaan lapangan setelah booking manual...");
         await bookingContext.refreshAvailability();
       }
       
       
       return booking;
     } catch (error: unknown) {
-      console.error("Error creating manual booking:", error);
+
       const err = error as {
         response?: {
           status?: number;
@@ -124,14 +119,11 @@ export const useAdminBooking = (branchId?: number) => {
       };
       
       if (err.response) {
-        console.error("Error response:", err.response.status, err.response.data);
-        const errorMessage = err.response.data?.message || JSON.stringify(err.response.data) || 'Unknown server error';
-        setError(`Gagal membuat booking manual: ${errorMessage}`);
+        showError(`Gagal membuat booking manual: ${err.response.data?.message || JSON.stringify(err.response.data) || 'Unknown server error'}`);
       } else if (err.request) {
-        console.error("Error request:", err.request);
-        setError("Tidak ada respons dari server. Periksa koneksi internet Anda.");
+        showError("Tidak ada respons dari server. Periksa koneksi internet Anda.");
       } else {
-        setError(`Gagal membuat booking manual: ${err.message || 'Unknown error'}`);
+        showError(`Gagal membuat booking manual: ${err.message || 'Unknown error'}`);
       }
       return null;
     } finally {
@@ -150,8 +142,7 @@ export const useAdminBooking = (branchId?: number) => {
       
       return updatedPayment;
     } catch (err) {
-      console.error("Error updating payment status:", err);
-      setError("Gagal mengubah status pembayaran");
+      showError("Gagal mengubah status pembayaran");
       return null;
     } finally {
       setLoading(false);
@@ -162,11 +153,8 @@ export const useAdminBooking = (branchId?: number) => {
   useEffect(() => {
     if (!socketInitialized || !adminBranchId) return;
 
-    console.log("Socket initialized, subscribing to booking updates for branch:", adminBranchId);
-
     // Subscribe ke pembaruan booking melalui socket
     const unsubscribe = subscribeToBookingUpdates(({ booking }) => {
-      console.log("Received booking update via socket:", booking);
       
       // Filter hanya booking yang relevan dengan cabang ini
       if (booking && booking.field && booking.field.branchId === adminBranchId) {
@@ -193,7 +181,6 @@ export const useAdminBooking = (branchId?: number) => {
     // Cleanup: unsubscribe dari socket events
     return () => {
       unsubscribe();
-      console.log("Unsubscribed from booking updates for branch:", adminBranchId);
     };
   }, [socketInitialized, adminBranchId, fetchBranchBookings]);
 
@@ -201,14 +188,12 @@ export const useAdminBooking = (branchId?: number) => {
   useEffect(() => {
     if (!socketInitialized || !adminBranchId || !bookingContext.selectedDate) return;
 
-    console.log("Socket initialized, subscribing to field availability updates for branch:", adminBranchId);
 
     // Gabung ke room ketersediaan lapangan berdasarkan tanggal dan cabang
     joinFieldAvailabilityRoom(adminBranchId, bookingContext.selectedDate);
 
     // Subscribe ke pembaruan ketersediaan lapangan
     const unsubscribe = subscribeToFieldAvailability((data) => {
-      console.log("Received field availability update via socket:", data);
       // Tidak perlu melakukan apa-apa di sini karena BookingContext 
       // sudah meng-handle pembaruan ini
     });
@@ -216,7 +201,6 @@ export const useAdminBooking = (branchId?: number) => {
     // Cleanup: unsubscribe dari socket events
     return () => {
       unsubscribe();
-      console.log("Unsubscribed from field availability updates for branch:", adminBranchId);
     };
   }, [socketInitialized, adminBranchId, bookingContext.selectedDate]);
 
@@ -238,8 +222,7 @@ export const useAdminBooking = (branchId?: number) => {
     try {
       return await bookingApi.createBooking(bookingData);
     } catch (err) {
-      console.error("Error creating booking:", err);
-      setError("Gagal membuat booking");
+      showError("Gagal membuat booking");
       return null;
     }
   }, [user?.id]);
@@ -267,4 +250,4 @@ export const useAdminBooking = (branchId?: number) => {
 };
 
 // Re-export types dari BookingContext untuk kompatibilitas
-export type { BookingFormValues, BookingRequest } from "@/context/booking/booking.context"; 
+export type { BookingFormValues } from "@/context/booking/booking.context"; 

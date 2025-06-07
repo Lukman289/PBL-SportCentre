@@ -10,6 +10,7 @@ import { Branch, Field, FieldStatus } from '@/types';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Image from 'next/image';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
+import useToastHandler from '@/hooks/useToastHandler';
 
 export default function BranchDetailPage() {
   const params = useParams<{ id: string }>();
@@ -18,7 +19,7 @@ export default function BranchDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { showLoading, hideLoading, withLoading } = useGlobalLoading();
-
+  const { showError, showSuccess } = useToastHandler();
   // Mengelola loading state
   useEffect(() => {
     if (loading) {
@@ -38,15 +39,14 @@ export default function BranchDetailPage() {
         if (branchResponse) {
           setBranch(Array.isArray(branchResponse.data) ? branchResponse.data[0] : branchResponse.data);
         } else {
-          throw new Error('Data cabang tidak ditemukan.');
+          showError("Gagal memuat data cabang. Silakan coba lagi nanti.");
         }
 
         // Perbaikan: Langsung menggunakan getBranchFields yang mengembalikan array lapangan
         const fieldsResponse = await withLoading(fieldApi.getBranchFields(branchId));
         setFields(Array.isArray(fieldsResponse.data) ? fieldsResponse.data : []);        
       } catch (err) {
-        console.error('Error fetching branch details:', err);
-        setError('Gagal memuat data cabang. Silakan coba lagi nanti.');
+        showError(err, "Gagal memuat data cabang. Silakan coba lagi nanti.");
       } finally {
         setLoading(false);
       }

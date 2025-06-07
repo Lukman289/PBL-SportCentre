@@ -18,6 +18,7 @@ import { branchApi } from '@/api/branch.api';
 import { useAuth } from '@/context/auth/auth.context';
 import { Role } from '@/types';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, PlusCircle, RefreshCw } from 'lucide-react';
+import useToastHandler from '@/hooks/useToastHandler';
 
 export default function BranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -28,6 +29,7 @@ export default function BranchesPage() {
   const itemsPerPage = 15;
   const router = useRouter();
   const { user } = useAuth();
+  const { showError } = useToastHandler();
 
   const fetchBranches = useCallback(async () => {
     try {
@@ -47,11 +49,13 @@ export default function BranchesPage() {
       }
     } catch (error) {
       console.error('Error fetching branches:', error);
-      setError('Gagal memuat daftar cabang. Silakan coba lagi.');
+      const errorMsg = 'Gagal memuat daftar cabang. Silakan coba lagi.';
+      setError(errorMsg);
+      showError(error, errorMsg);
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery]);
+  }, [searchQuery, showError]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

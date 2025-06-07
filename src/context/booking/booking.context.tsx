@@ -16,6 +16,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth/auth.context";
+import useToastHandler from "@/hooks/useToastHandler";
 
 // Schema untuk form booking
 const bookingSchema = z.object({
@@ -76,6 +77,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   
   const router = useRouter();
   const { user } = useAuth();
+  const { showError } = useToastHandler();
   
   // Dummy functions untuk UI loading
   const showLoading = () => { /* NextTopLoader handles this automatically */ };
@@ -132,11 +134,11 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       
       setBookedTimeSlots(bookedSlots);
     } catch (error) {
-      console.error("Error refreshing availability data:", error);
+      showError(error, "Gagal memperbarui data ketersediaan lapangan");
     } finally {
       setRefreshing(false);
     }
-  }, [selectedBranch, selectedDate, fields, times]);
+  }, [selectedBranch, selectedDate, fields, times, showError]);
 
   // Fungsi untuk mengambil data ketersediaan awal
   const fetchInitialAvailability = useCallback(async () => {
@@ -360,11 +362,11 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         window.location.href = paymentUrl;
       } else {
         console.error("Tidak ada URL pembayaran yang dikembalikan dari API:", result);
-        alert("Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi.");
+        showError("Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi.");
       }
     } catch (error) {
       console.error("Error creating booking:", error);
-      alert("Gagal membuat booking. Silakan coba lagi nanti.");
+      showError(error, "Gagal membuat booking. Silakan coba lagi nanti.");
     } finally {
       setLoading(false);
     }
@@ -497,3 +499,4 @@ export const useBookingContext = () => {
   }
   return context;
 }; 
+

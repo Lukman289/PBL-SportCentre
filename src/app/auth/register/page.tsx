@@ -22,14 +22,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import useAuth from '@/hooks/useAuth.hook';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import { Role } from '@/types';
-
-interface ApiError {
-  response?: {
-    data?: {
-      error?: string;
-    };
-  };
-}
+import useToastHandler from '@/hooks/useToastHandler';
 
 const registerSchema = z
   .object({
@@ -55,6 +48,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { register } = useAuth();
   const { withLoading } = useGlobalLoading();
+  const { showError, showSuccess } = useToastHandler();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -76,14 +70,22 @@ export default function RegisterPage() {
     try {
       await withLoading(register(data.name, data.email, data.password, data.phone, data.role));
       setSuccess(true);
+      showSuccess('Pendaftaran berhasil! Anda akan dialihkan ke halaman login.');
       setTimeout(() => {
         router.push('/auth/login');
       }, 3000);
     } catch (error) {
       console.error('Register error:', error);
-      const apiError = error as ApiError;
-      const errorMessage = apiError.response?.data?.error || 'Gagal mendaftar. Silakan coba lagi.';
-      setError(errorMessage);
+      showError(error, 'Gagal mendaftar. Silakan coba lagi.');
+      
+      // Tetap menyimpan error untuk ditampilkan dalam Alert
+      if (error && typeof error === 'object' && 'response' in error) {
+        const apiError = error as { response?: { data?: { error?: string } } };
+        const errorMessage = apiError.response?.data?.error || 'Gagal mendaftar. Silakan coba lagi.';
+        setError(errorMessage);
+      } else {
+        setError('Gagal mendaftar. Silakan coba lagi.');
+      }
     }
   };
 

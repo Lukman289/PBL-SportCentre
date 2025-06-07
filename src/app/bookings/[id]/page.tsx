@@ -14,7 +14,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/components/ui/use-toast";
 import { getPaymentStatusBadge } from "@/components/dashboard/tables/BookingTableUtils";
 import { formatTimeRange } from "@/utils/timezone.utils";
 import { format } from "date-fns";
@@ -29,10 +28,11 @@ import {
 } from "@/components/ui/dialog";
 import { Ban, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import useToastHandler from "@/hooks/useToastHandler";
 
 export default function BookingDetailPage() {
   const params = useParams();
-  const { toast } = useToast();
+  const { showError, showSuccess } = useToastHandler();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
@@ -50,18 +50,14 @@ export default function BookingDetailPage() {
         setBooking(data);
       } catch (error) {
         console.error("Error fetching booking data:", error);
-        toast({
-          title: "Gagal memuat data",
-          description: "Terjadi kesalahan saat memuat data booking",
-          variant: "destructive",
-        });
+        showError(error, "Terjadi kesalahan saat memuat data booking");
       } finally {
         setLoading(false);
       }
     };
 
     fetchBookingData();
-  }, [bookingId, toast]);
+  }, [bookingId, showError]);
 
   const handleCancelBooking = async () => {
     if (!booking) return;
@@ -70,10 +66,7 @@ export default function BookingDetailPage() {
     try {
       await bookingApi.cancelBooking(booking.id);
       
-      toast({
-        title: "Berhasil",
-        description: "Booking berhasil dibatalkan",
-      });
+      showSuccess("Booking berhasil dibatalkan");
       
       // Reload data booking setelah berhasil dibatalkan
       const updatedBooking = await bookingApi.getBookingById(bookingId, Role.USER);
@@ -82,11 +75,7 @@ export default function BookingDetailPage() {
       setOpenCancelDialog(false);
     } catch (error) {
       console.error("Error canceling booking:", error);
-      toast({
-        title: "Gagal",
-        description: "Terjadi kesalahan saat membatalkan booking",
-        variant: "destructive",
-      });
+      showError(error, "Terjadi kesalahan saat membatalkan booking");
     } finally {
       setCancelLoading(false);
     }

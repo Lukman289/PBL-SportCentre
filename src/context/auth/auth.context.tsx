@@ -6,6 +6,7 @@ import { authApi } from '@/api/auth.api';
 import { hasAuthCookie, setIsLoggedInCookie } from '@/utils/cookie.utils';
 import { useRouter } from 'next/navigation';
 import { createAxiosResponseInterceptor } from '@/config/axios.config';
+import useToastHandler from '@/hooks/useToastHandler';
 
 interface AxiosErrorResponse {
   response?: {
@@ -38,6 +39,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { showError, showSuccess } = useToastHandler();
   const router = useRouter();
 
   useEffect(() => {
@@ -60,7 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               setUser(null);
             }
           } catch (error) {
-            console.error('Error fetching auth status:', error);
+            showError(error, "Gagal memperbarui status autentikasi");
             setUser(null);
           }
         } else {
@@ -86,15 +88,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const authData = await authApi.login({ identifier, password });
       if (authData && authData.user) {
-        console.log("Login berhasil:", authData.user);
+        showSuccess("Login berhasil");
         setUser(authData.user);
         setIsLoggedInCookie();
       } else {
-        console.error("Login gagal: Tidak ada data user");
+        showError("Gagal login: Tidak ada data user");
         setUser(null);
       }
     } catch (error) {
-      console.error("Login error:", error);
+      showError(error, "Gagal login");
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -121,10 +123,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Set user ke null untuk memastikan keadaan tidak terautentikasi
       setUser(null);
       
-      console.log("Logout berhasil, mengarahkan ke halaman login");
+      showSuccess("Logout berhasil, mengarahkan ke halaman login");
       router.push('/auth/login');
     } catch (error) {
-      console.error('Logout error:', error);
+      showError(error, "Gagal logout");
       setUser(null);
       router.push('/auth/login');
     } finally {

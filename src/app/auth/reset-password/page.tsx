@@ -14,7 +14,7 @@ function ResetPasswordContent() {
     const tokenFromCookie = getResetPasswordToken();
     
     if (tokenFromCookie) {
-      router.push(`/auth/reset-password/_token`);
+      router.push(`/auth/reset-password/${tokenFromCookie}`);
     } else {
       router.push("/auth/forgot-password");
     }

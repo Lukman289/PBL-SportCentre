@@ -15,9 +15,9 @@ import {
 } from '@/components/ui/table';
 import { User, Role } from '@/types';
 import { useAuth } from '@/context/auth/auth.context';
-import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search, X } from 'lucide-react';
 import { userApi } from '@/api';
+import useToastHandler from '@/hooks/useToastHandler';
 
 function UsersContent() {
   const [users, setUsers] = useState<User[]>([]);
@@ -31,9 +31,10 @@ function UsersContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const { showError, showSuccess } = useToastHandler();
 
   // Gunakan useCallback untuk fetchUsers agar bisa dipanggil dari mana saja
-  const fetchUsers = useCallback(async (showToast = false) => {
+  const fetchUsers = useCallback(async (showToastMessage = false) => {
     try {
       setIsLoading(true);
       
@@ -57,16 +58,16 @@ function UsersContent() {
         setCurrentPage(1);
       }
       
-      if (showToast) {
-        toast.success('Data berhasil diperbarui');
+      if (showToastMessage) {
+        showSuccess('Data berhasil diperbarui');
       }
     } catch (error) {
       console.error('Error fetching users:', error);
-      toast.error('Gagal memuat data pengguna');
+      showError(error, 'Gagal memuat data pengguna');
     } finally {
       setIsLoading(false);
     }
-  }, [user?.role, currentPage]);
+  }, [user?.role, currentPage, showSuccess, showError]);
 
   // Handle refresh parameter dari URL
   useEffect(() => {

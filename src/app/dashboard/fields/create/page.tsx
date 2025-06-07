@@ -30,7 +30,7 @@ import { branchApi } from '@/api/branch.api';
 import { Role, Branch, FieldType, FieldStatus } from '@/types';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import { Suspense } from 'react';
-
+import useToastHandler from '@/hooks/useToastHandler';
 // Validasi form menggunakan Zod
 const createFieldSchema = z.object({
   name: z.string().min(3, 'Nama lapangan minimal 3 karakter'),
@@ -47,6 +47,7 @@ function CreateFieldContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const { showError } = useToastHandler();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -108,8 +109,7 @@ function CreateFieldContent() {
         const fieldTypeResponse = await fieldApi.getFieldTypes();
         setFieldTypes(fieldTypeResponse || []);
       } catch (error) {
-        console.error('Error fetching data:', error);
-        setError('Gagal memuat data. Silakan coba lagi.');
+        showError(error, 'Gagal memuat data. Silakan coba lagi.');
       } finally {
         hideLoading(); // Sembunyikan loading setelah selesai fetch
         setIsLoading(false);
@@ -213,8 +213,7 @@ function CreateFieldContent() {
         router.push('/dashboard/fields');
       }
     } catch (error) {
-      console.error('Error creating field:', error);
-      setError('Gagal membuat lapangan. Silakan coba lagi.');
+      showError(error, 'Gagal membuat lapangan. Silakan coba lagi.');
     } finally {
       hideLoading(); // Sembunyikan loading setelah selesai submit
       setIsSubmitting(false);

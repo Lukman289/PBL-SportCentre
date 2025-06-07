@@ -46,7 +46,6 @@ export const useTimeSlot = () => {
         }
         
         if (isAnyTimeInRangeBooked) {
-          console.log('Resetting selection because a time in range is now booked');
           resetSelection();
         }
       }

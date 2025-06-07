@@ -9,20 +9,8 @@ import { Label } from '@/components/ui/label';
 import { FieldType } from '@/types';
 import { fieldApi } from '@/api/field.api';
 import { useAuth } from '@/context/auth/auth.context';
-import { toast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
-
-// Tipe untuk error
-interface ApiError {
-  response?: {
-    status?: number;
-    data?: {
-      message?: string;
-      errors?: string[];
-    };
-  };
-  message?: string;
-}
+import useToastHandler from '@/hooks/useToastHandler';
 
 export default function EditFieldTypePage() {
   const params = useParams();
@@ -35,6 +23,7 @@ export default function EditFieldTypePage() {
   const [formData, setFormData] = useState({
     name: '',
   });
+  const { showError, showSuccess } = useToastHandler();
 
   useEffect(() => {
     const fetchFieldType = async () => {
@@ -46,30 +35,11 @@ export default function EditFieldTypePage() {
         });
       } catch (err) {
         console.error('Failed to fetch field type:', err);
-        const error = err as ApiError;
         
-        if (error.response?.status === 403) {
-          toast({
-            title: 'Access Denied',
-            description: 'You do not have permission to view this field type',
-            variant: 'destructive',
-          });
-          router.push('/dashboard');
-        } else if (error.response?.status === 404) {
-          toast({
-            title: 'Field Type Not Found',
-            description: 'The field type you requested was not found',
-            variant: 'destructive',
-          });
-          router.push('/dashboard/fieldtypes');
-        } else {
-          toast({
-            title: 'Error',
-            description: 'Failed to load field type data',
-            variant: 'destructive',
-          });
-          router.push('/dashboard/fieldtypes');
-        }
+        showError(err, 'Gagal memuat data jenis lapangan');
+        
+        // Redirect ke halaman field types jika terjadi error
+        router.push('/dashboard/fieldtypes');
       } finally {
         setLoading(false);
       }
@@ -78,7 +48,7 @@ export default function EditFieldTypePage() {
     if (authUser) {
       fetchFieldType();
     }
-  }, [fieldTypeId, router, authUser]);
+  }, [fieldTypeId, router, authUser, showError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,25 +60,13 @@ export default function EditFieldTypePage() {
       
       await fieldApi.updateFieldType(fieldTypeId, formData);
       
-      toast({
-        title: 'Success',
-        description: 'Field type updated successfully',
-      });
+      showSuccess('Jenis lapangan berhasil diperbarui');
       
       router.push(`/dashboard/fieldtypes/${fieldTypeId}`);
     } catch (error) {
       console.error('Failed to update field type:', error);
-      const apiError = error as ApiError;
       
-      const errorMessage = apiError.response?.data?.message || 
-        apiError.response?.data?.errors?.join('\n') || 
-        'Failed to update field type. Please try again.';
-      
-      toast({
-        title: 'Update Failed',
-        description: errorMessage,
-        variant: 'destructive',
-      });
+      showError(error, 'Gagal memperbarui jenis lapangan');
     } finally {
       setUpdating(false);
     }

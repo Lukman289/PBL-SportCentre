@@ -17,18 +17,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fieldApi } from '@/api/field.api';
-import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
-
-// Tipe untuk error
-interface ApiError {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-  message?: string;
-}
+import useToastHandler from '@/hooks/useToastHandler';
 
 // Form schema
 const formSchema = z.object({
@@ -37,7 +27,7 @@ const formSchema = z.object({
 
 export default function CreateFieldTypePage() {
   const router = useRouter();
-  const { toast } = useToast();
+  const { showSuccess, showError } = useToastHandler();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -52,20 +42,11 @@ export default function CreateFieldTypePage() {
       setIsSubmitting(true);
       await fieldApi.createFieldType(values);
       
-      toast({
-        title: 'Berhasil',
-        description: 'Tipe field berhasil dibuat',
-      });
+      showSuccess('Tipe field berhasil dibuat');
       
       router.push('/dashboard/fieldtypes');
     } catch (error) {
-      console.error('Error creating field type:', error);
-      const apiError = error as ApiError;
-      toast({
-        title: 'Gagal',
-        description: apiError?.response?.data?.message || 'Gagal membuat tipe field',
-        variant: 'destructive',
-      });
+      showError(error, 'Gagal membuat tipe field');
     } finally {
       setIsSubmitting(false);
     }

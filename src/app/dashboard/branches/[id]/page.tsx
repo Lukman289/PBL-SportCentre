@@ -39,6 +39,8 @@ import { branchApi } from '@/api/branch.api';
 import { fieldApi } from '@/api/field.api';
 import { Branch, Field, Role, FieldType, FieldStatus } from '@/types';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
+import useToastHandler from '@/hooks/useToastHandler';
+import { toast } from "sonner";
 import Image from 'next/image';
 
 // Interface untuk admin
@@ -70,7 +72,7 @@ interface PaginationProps {
   totalItems: number;
   itemsPerPage: number;
 }
-
+const { showError } = useToastHandler();    
 const Pagination = ({ currentPage, totalPages, onPageChange, totalItems, itemsPerPage }: PaginationProps) => {
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
@@ -204,7 +206,7 @@ export default function BranchDetailPage() {
       setFieldsTotalPages(Math.ceil(allFields.length / fieldsPerPage));
       setFieldsCurrentPage(page);
     } catch (err) {
-      console.error('Error fetching fields:', err);
+      showError(err, 'Gagal memuat data lapangan');
       setFields([]);
       setFieldsTotal(0);
       setFieldsTotalPages(1);
@@ -232,7 +234,7 @@ export default function BranchDetailPage() {
       setAdminsTotalPages(Math.ceil(allAdmins.length / adminsPerPage));
       setAdminsCurrentPage(page);
     } catch (err) {
-      console.error('Error fetching admins:', err);
+      showError(err, 'Gagal memuat data admin');
       setAdmins([]);
       setAdminsTotal(0);
       setAdminsTotalPages(1);
@@ -260,8 +262,7 @@ export default function BranchDetailPage() {
           fetchAdmins(1)
         ]);
       } catch (err) {
-        console.error('Error fetching branch details:', err);
-        setError('Gagal memuat data cabang. Silakan coba lagi.');
+        showError(err, 'Gagal memuat data cabang. Silakan coba lagi.');
       } finally {
         setIsLoading(false);
       }
@@ -348,9 +349,9 @@ export default function BranchDetailPage() {
       // Refresh fields data dengan pagination
       await fetchFields(fieldsCurrentPage);
 
+      toast.success('Lapangan berhasil ditambahkan');
     } catch (error) {
-      console.error('Error creating field:', error);
-      setFieldFormError('Gagal membuat lapangan. Silakan coba lagi.');
+      showError(error, 'Gagal membuat lapangan. Silakan coba lagi.');
     } finally {
       hideLoading();
       setIsSubmittingField(false);
@@ -380,8 +381,7 @@ export default function BranchDetailPage() {
           router.push('/dashboard/my-branches');
         }
       } catch (err) {
-        console.error('Error deleting branch:', err);
-        setError('Gagal menghapus cabang. Silakan coba lagi.');
+        showError(err, 'Gagal menghapus cabang. Silakan coba lagi.');
       }
     }
   };
@@ -398,7 +398,7 @@ export default function BranchDetailPage() {
   };
 
   const handleAddAdmin = () => {
-    // router.push(/dashboard/branches/${branchId}/add-admin);
+    router.push(`/dashboard/branches/${branchId}/add-admin`);
   };
 
   if (isLoading) {
@@ -472,9 +472,11 @@ export default function BranchDetailPage() {
           {branch.imageUrl && (
             <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground mb-2">Gambar:</p>
-              <img
+              <Image
                 src={branch.imageUrl}
                 alt={branch.name}
+                width={300}
+                height={200}
                 className="w-full max-w-md h-auto rounded-md"
               />
             </div>

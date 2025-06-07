@@ -8,6 +8,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import useToastHandler from '@/hooks/useToastHandler';
 import {
     Select,
     SelectContent,
@@ -58,6 +59,8 @@ export default function FieldDetailPage({ params }: { params: Promise<{ id: stri
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [shouldRemoveImage, setShouldRemoveImage] = useState(false);
     const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+    const { showError } = useToastHandler();
+
 
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -88,7 +91,7 @@ export default function FieldDetailPage({ params }: { params: Promise<{ id: stri
     useEffect(() => {
         const fetchData = async () => {
             if (isNaN(fieldId)) {
-                setError('ID lapangan tidak valid');
+                showError('ID lapangan tidak valid');
                 setIsLoading(false);
                 return;
             }
@@ -121,8 +124,7 @@ export default function FieldDetailPage({ params }: { params: Promise<{ id: stri
                 const fieldTypesData = await fieldApi.getFieldTypes();
                 setFieldTypes(fieldTypesData || []);
             } catch (err) {
-                console.error('Error fetching data:', err);
-                setError('Gagal memuat data. Silakan coba lagi.');
+                showError(err, 'Gagal memuat data. Silakan coba lagi.');
             } finally {
                 setIsLoading(false);
             }

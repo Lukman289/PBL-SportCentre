@@ -17,15 +17,9 @@ import { useRouter } from "next/navigation";
 import { ResetPasswordRequest } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
-import { setResetPasswordToken, getResetPasswordToken } from "@/utils/cookie.utils";
+import { getResetPasswordToken } from "@/utils/cookie.utils";
 
-interface ResetPasswordProps {
-  params: {
-    token: string;
-  }
-}
-
-export default function ResetPasswordTokenPage({ params }: ResetPasswordProps) {
+export default function ResetPasswordTokenPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -35,39 +29,20 @@ export default function ResetPasswordTokenPage({ params }: ResetPasswordProps) {
   const [isTokenValid, setIsTokenValid] = useState(false);
 
   useEffect(() => {
-    // Mendapatkan token dari URL path parameter dan simpan ke cookie
-    if (params.token) {
-      try {
-        // Decode token dari URL
-        const decodedToken = decodeURIComponent(params.token);
-        // Simpan token ke cookie
-        setResetPasswordToken(decodedToken);
-        setIsTokenValid(true);
-      } catch (error) {
-        console.error("Error decoding token:", error);
-        toast({
-          variant: "destructive",
-          title: "Token Tidak Valid",
-          description: "Link reset password tidak valid. Silakan minta link baru.",
-        });
-        setIsTokenValid(false);
-      }
+    // Cek apakah ada token reset password di cookie
+    const tokenFromCookie = getResetPasswordToken();
+    
+    if (!tokenFromCookie) {
+      toast({
+        variant: "destructive",
+        title: "Token Tidak Ditemukan",
+        description: "Link reset password tidak valid. Silakan minta link baru.",
+      });
+      setIsTokenValid(false);
     } else {
-      // Jika tidak ada token di parameter URL, cek apakah ada di cookie
-      const tokenFromCookie = getResetPasswordToken();
-      
-      if (!tokenFromCookie) {
-        toast({
-          variant: "destructive",
-          title: "Token Tidak Ditemukan",
-          description: "Link reset password tidak valid. Silakan minta link baru.",
-        });
-        setIsTokenValid(false);
-      } else {
-        setIsTokenValid(true);
-      }
+      setIsTokenValid(true);
     }
-  }, [params, toast]);
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,7 +71,7 @@ export default function ResetPasswordTokenPage({ params }: ResetPasswordProps) {
       // Token akan diambil dari cookie di dalam API
       const data: ResetPasswordRequest = {
         password,
-        confirmPassword,
+        confirmPassword
       };
       
       await authApi.resetPassword(data);

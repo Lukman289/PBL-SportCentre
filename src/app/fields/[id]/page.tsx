@@ -11,10 +11,12 @@ import FieldReviewsClient from '@/components/field/FieldReview';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
+import useToastHandler from '@/hooks/useToastHandler';
 
 export default function FieldDetailPage() {
   const params = useParams();
   const fieldIdParam = params?.id as string;
+  const { showError } = useToastHandler();
   const [field, setField] = useState<Field | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,9 +44,8 @@ export default function FieldDetailPage() {
             throw new Error('Data lapangan tidak ditemukan.');
           }
         } catch (error) {
-          console.error("Error fetching field:", error);
           setField(null);
-          setError("Gagal memuat data lapangan. Silakan coba lagi nanti.");
+          showError("Gagal memuat data lapangan. Silakan coba lagi nanti.");
         } finally {
           setLoading(false);
         }

@@ -8,18 +8,7 @@ import { User, Role } from '@/types';
 import { useAuth } from '@/context/auth/auth.context';
 import { userApi } from '@/api/user.api';
 import axiosInstance from '@/config/axios.config';
-import { toast } from '@/components/ui/use-toast';
-
-// Tipe untuk error
-interface ApiError {
-  response?: {
-    status?: number;
-    data?: {
-      message?: string;
-    };
-  };
-  message?: string;
-}
+import useToastHandler from '@/hooks/useToastHandler';
 
 export default function UserDetailPage() {
   const params = useParams();
@@ -29,6 +18,7 @@ export default function UserDetailPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const { showError, showSuccess } = useToastHandler();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -36,29 +26,18 @@ export default function UserDetailPage() {
         const userData = await userApi.getUserById(userId);
         setUser(userData);
       } catch (err) {
-        console.error('Failed to fetch user:', err);
-        const error = err as ApiError;
+        showError("Gagal mengambil data pengguna");
         
-        if (error.response?.status === 403) {
-          toast({
-            title: 'Akses Ditolak',
-            description: 'Anda tidak memiliki izin untuk melihat pengguna ini',
-            variant: 'destructive',
-          });
+        // Type assertion untuk error Axios
+        const axiosError = err as { response?: { status?: number } };
+        
+        if (axiosError.response?.status === 403) {
           router.push('/dashboard');
-        } else if (error.response?.status === 404) {
-          toast({
-            title: 'Pengguna Tidak Ditemukan',
-            description: 'Pengguna yang Anda cari tidak ditemukan',
-            variant: 'destructive',
-          });
+        } else if (axiosError.response?.status === 404) {
+          showError("Pengguna tidak ditemukan");
           router.push('/dashboard/users');
         } else {
-          toast({
-            title: 'Terjadi Kesalahan',
-            description: 'Gagal memuat data pengguna',
-            variant: 'destructive',
-          });
+          showError("Gagal memuat data pengguna");
           router.push('/dashboard/users');
         }
       } finally {
@@ -82,25 +61,11 @@ export default function UserDetailPage() {
       setDeleting(true);
       try {
         await axiosInstance.delete(`/users/${userId}`);
-        
-        toast({
-          title: 'Berhasil',
-          description: `Pengguna ${user.name} berhasil dihapus`,
-        });
+        showSuccess(`Pengguna ${user.name} berhasil dihapus`);
         
         router.push('/dashboard/users');
       } catch (error) {
-        console.error('Failed to delete user:', error);
-        const apiError = error as ApiError;
-        
-        const errorMessage = apiError.response?.data?.message || 
-          'Gagal menghapus pengguna. Silakan coba lagi.';
-        
-        toast({
-          title: 'Gagal Menghapus',
-          description: errorMessage,
-          variant: 'destructive',
-        });
+        showError(error, "Gagal menghapus pengguna");
       } finally {
         setDeleting(false);
       }

@@ -16,12 +16,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ForgotPasswordRequest } from "@/types";
-import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import useToastHandler from "@/hooks/useToastHandler";
 
 export default function ForgotPasswordPage() {
-  const { toast } = useToast();
+  const { showError, showSuccess } = useToastHandler();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -31,11 +31,7 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Silakan masukkan email Anda",
-      });
+      showError("Silakan masukkan email Anda");
       return;
     }
 
@@ -46,10 +42,7 @@ export default function ForgotPasswordPage() {
       const data: ForgotPasswordRequest = { email };
       const response = await authApi.forgotPassword(data);
       setIsSuccess(true);
-      toast({
-        title: "Permintaan terkirim",
-        description: "Jika email terdaftar, instruksi reset password akan dikirim",
-      });
+      showSuccess("Jika email terdaftar, instruksi reset password akan dikirim", "Permintaan terkirim");
       
       // Cek jika server mengirim URL untuk mode development
       if (response.resetUrl) {
@@ -57,11 +50,7 @@ export default function ForgotPasswordPage() {
       }
     } catch (error) {
       console.error("Forgot password error:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Gagal mengirim permintaan reset password. Silakan coba lagi.",
-      });
+      showError(error, "Gagal mengirim permintaan reset password. Silakan coba lagi.");
     } finally {
       setIsLoading(false);
     }

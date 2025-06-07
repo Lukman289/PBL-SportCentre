@@ -6,9 +6,10 @@ import { useBooking } from "@/hooks/bookings/useBooking.hook";
 import TimeSlotSelector from "@/components/booking/TimeSlotSelector";
 import BookingHeader from "@/components/booking/BookingHeader";
 import BookingForm from "@/components/booking/BookingForm";
-import ErrorState from "@/components/booking/ErrorState";
+import useToastHandler from "@/hooks/useToastHandler";
 
 export default function BookingsPage() {
+  const { showError } = useToastHandler();
   // Menggunakan custom hook untuk memisahkan logika state dan efek
   const {
     loading,
@@ -23,7 +24,7 @@ export default function BookingsPage() {
   }
 
   if (error) {
-    return <ErrorState error={error} />;
+    showError(error, "Gagal memuat data booking");
   }
 
   // Main render

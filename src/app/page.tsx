@@ -34,11 +34,9 @@ export default function HomePage() {
         if (Array.isArray(branches)) {
           setFeaturedBranches(branches.slice(0, 4));
         } else {
-          console.error("branches is not an array:", branches);
           setFeaturedBranches([]);
         }
       } catch (error) {
-        console.error("Error fetching branches:", error);
         setFeaturedBranches([]);
       } finally {
         setIsLoading(false);
@@ -50,7 +48,7 @@ export default function HomePage() {
         const response = await fieldApi.getAllFields();
         setTotalFields(response.meta?.totalItems || 0);
       } catch (error) {
-        console.error("Error fetching total fields:", error);
+        setTotalFields(0);
       }
     }
     

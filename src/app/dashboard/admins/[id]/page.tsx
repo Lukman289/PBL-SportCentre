@@ -18,19 +18,32 @@ import { useAuth } from '@/context/auth/auth.context';
 import { branchApi } from '@/api/branch.api';
 import { Branch, BranchAdmin, Role, User } from '@/types';
 import { userApi } from '@/api';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import useToastHandler from '@/hooks/useToastHandler';
 
 
 export default function AdminDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { showError, showSuccess } = useToastHandler();
   const [branches, setBranches] = useState<Branch[]>([]);
   const [branchesAdmin, setBranchesAdmin] = useState<BranchAdmin[]>([]);
   const [admin, setAdmin] = useState<User>({} as User);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddFieldForm, setShowAddFieldForm] = useState(false);
-  const adminId = parseInt(params.id as string);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [removingBranchId, setRemovingBranchId] = useState<number | null>(null);
+  const [removingUserId, setRemovingUserId] = useState<number | null>(null);
+  const adminId = params?.id ? parseInt(params.id as string) : 0;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -48,7 +61,9 @@ export default function AdminDetailPage() {
             setBranches(branchData.data);
         } catch (err) {
             console.error('Error fetching branch details:', err);
-            setError('Gagal memuat data cabang. Silakan coba lagi.');
+            const errorMsg = 'Gagal memuat data cabang. Silakan coba lagi.';
+            setError(errorMsg);
+            showError(err, errorMsg);
         } finally {
             setIsLoading(false);
         }
@@ -57,7 +72,7 @@ export default function AdminDetailPage() {
         fetchData();
         fetchBranchesAdmin();
     }
-  }, [adminId]);
+  }, [adminId, showError]);
 
   const fetchBranchesAdmin = async () => {
     setIsLoading(true);
@@ -67,20 +82,34 @@ export default function AdminDetailPage() {
         setBranchesAdmin(branchesData);
     } catch (err) {
         console.error('Error fetching branch details:', err);
-        setError('Gagal memuat data cabang. Silakan coba lagi.');
+        const errorMsg = 'Gagal memuat data cabang. Silakan coba lagi.';
+        setError(errorMsg);
+        showError(err, errorMsg);
     } finally {
         setIsLoading(false);
     }
   };
     
-  const handleRemoveAdmin = async (branchId: number, userId: number) => {
+  const confirmRemoveAdmin = (branchId: number, userId: number) => {
+    setRemovingBranchId(branchId);
+    setRemovingUserId(userId);
+    setShowConfirmDialog(true);
+  };
+  
+  const handleRemoveAdmin = async () => {
+    if (removingBranchId === null || removingUserId === null) return;
+    
     try {
-      if (!window.confirm('Apakah Anda yakin ingin menghapus admin ini?')) return;
-      await branchApi.removeBranchAdmin(branchId, userId);
+      await branchApi.removeBranchAdmin(removingBranchId, removingUserId);
+      setShowConfirmDialog(false);
+      showSuccess('Admin berhasil dihapus dari cabang');
       fetchBranchesAdmin();
     } catch (error) {
       console.error('Error removing admin:', error);
-      alert('Gagal menghapus admin. Silakan coba lagi.');
+      showError(error, 'Gagal menghapus admin. Silakan coba lagi.');
+    } finally {
+      setRemovingBranchId(null);
+      setRemovingUserId(null);
     }
   };
 
@@ -90,18 +119,18 @@ export default function AdminDetailPage() {
       e.preventDefault();
       const formData = new FormData(e.currentTarget);
       const branchId = formData.get('branchId');
-      if (!branchId) {
-        alert('Cabang tidak valid.');
+      if (!branchId || branchId === '0') {
+        showError('Silakan pilih cabang yang valid.');
         return;
       }
       await branchApi.addBranchAdmin(parseInt(branchId as string), adminId);
       setShowAddFieldForm(false);
+      showSuccess('Admin berhasil ditambahkan ke cabang');
       fetchBranchesAdmin();
     } catch (error) {
       console.error('Error changing branch:', error);
-      alert('Gagal mengubah cabang admin. Silakan coba lagi.');
+      showError(error, 'Gagal mengubah cabang admin. Silakan coba lagi.');
       setShowAddFieldForm(false);
-      return;
     }
   };
 
@@ -225,7 +254,7 @@ export default function AdminDetailPage() {
                                 variant="destructive"
                                 size="sm"
                                 className='text-white'
-                                onClick={() => handleRemoveAdmin(branch.branchId, admin.id)}
+                                onClick={() => confirmRemoveAdmin(branch.branchId, admin.id)}
                                 >
                                 Hapus
                             </Button>
@@ -239,6 +268,25 @@ export default function AdminDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={showConfirmDialog} onOpenChange={() => setShowConfirmDialog(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Konfirmasi Penghapusan</DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin menghapus admin ini dari cabang ini?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" onClick={() => setShowConfirmDialog(false)} variant="secondary">
+              Batal
+            </Button>
+            <Button type="button" onClick={handleRemoveAdmin} variant="destructive">
+              Hapus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth/auth.context';
 import { Button } from '@/components/ui/button';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
+import useToastHandler from '@/hooks/useToastHandler';
 
 export default function LogoutPage() {
   const { logout } = useAuth();
   const router = useRouter();
   const { showLoading, hideLoading } = useGlobalLoading();
+  const { showError } = useToastHandler();
 
   useEffect(() => {
     const performLogout = async () => {
@@ -18,7 +20,7 @@ export default function LogoutPage() {
         await logout();
         router.push('/auth/login');
       } catch (error) {
-        console.error('Gagal logout:', error);
+        showError(error, "Gagal logout");
         router.push('/auth/login');
       } finally {
         hideLoading();

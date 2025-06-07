@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import useAuth from '@/hooks/useAuth.hook';
 import { userApi } from '@/api/user.api';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
+import useToastHandler from '@/hooks/useToastHandler';
 
 const profileSchema = z.object({
   name: z.string().min(3, 'Nama minimal 3 karakter'),
@@ -31,6 +32,7 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+  const { showError, showSuccess } = useToastHandler();
 
   // Mengelola loading state
   useEffect(() => {
@@ -70,9 +72,11 @@ export default function ProfilePage() {
       });
       
       setSuccess(true);
+      showSuccess('Profil berhasil diperbarui!');
     } catch (error) {
       console.error('Error updating profile:', error);
       setError('Gagal memperbarui profil. Silakan coba lagi.');
+      showError(error, 'Gagal memperbarui profil. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
     }

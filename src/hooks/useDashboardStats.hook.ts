@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { dashboardApi } from '@/api/dashboard.api';
 import { Role } from '@/types';
 import { PeriodType } from '@/components/dashboard/filters/PeriodFilter';
+import useToastHandler from './useToastHandler';
 
 // Tipe data untuk statistik dashboard
 export interface SuperAdminStats {
@@ -105,6 +106,7 @@ export const useDashboardStats = (role: Role, period: PeriodType = 'monthly') =>
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { showError } = useToastHandler();
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -114,8 +116,7 @@ export const useDashboardStats = (role: Role, period: PeriodType = 'monthly') =>
         setStats(data);
         setError(null);
       } catch (err) {
-        console.error(`Error fetching ${role} dashboard:`, err);
-        setError('Gagal memuat data dashboard');
+        showError('Gagal memuat data dashboard');
       } finally {
         setIsLoading(false);
       }

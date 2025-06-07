@@ -3,19 +3,18 @@
 import { useAdminBooking } from "@/hooks/bookings/useAdminBooking.hook";
 import { useAuth } from "@/context/auth/auth.context";
 import { useEffect, useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
 import useGlobalLoading from "@/hooks/useGlobalLoading.hook";
 
 // Komponen-komponen terpisah untuk halaman booking
 import TimeSlotSelector from "@/components/booking/TimeSlotSelector";
 import BookingHeader from "@/components/booking/BookingHeader";
 import BookingForm from "@/components/booking/BookingForm";
-import ErrorState from "@/components/booking/ErrorState";
+import useToastHandler from "@/hooks/useToastHandler";
 import { Branch, Role } from "@/types";
 
 export default function AdminBookingCreatePage() {
   const { user } = useAuth();
-  const { toast } = useToast();
+  const { showError, showSuccess } = useToastHandler();
   const [assignedBranches, setAssignedBranches] = useState<Branch[]>([]);
   const [selectedBranchId, setSelectedBranchId] = useState<number | undefined>(undefined);
   const { showLoading, hideLoading } = useGlobalLoading();
@@ -63,12 +62,7 @@ export default function AdminBookingCreatePage() {
 
   // Handler untuk ketika booking berhasil dibuat
   const handleBookingSuccess = () => {
-    toast({
-      title: "Booking Berhasil",
-      description: `Booking manual telah berhasil dibuat dan dicatat sebagai ${user?.role === Role.ADMIN_CABANG ? "PAID" : "UNPAID"} dengan metode CASH.`,
-      variant: "default",
-      duration: 5000,
-    });
+    showSuccess(`Booking manual telah berhasil dibuat dan dicatat sebagai ${user?.role === Role.ADMIN_CABANG ? "PAID" : "UNPAID"} dengan metode CASH.`);
   };
 
   // Render states
@@ -77,7 +71,7 @@ export default function AdminBookingCreatePage() {
   }
 
   if (error) {
-    return <ErrorState error={error} />;
+    showError(error, 'Gagal memuat data cabang');
   }
 
   // Main render

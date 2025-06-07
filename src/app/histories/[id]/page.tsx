@@ -20,13 +20,14 @@ import { BookingWithPayment, Field, PaymentStatus } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { use } from 'react';
+import useToastHandler from '@/hooks/useToastHandler';
 
 export default function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { toast } = useToast();
   const { id } = use(params);
   const bookingId = Number(id);
-
+  const { showError } = useToastHandler();
   const [booking, setBooking] = useState<BookingWithPayment | null>(null);
   const [field, setField] = useState<Field | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,8 +50,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         }
 
       } catch (error) {
-        console.error('Error fetching booking details:', error);
-        setError('Gagal memuat detail booking. Silakan coba lagi nanti.');
+        showError('Gagal memuat detail booking. Silakan coba lagi nanti.');
       } finally {
         setLoading(false);
       }
@@ -108,12 +108,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
       // Redirect to bookings list
       router.push('/histories');
     } catch (error) {
-      console.error('Error cancelling booking:', error);
-      toast({
-        title: 'Error',
-        description: 'Gagal membatalkan booking. Silakan coba lagi.',
-        variant: 'destructive',
-      });
+      showError(error, 'Gagal membatalkan booking. Silakan coba lagi.');
     } finally {
       setProcessingCancel(false);
     }

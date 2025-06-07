@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useToast } from "@/components/ui/use-toast";
 import { Booking, Branch, Role, User, BranchAdmin, BookingMeta } from "@/types";
 import { bookingApi } from "@/api/booking.api";
 import { branchApi } from "@/api/branch.api";
 import { BookingFilters } from './useBookingFilters.hook';
-
+import useToastHandler from '../useToastHandler';
 interface UseBookingDataProps {
   user: User | null;
   filters: BookingFilters;
 }
 
 export function useBookingData({ user, filters }: UseBookingDataProps, limit: number = 10, page: number = 1, ) {
-  const { toast } = useToast();
+  const { showError } = useToastHandler();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [meta, setMeta] = useState<BookingMeta | null>(null);
@@ -31,7 +30,7 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
           setBranches(branchesData);
         }
       } catch (error) {
-        console.error("Error loading branches:", error);
+        showError("Gagal memuat data cabang");
       }
     };
 
@@ -85,12 +84,7 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
           setBookings(data);
         }
       } catch (error) {
-        console.error("Error loading bookings:", error);
-        toast({
-          title: "Gagal memuat data booking",
-          description: "Terjadi kesalahan saat memuat data booking",
-          variant: "destructive",
-        });
+        showError("Gagal memuat data booking");
       } finally {
         setLoading(false);
       }
@@ -99,7 +93,7 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
     if (user) {
       loadBookings();
     }
-  }, [user, filters, toast, page]);
+  }, [user, filters, page]);
 
   const loadAdminCabangBookings = async (page: number, limit: number) => {
     if (!user?.branches?.length) {
@@ -150,12 +144,7 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
           handleNoBranchError();
         }
       } catch (error) {
-        console.error("Error fetching branch data:", error);
-        toast({
-          title: "Terjadi kesalahan",
-          description: "Gagal mendapatkan data cabang",
-          variant: "destructive",
-        });
+        showError("Gagal mendapatkan data cabang");
       }
       return;
     }
@@ -205,12 +194,7 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
 
   // Helper untuk menampilkan error jika tidak ada cabang
   const handleNoBranchError = () => {
-    console.error("Admin cabang tidak memiliki branches:", user);
-    toast({
-      title: "Terjadi kesalahan",
-      description: "Admin cabang tidak terhubung dengan cabang manapun",
-      variant: "destructive",
-    });
+    showError("Admin cabang tidak memiliki branches");
   };
 
   // Fungsi untuk menerapkan filter ke data booking
@@ -223,15 +207,12 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
       filteredData = filteredData.filter(booking => {
         const bookingBranchId = booking.field?.branch?.id || booking.field?.branchId;
         const match = bookingBranchId === filters.branchId;
-        console.log(`Booking ${booking.id} branch:`, booking.field?.branch);
-        console.log(`Booking ${booking.id} branchId: ${bookingBranchId}, filter: ${filters.branchId}, match: ${match}`);
         return match;
       });
     }
     
     // Status filter
     if (filters.status) {
-      console.log("Applying status filter:", filters.status);
       filteredData = filteredData.filter(booking => 
         booking.payment?.status === filters.status
       );
@@ -240,7 +221,6 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
     // Date filters
     if (filters.startDate) {
       const startDate = new Date(filters.startDate);
-      console.log("Applying start date filter:", startDate);
       filteredData = filteredData.filter(booking => {
         const bookingDate = new Date(booking.bookingDate);
         return bookingDate >= startDate;
@@ -250,7 +230,6 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
     if (filters.endDate) {
       const endDate = new Date(filters.endDate);
       endDate.setDate(endDate.getDate() + 1); // Include end date
-      console.log("Applying end date filter:", endDate);
       filteredData = filteredData.filter(booking => {
         const bookingDate = new Date(booking.bookingDate);
         return bookingDate < endDate;
@@ -260,7 +239,6 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
     // Search filter
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
-      console.log("Applying search filter:", searchLower);
       filteredData = filteredData.filter(booking => 
         (booking.user?.name?.toLowerCase().includes(searchLower)) || 
         (booking.field?.name?.toLowerCase().includes(searchLower)) ||
@@ -268,7 +246,6 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
       );
     }
     
-    console.log("Filter applied, remaining bookings:", filteredData.length);
     return filteredData;
   };
 

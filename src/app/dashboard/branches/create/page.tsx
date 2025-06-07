@@ -29,6 +29,7 @@ import { branchApi } from '@/api/branch.api';
 import { BranchStatus, Role } from '@/types';
 import { Loader2, X } from 'lucide-react';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
+import useToastHandler from '@/hooks/useToastHandler';
 
 // Validasi form menggunakan Zod - disesuaikan dengan database schema
 const createBranchSchema = z.object({
@@ -50,6 +51,7 @@ export default function CreateBranchPage() {
   const [loadingOwners, setLoadingOwners] = useState(true);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const { showLoading, hideLoading, withLoading } = useGlobalLoading();
+  const { showError, showSuccess } = useToastHandler();
 
   const form = useForm<CreateBranchFormValues>({
     resolver: zodResolver(createBranchSchema),
@@ -87,6 +89,7 @@ export default function CreateBranchPage() {
       } catch (err) {
         console.error('Error loading owners:', err);
         setError('Gagal memuat daftar owner. Silakan refresh halaman.');
+        showError(err, 'Gagal memuat daftar owner');
       } finally {
         setLoadingOwners(false);
         hideLoading();
@@ -94,7 +97,7 @@ export default function CreateBranchPage() {
     };
 
     loadOwners();
-  }, [user, form, showLoading, hideLoading]);
+  }, [user, form, showLoading, hideLoading, showError]);
 
   // Redirect jika bukan super admin atau owner cabang
   if (user && user.role !== Role.SUPER_ADMIN && user.role !== Role.OWNER_CABANG) {
@@ -134,16 +137,18 @@ export default function CreateBranchPage() {
       // Siapkan data untuk dikirim ke API - sesuaikan dengan database schema
       const submitData = {
         name: data.name,
-        location: data.location, // Konsisten menggunakan 'location'
-        status: data.status, // Tambahkan status
+        location: data.location,
+        status: data.status,
         ownerId: data.ownerId,
-        imageUrl: data.imageUrl, // File untuk upload
+        imageUrl: data.imageUrl,
       };
 
       console.log('Submitting data:', submitData);
 
       // Gunakan withLoading dengan membungkus promise
       await withLoading(branchApi.createBranch(submitData));
+      
+      showSuccess('Cabang berhasil dibuat');
 
       // Redirect berdasarkan role user
       const redirectPath = user?.role === Role.SUPER_ADMIN
@@ -151,15 +156,10 @@ export default function CreateBranchPage() {
         : '/dashboard/my-branches';
 
       router.push(redirectPath);
-    } catch (err: unknown) {
+    } catch (err) {
       console.error('Error creating branch:', err);
-
-      // Perbaiki cara penanganan error
-      if (err && typeof err === 'object' && 'message' in err) {
-        setError((err as Error).message || 'Gagal membuat cabang. Silakan coba lagi.');
-      } else {
-        setError('Gagal membuat cabang. Silakan coba lagi.');
-      }
+      showError(err, 'Gagal membuat cabang');
+      setError('Gagal membuat cabang. Silakan coba lagi.');
     } finally {
       setIsSubmitting(false);
     }

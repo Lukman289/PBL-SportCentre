@@ -20,11 +20,13 @@ import { useAuth } from '@/context/auth/auth.context';
 import { Role } from '@/types';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import { Search, X } from 'lucide-react';
+import useToastHandler from '@/hooks/useToastHandler';
 
 export default function MyBranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const { showError } = useToastHandler();
   const router = useRouter();
   const { user } = useAuth();
   const { showLoading, hideLoading, withLoading } = useGlobalLoading();
@@ -61,7 +63,7 @@ export default function MyBranchesPage() {
         setBranches([]);
       }
     } catch (error) {
-      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      showError(error, 'Gagal memuat data cabang. Silakan coba lagi nanti.');
     } finally {
       setIsLoading(false);
     }

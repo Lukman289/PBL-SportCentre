@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Field, Branch } from '@/types';
 import { fieldApi } from '@/api';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/use-toast';
 import Link from 'next/link'; 
+import useToastHandler from '@/hooks/useToastHandler';
 import {
   Select,
   SelectContent,
@@ -37,12 +37,12 @@ export default function FieldPage() {
   const [selectedBranchId, setSelectedBranchId] = useState<number>(0);
   const [selectedBranchName, setSelectedBranchName] = useState<string>("Pilih cabang");
   const [searchQuery, setSearchQuery] = useState('');
-  const { toast } = useToast();
   const router = useRouter();
   const { showLoading, hideLoading, withLoading } = useGlobalLoading();
   const [currentPage, setCurrentPage] = useState(1);
-    const [totalItems, setTotalItems] = useState(0);
-    const maxData = 10;
+  const [totalItems, setTotalItems] = useState(0);
+  const maxData = 10;
+  const { showError } = useToastHandler();
 
   useEffect(() => {
     if (loading) {
@@ -70,28 +70,19 @@ export default function FieldPage() {
         } else {
           console.error("branches is not an array:", branchesData);
           setBranches([]);
-          toast({
-            title: "Error Format Data",
-            description: "Data cabang tidak dalam format yang diharapkan",
-            variant: "destructive"
-          });
+          showError("Data cabang tidak dalam format yang diharapkan", "Error Format Data");
         }
       } catch (error) {
         console.error("Error fetching branches:", error);
         setBranches([]);
-        setError("Gagal memuat cabang. Silakan coba lagi nanti.");
-        toast({
-          title: "Error",
-          description: "Gagal memuat data cabang",
-          variant: "destructive"
-        });
+        showError("Gagal memuat cabang. Silakan coba lagi nanti.", "Error Fetching Cabang");
       } finally {
         setLoading(false);
       }
     };
 
     fetchBranches();
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     fetchFields(selectedBranchId, maxData, currentPage, searchQuery);
@@ -147,11 +138,7 @@ export default function FieldPage() {
     const id = parseInt(branchId, 10);
 
     if (isNaN(id)) {
-      toast({
-        title: "Error",
-        description: "ID cabang tidak valid",
-        variant: "destructive"
-      });
+      showError("ID cabang tidak valid", "Error ID Cabang");
       return;
     }
 

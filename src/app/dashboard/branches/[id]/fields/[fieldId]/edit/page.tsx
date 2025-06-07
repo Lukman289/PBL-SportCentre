@@ -30,6 +30,7 @@ import { Field, FieldType, Branch } from '@/types';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import Image from 'next/image';
 import React from 'react';
+import useToastHandler from '@/hooks/useToastHandler';  
 
 const updateFieldSchema = z.object({
     name: z.string().min(3, 'Nama lapangan minimal 3 karakter'),
@@ -45,7 +46,7 @@ type UpdateFieldFormValues = z.infer<typeof updateFieldSchema>;
 export default function FieldEditPage() {
     const router = useRouter();
     const params = useParams<{ id: string; fieldId: string }>(); // Updated to match URL structure
-    
+    const { showError } = useToastHandler();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [field, setField] = useState<Field | null>(null);
@@ -90,7 +91,7 @@ export default function FieldEditPage() {
     useEffect(() => {
         const fetchData = async () => {
             if (isNaN(fieldId) || isNaN(branchId)) {
-                setError('ID lapangan atau cabang tidak valid');
+                showError('ID lapangan atau cabang tidak valid', 'Error ID Lapangan atau Cabang');
                 setIsLoading(false);
                 return;
             }
@@ -142,8 +143,7 @@ export default function FieldEditPage() {
                 setFieldTypes(fieldTypesData || []);
                 
             } catch (err) {
-                console.error('Error fetching data:', err);
-                setError('Gagal memuat data. Silakan coba lagi.');
+                showError(err, 'Gagal memuat data. Silakan coba lagi.');
             } finally {
                 setIsLoading(false);
             }
@@ -219,8 +219,7 @@ export default function FieldEditPage() {
             router.push(`/dashboard/branches/${branchId}`);
             
         } catch (err) {
-            console.error('Error updating field:', err);
-            setError('Gagal memperbarui lapangan. Silakan coba lagi.');
+            showError(err, 'Gagal memperbarui lapangan. Silakan coba lagi.');
         } finally {
             setIsSubmitting(false);
         }

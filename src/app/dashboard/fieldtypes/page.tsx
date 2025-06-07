@@ -18,6 +18,7 @@ import { fieldApi } from '@/api/field.api';
 import { useAuth } from '@/context/auth/auth.context';
 import { Role } from '@/types';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, PlusCircle, RefreshCw, ArrowUpDown } from 'lucide-react';
+import useToastHandler from '@/hooks/useToastHandler';
 
 type SortConfig = {
     key: 'id' | 'name';
@@ -38,6 +39,7 @@ export default function FieldTypesPage() {
     const itemsPerPage = 10;
     const router = useRouter();
     const { user } = useAuth();
+    const { showError } = useToastHandler();
 
     const fetchFieldTypes = useCallback(async () => {
         try {
@@ -50,11 +52,13 @@ export default function FieldTypesPage() {
             setCurrentPage(1);
         } catch (error) {
             console.error('Error fetching field types:', error);
-            setError('Gagal memuat daftar tipe field. Silakan coba lagi.');
+            const errorMsg = 'Gagal memuat daftar tipe field. Silakan coba lagi.';
+            setError(errorMsg);
+            showError(error, errorMsg);
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [showError]);
 
     useEffect(() => {
         const timer = setTimeout(() => {

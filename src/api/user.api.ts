@@ -28,6 +28,14 @@ class UserApi {
   }
 
   /**
+   * Mendapatkan daftar user berdasarkan role
+   */
+  async getUsersByRole(role: string): Promise<{ data: User[] }> {
+    const response = await axiosInstance.get<{ data: User[] }>(`/users/by-role/${role}`);
+    return response.data;
+  }
+
+  /**
    * Mendapatkan daftar cabang untuk admin cabang
    */
   async getBranchesForAdmin(userId: number): Promise<BranchAdmin[]> {

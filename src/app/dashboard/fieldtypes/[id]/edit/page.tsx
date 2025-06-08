@@ -34,7 +34,6 @@ export default function EditFieldTypePage() {
           name: fieldTypeData.name,
         });
       } catch (err) {
-        console.error('Failed to fetch field type:', err);
         
         showError(err, 'Gagal memuat data jenis lapangan');
         
@@ -64,7 +63,6 @@ export default function EditFieldTypePage() {
       
       router.push(`/dashboard/fieldtypes/${fieldTypeId}`);
     } catch (error) {
-      console.error('Failed to update field type:', error);
       
       showError(error, 'Gagal memperbarui jenis lapangan');
     } finally {

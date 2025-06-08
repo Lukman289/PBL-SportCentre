@@ -37,7 +37,6 @@ export function useBookingFilters(defaultBranchId?: number) {
         return prev;
       }
       
-      console.log("Updating filters:", { ...prev, ...newFilters });
       return { ...prev, ...newFilters };
     });
   }, []);

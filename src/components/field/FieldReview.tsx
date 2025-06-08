@@ -8,20 +8,20 @@ import { fieldApi } from '@/api/field.api';
 import { Card, CardContent } from '@/components/ui/card';
 import { id } from 'date-fns/locale';
 import AddFieldReview from './AddFieldReview';
+import useToastHandler from '@/hooks/useToastHandler';
 
 export default function FieldReviewsClient({ fieldId }: { fieldId: number }) {
   const [reviews, setReviews] = useState<FieldReview[]>([]);
   const [loading, setLoading] = useState(true);
+  const { showError } = useToastHandler();
 
   const fetchReviews = async () => {
     setLoading(true);
     try {
       const response = await fieldApi.getFieldReviews(fieldId);
-      console.log("reviews response data: ", response)
-      console.log("reviews response: ", response.data)
       setReviews(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
-      console.error('Error fetching field reviews:', error);
+      showError(error, "Gagal mengambil data ulasan");
       setReviews([]);
     } finally {
       setLoading(false);

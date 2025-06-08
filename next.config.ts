@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 import TerserPlugin from "terser-webpack-plugin";
 
 const nextConfig: NextConfig = {
+  compiler: {
+    removeConsole: true,
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },

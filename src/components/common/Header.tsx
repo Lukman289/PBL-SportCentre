@@ -29,11 +29,13 @@ import {
   Clock,
   LayoutDashboard,
 } from "lucide-react";
+import useToastHandler from "@/hooks/useToastHandler";
 
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth();
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
+  const { showError } = useToastHandler();
 
   // Deteksi scroll untuk efek shadow pada navbar
   useEffect(() => {
@@ -53,7 +55,7 @@ export function Header() {
     try {
       await logout();
     } catch (error) {
-      console.error("Error logging out:", error);
+      showError(error, "Gagal logout");
     }
   };
 

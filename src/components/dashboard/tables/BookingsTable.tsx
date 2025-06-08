@@ -35,7 +35,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import { Role } from "@/types";
 import { getDetailLink, getPaymentStatusBadge } from "./BookingTableUtils";
 import { formatTimeRange } from "@/utils/timezone.utils";
-
+import useToastHandler from "@/hooks/useToastHandler";
 interface BookingsTableProps {
   bookings: Booking[];
   userRole?: string;
@@ -45,6 +45,7 @@ export default function BookingsTable({ bookings, userRole }: BookingsTableProps
   const [openAlertId, setOpenAlertId] = useState<number | null>(null);
   const [alertAction, setAlertAction] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const { showError } = useToastHandler();
 
   const handleConfirmAction = async () => {
     if (!openAlertId) return;
@@ -75,18 +76,7 @@ export default function BookingsTable({ bookings, userRole }: BookingsTableProps
       // Refresh halaman setelah aksi berhasil
       window.location.reload();
     } catch (error) {
-      console.error("Error:", error);
-      toast({
-        title: "Gagal",
-        description: `Terjadi kesalahan saat ${
-          alertAction === "cancel" ? "membatalkan" : 
-          alertAction === "approve" ? "menyetujui" : 
-          alertAction === "reject" ? "menolak" : 
-          alertAction === "complete" ? "menyelesaikan" : 
-          "memperbarui"
-        } booking`,
-        variant: "destructive",
-      });
+     showError(error, "Gagal memproses aksi booking");
     } finally {
       setIsLoading(false);
       setOpenAlertId(null);

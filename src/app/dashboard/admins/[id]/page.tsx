@@ -60,7 +60,6 @@ export default function AdminDetailPage() {
             const branchData = await branchApi.getUserBranches();
             setBranches(branchData.data);
         } catch (err) {
-            console.error('Error fetching branch details:', err);
             const errorMsg = 'Gagal memuat data cabang. Silakan coba lagi.';
             setError(errorMsg);
             showError(err, errorMsg);
@@ -81,7 +80,6 @@ export default function AdminDetailPage() {
         const branchesData = await userApi.getBranchesForAdmin(adminId);
         setBranchesAdmin(branchesData);
     } catch (err) {
-        console.error('Error fetching branch details:', err);
         const errorMsg = 'Gagal memuat data cabang. Silakan coba lagi.';
         setError(errorMsg);
         showError(err, errorMsg);
@@ -105,7 +103,6 @@ export default function AdminDetailPage() {
       showSuccess('Admin berhasil dihapus dari cabang');
       fetchBranchesAdmin();
     } catch (error) {
-      console.error('Error removing admin:', error);
       showError(error, 'Gagal menghapus admin. Silakan coba lagi.');
     } finally {
       setRemovingBranchId(null);
@@ -128,7 +125,6 @@ export default function AdminDetailPage() {
       showSuccess('Admin berhasil ditambahkan ke cabang');
       fetchBranchesAdmin();
     } catch (error) {
-      console.error('Error changing branch:', error);
       showError(error, 'Gagal mengubah cabang admin. Silakan coba lagi.');
       setShowAddFieldForm(false);
     }

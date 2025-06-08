@@ -97,14 +97,11 @@ export const subscribeToFieldAvailability = (callback: (data: FieldAvailabilityD
 export const subscribeToFieldAvailabilityChanges = (callback: (data: FieldAvailabilityChangeEvent) => void) => {
   const socket = getFieldsSocket();
   if (!socket) {
-    console.error('Tidak dapat berlangganan perubahan ketersediaan: socket tidak tersedia');
     return () => {};
   }
 
-  console.log('Berlangganan perubahan ketersediaan lapangan dengan socket ID:', socket.id);
-
+  
   const handleChange = (data: FieldAvailabilityChangeEvent) => {
-    console.log('Field availability changed (event received):', data);
     callback(data);
   };
 
@@ -112,14 +109,8 @@ export const subscribeToFieldAvailabilityChanges = (callback: (data: FieldAvaila
   socket.on('field:availability-changed', handleChange);
   socket.on('availability-update', handleChange);
 
-  // Tambahkan listener untuk debugging
-  socket.onAny((eventName, ...args) => {
-    console.log(`Socket event received: ${eventName}`, args);
-  });
-
   // Return unsubscribe function
   return () => {
-    console.log('Berhenti berlangganan perubahan ketersediaan lapangan');
     socket.off('field:availability-changed', handleChange);
     socket.off('availability-update', handleChange);
     socket.offAny();

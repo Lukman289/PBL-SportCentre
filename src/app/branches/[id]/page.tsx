@@ -25,7 +25,7 @@ export default function BranchDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { showLoading, hideLoading, withLoading } = useGlobalLoading();
-  const { showError, showSuccess } = useToastHandler();
+  const { showError } = useToastHandler();
   // Mengelola loading state
   useEffect(() => {
     if (loading) {

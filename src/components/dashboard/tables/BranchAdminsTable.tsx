@@ -29,7 +29,6 @@ export function BranchAdminsTable({
   caption = "Daftar semua admin cabang yang terdaftar dalam sistem",
   isLoading = false,
 }: BranchAdminsTableProps) {
-  console.log("Admins:", admins);
   const [adminPaginate, setAdminPaginate] = useState<BranchAdmin[]>(admins);
   const [page, setPage] = useState(1);
   const totalItems = admins.length;
@@ -38,7 +37,6 @@ export function BranchAdminsTable({
   useEffect(() => {
     setAdminPaginate(admins.slice((page - 1) * limit, page * limit));
   }, [page, admins]);
-  console.log("Paginated Admins:", adminPaginate);
 
   return (
     <Card className="border shadow-sm">

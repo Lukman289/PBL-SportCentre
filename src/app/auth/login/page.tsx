@@ -48,8 +48,6 @@ export default function LoginPage() {
       await withLoading(login(data.identifier, data.password));
       router.push('/');
     } catch (error) {
-      console.error('Login error:', error);
-      setError('Kredensial tidak valid. Silakan coba lagi.');
       showError(error, 'Kredensial tidak valid. Silakan coba lagi.');
     }
   };

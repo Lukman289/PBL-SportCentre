@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, ReactNode, useState, useEffect, useCallback, useMemo } from "react";
-import { Field, Branch, BookingRequest } from "@/types";
+import { Field, Branch, BookingRequest, Role } from "@/types";
 import { branchApi, fieldApi, bookingApi } from "@/api";
 import { format } from "date-fns";
 import { 
@@ -116,8 +116,8 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     setRefreshing(true);
     
     try {
-      console.log("Manually refreshing availability data for date:", selectedDate);
-      
+      // Hapus cache untuk memastikan data di-refresh
+      sessionStorage.removeItem(`${selectedBranch}_${selectedDate}`);
       // Hapus cache untuk memastikan data di-refresh
       sessionStorage.removeItem(`${selectedBranch}_${selectedDate}`);
       
@@ -143,7 +143,6 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   // Fungsi untuk mengambil data ketersediaan awal
   const fetchInitialAvailability = useCallback(async () => {
     if (selectedBranch && selectedDate && fields.length > 0) {
-      console.log("Fetching initial availability data for date:", selectedDate);
       
       try {
         const bookedSlots = await fieldApi.fetchBookedTimeSlots(
@@ -157,7 +156,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         // Minta pembaruan real-time melalui socket
         requestAvailabilityUpdate(selectedDate, selectedBranch);
       } catch (error) {
-        console.error("Error fetching initial availability:", error);
+        showError(error, "Gagal mengambil data ketersediaan awal");
       }
     }
   }, [selectedBranch, selectedDate, fields, times]);
@@ -175,7 +174,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         
         if (Array.isArray(branches) && branches.length > 0) {
           // Jika user adalah admin cabang, pilih cabang yang dikelola
-          if (user?.role === 'admin_cabang' && user?.branches && user.branches.length > 0) {
+          if (user?.role === Role.ADMIN_CABANG && user?.branches && user.branches.length > 0) {
             const adminBranchId = user.branches[0].branchId;
             const adminBranch = branches.find(branch => branch.id === adminBranchId);
             
@@ -193,7 +192,6 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
           
           setBranches(branches);
         } else {
-          console.error("branches is not an array or empty:", branches);
           setBranches([]);
         }
         
@@ -209,8 +207,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching initial data:", error);
-        setError("Gagal memuat data. Silakan coba lagi nanti.");
+        showError(error, "Gagal memuat data. Silakan coba lagi nanti.");
         setLoading(false);
       }
     };
@@ -220,15 +217,10 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     // Pindahkan inisialisasi socket ke blok terpisah dan hanya inisialisasi jika user sudah login
     if (user?.id) {
       try {
-        const { rootSocket, fieldsSocket, notificationSocket } = initializeSockets();
-        console.log('Sockets initialized in booking context:', { 
-          rootId: rootSocket?.id, 
-          fieldsId: fieldsSocket?.id,
-          notificationId: notificationSocket?.id
-        });
+        initializeSockets();
         setSocketInitialized(true);
       } catch (error) {
-        console.error('Error initializing sockets:', error);
+        showError(error, "Gagal menginisialisasi socket");
       }
     }
   }, [user?.role, user?.branches, user?.id]);
@@ -241,7 +233,6 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       
       // Subscribe untuk pembaruan ketersediaan lapangan
       const unsubscribe = subscribeToFieldAvailability((data: FieldAvailabilityData) => {
-        console.log('Received field availability update from socket.io:', data);
         // Update bookedTimeSlots berdasarkan data dari server
         if (data && Array.isArray(data.fields)) {
           const newBookedSlots: {[key: number]: string[]} = {};
@@ -290,7 +281,6 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
             
             // Jika waktu mulai atau waktu dalam rentang sudah terpesan, reset pemilihan
             if (isStartTimeBooked || isAnyTimeInRangeBooked) {
-              console.log('Reset selection because selected time slot is now booked:', selectedStartTime, selectedEndTime);
               setSelectedStartTime("-");
               setSelectedEndTime("");
               // Jangan reset field karena user masih melihat lapangan yang sama
@@ -349,8 +339,6 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       const result = await bookingApi.createBooking(bookingData);
       
-      console.log("Hasil booking:", result);
-      
       // Cari URL pembayaran dari backend
       let paymentUrl = '';
       
@@ -359,14 +347,11 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       }
       
       if (paymentUrl) {
-        console.log("Mengarahkan ke URL pembayaran:", paymentUrl);
         window.location.href = paymentUrl;
       } else {
-        console.error("Tidak ada URL pembayaran yang dikembalikan dari API:", result);
         showError("Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi.");
       }
     } catch (error) {
-      console.error("Error creating booking:", error);
       showError(error, "Gagal membuat booking. Silakan coba lagi nanti.");
     } finally {
       setLoading(false);

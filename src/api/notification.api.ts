@@ -40,10 +40,8 @@ class NotificationApi {
       }
       
       // Jika format tidak dikenali, kembalikan array kosong
-      console.error('Unexpected response format:', response.data);
       return [];
     } catch (error) {
-      console.error('Error fetching user notifications:', error);
       return [];
     }
   }
@@ -68,7 +66,6 @@ class NotificationApi {
       
       throw new Error('Unexpected response format');
     } catch (error) {
-      console.error(`Error marking notification with ID ${id} as read:`, error);
       throw error;
     }
   }
@@ -82,7 +79,6 @@ class NotificationApi {
       const response = await axiosInstance.post<{ message: string }>('/notifications/read-all');
       return response.data;
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
       throw error;
     }
   }
@@ -97,7 +93,6 @@ class NotificationApi {
       const response = await axiosInstance.delete<{ message: string }>(`/notifications/${id}`);
       return response.data;
     } catch (error) {
-      console.error(`Error deleting notification with ID ${id}:`, error);
       throw error;
     }
   }

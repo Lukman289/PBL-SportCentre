@@ -95,8 +95,7 @@ export default function AddAdminPage() {
       // Redirect ke halaman detail cabang
       router.push(`/dashboard/branches/${branchId}`);
     } catch (err) {
-      console.error('Error adding admin:', err);
-      setError('Gagal menambahkan admin. Silakan coba lagi.');
+      showError(err, 'Gagal menambahkan admin. Silakan coba lagi.');
     } finally {
       setIsSubmitting(false);
     }

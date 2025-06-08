@@ -84,8 +84,7 @@ export default function ResetPasswordTokenPage() {
       setIsSuccess(true);
       showSuccess("Password Anda telah diperbarui. Silakan login dengan password baru.");
     } catch (error) {
-      console.error("Reset password error:", error);
-      showError("Error", "Gagal mereset password. Token mungkin sudah kedaluwarsa.");
+      showError(error, "Gagal mereset password. Token mungkin sudah kedaluwarsa.");
     } finally {
       setIsLoading(false);
     }

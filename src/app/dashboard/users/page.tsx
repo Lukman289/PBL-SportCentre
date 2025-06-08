@@ -62,7 +62,6 @@ function UsersContent() {
         showSuccess('Data berhasil diperbarui');
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
       showError(error, 'Gagal memuat data pengguna');
     } finally {
       setIsLoading(false);

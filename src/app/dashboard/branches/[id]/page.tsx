@@ -37,21 +37,12 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/context/auth/auth.context";
 import { branchApi } from "@/api/branch.api";
 import { fieldApi } from "@/api/field.api";
-import { Branch, Field, Role, FieldType, FieldStatus } from "@/types";
+import { Branch, Field, Role, FieldType, FieldStatus, BranchAdmin } from "@/types";
 import useGlobalLoading from "@/hooks/useGlobalLoading.hook";
 import useToastHandler from "@/hooks/useToastHandler";
-import { toast } from "sonner";
 import Image from "next/image";
 
 // Interface untuk admin
-interface BranchAdmin {
-  userId: number;
-  user: {
-    id: number;
-    name: string;
-    email: string;
-  };
-}
 
 // Validasi form untuk tambah lapangan
 const createFieldSchema = z.object({
@@ -78,7 +69,6 @@ interface PaginationProps {
   totalItems: number;
   itemsPerPage: number;
 }
-const { showError } = useToastHandler();
 const Pagination = ({
   currentPage,
   totalPages,
@@ -146,6 +136,7 @@ const Pagination = ({
 
 export default function BranchDetailPage() {
   const router = useRouter();
+  const { showError, showSuccess } = useToastHandler();
   const params = useParams<{ id: string }>();
   const { user } = useAuth();
   const { showLoading, hideLoading } = useGlobalLoading();
@@ -364,7 +355,7 @@ export default function BranchDetailPage() {
       // Refresh fields data dengan pagination
       await fetchFields(fieldsCurrentPage);
 
-      toast.success("Lapangan berhasil ditambahkan");
+      showSuccess("Lapangan berhasil ditambahkan");
     } catch (error) {
       showError(error, "Gagal membuat lapangan. Silakan coba lagi.");
     } finally {

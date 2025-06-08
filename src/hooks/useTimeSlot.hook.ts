@@ -28,7 +28,6 @@ export const useTimeSlot = () => {
       const isStartTimeBooked = bookedTimeSlots[selectedFieldId]?.includes(selectedStartTime);
       
       if (isStartTimeBooked) {
-        console.log('Resetting selection in useTimeSlot because selected time is now booked:', selectedStartTime);
         resetSelection();
       } else if (selectedEndTime) {
         // Cek apakah ada jam dalam rentang yang dipilih yang sudah terpesan
@@ -216,13 +215,11 @@ export const useTimeSlot = () => {
   const handleTimeClick = (time: string, field: Field) => {
     // Jika slot tidak tersedia, tidak lakukan apa-apa
     if (isTimeSlotDisabled(field, time)) {
-      console.log(`Slot ${time} disabled: Already booked or field not available`);
       return;
     }
 
     // Jika mode pemilihan adalah 'start' atau berbeda lapangan, pilih waktu mulai
     if (selectionMode === 'start' || selectedFieldId !== field.id) {
-      console.log(`Setting ${time} as start time for field ${field.id}`, field.name);
       resetSelection();
       setSelectedStartTime(time);
       setSelectedFieldId(field.id);
@@ -236,21 +233,17 @@ export const useTimeSlot = () => {
     if (selectionMode === 'end' && selectedFieldId === field.id) {
       // Jika klik waktu mulai lagi, batalkan pemilihan
       if (time === selectedStartTime) {
-        console.log(`Canceled selection for ${time}`);
         resetSelection();
         return;
       }
       
       // Pastikan bahwa waktu akhir valid
       if (isValidEndTime(time, field) && selectedStartTime) {
-        console.log(`Setting ${time} as end time. Range: ${selectedStartTime} - ${time}`);
         setSelectedEndTime(time);
         setSelectionMode('start');
         
         // Kirim informasi waktu mulai dan akhir
         handleTimeSelection(selectedStartTime, field.id, field.name, time);
-      } else {
-        console.log(`Invalid end time: ${time}`);
       }
     }
   };

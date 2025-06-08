@@ -26,7 +26,6 @@ export default function FieldTypeDetailPage() {
                 const fieldTypeData = await fieldApi.getFieldTypeById(fieldTypeId);
                 setFieldType(fieldTypeData);
             } catch (err) {
-                console.error('Failed to fetch field type:', err);
                 showError(err, 'Gagal memuat data jenis lapangan');
                 
                 // Redirect ke halaman field types jika terjadi error
@@ -57,7 +56,6 @@ export default function FieldTypeDetailPage() {
 
                 router.push('/dashboard/fieldtypes');
             } catch (error) {
-                console.error('Failed to delete field type:', error);
                 showError(error, 'Gagal menghapus jenis lapangan');
             } finally {
                 setDeleting(false);

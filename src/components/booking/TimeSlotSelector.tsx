@@ -11,6 +11,7 @@ import {
   TIMEZONE, 
   formatTimeRange
 } from "@/utils/timezone.utils";
+import { useEffect } from "react";
 
 /**
  * Time Slot Selector Component
@@ -35,8 +36,12 @@ export default function TimeSlotSelector() {
     selectedFieldId
   } = useTimeSlot();
   
-  // Mengambil selectedDate dari useBooking hook
-  const { selectedDate } = useBooking();
+  // Mengambil selectedDate dan selectedBranch dari useBooking hook
+  const { selectedDate, selectedBranch, bookedTimeSlots } = useBooking();
+  
+  // Log untuk debugging
+  useEffect(() => {
+  }, [selectedBranch, filteredFields, bookedTimeSlots]);
   
   // Membuat array untuk jam dari 08:00 sampai 23:00
   const timeSlots = Array.from({ length: 16 }, (_, i) => 
@@ -105,6 +110,7 @@ export default function TimeSlotSelector() {
         return `Status: ${status} - ${time}`;
     }
   };
+  
   
   if (filteredFields.length === 0) {
     return (

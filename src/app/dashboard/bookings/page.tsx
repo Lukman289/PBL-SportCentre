@@ -117,17 +117,6 @@ export default function BookingsPage() {
     }, { total: 0, paid: 0, pending: 0, failed: 0, todayCount: 0 });
   }, [bookings]);
 
-  // Debugging
-  useEffect(() => {
-    if (bookings && bookings.length > 0) {
-      console.log("Bookings data available:", bookings.length);
-      console.log("Sample booking:", bookings[0]);
-    } else {
-      console.log("No bookings data available");
-    }
-  }, [bookings]);
-
-  // Jika loading, GlobalLoading akan ditampilkan
   if (loading) {
     return null;
   }

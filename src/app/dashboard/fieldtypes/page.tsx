@@ -51,7 +51,6 @@ export default function FieldTypesPage() {
             setFilteredFieldTypes(response);
             setCurrentPage(1);
         } catch (error) {
-            console.error('Error fetching field types:', error);
             const errorMsg = 'Gagal memuat daftar tipe field. Silakan coba lagi.';
             setError(errorMsg);
             showError(error, errorMsg);

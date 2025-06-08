@@ -30,7 +30,7 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
           setBranches(branchesData);
         }
       } catch (error) {
-        showError("Gagal memuat data cabang");
+        showError(error, "Gagal memuat data cabang");
       }
     };
 
@@ -52,7 +52,6 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
             endDate: filters.endDate,
             search: filters.search
           };
-          console.log("Fetching super admin bookings with filters:", apiFilters);
           
           // Dapatkan data dengan filter dari API
           const data = await bookingApi.getAllBookings(apiFilters, {
@@ -60,9 +59,6 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
             limit: limit,
           });
           
-          // Log data untuk debugging
-          console.log("Data booking diterima:", data);
-          console.log("Contoh data booking pertama:", data.data[0]);
           
           // Tidak perlu melakukan filter lagi karena backend sudah menerapkan filter
           setBookings(data.data);
@@ -72,19 +68,12 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
         } else if (user?.role === Role.USER && user.id) {
           let data = await bookingApi.getUserBookings(user.id);
           
-          // Log data untuk debugging
-          console.log("Data booking user diterima:", data);
-          if (data[0]?.field) {
-            console.log("Field data:", data[0].field);
-            console.log("Branch data:", data[0].field.branch);
-          }
-          
           // Untuk user reguler, tetap lakukan filter di frontend
           data = applyFilters(data, filters);
           setBookings(data);
         }
       } catch (error) {
-        showError("Gagal memuat data booking");
+        showError(error, "Gagal memuat data booking");
       } finally {
         setLoading(false);
       }
@@ -114,10 +103,7 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
             ? filters.branchId 
             : branchAdmins[0].branchId;
 
-          console.log("Admin cabang menggunakan branchId:", branchId);
-          console.log("Daftar branch admin:", userBranchIds);
-          console.log("Branch filter yang diminta:", filters.branchId);
-          
+  
           // Kirim filter ke API kecuali branchId (karena sudah di path)
           const apiFilters = {
             status: filters.status,
@@ -125,8 +111,7 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
             endDate: filters.endDate,
             search: filters.search
           };
-          console.log(`Fetching branch bookings for ID ${branchId} with filters:`, apiFilters);
-          
+
           // Dapatkan data dengan filter dari API
           const data = await bookingApi.getBranchBookings(
             branchId, 
@@ -134,8 +119,6 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
             { page, limit }
           );
           
-          // Log data untuk debugging
-          console.log("Data booking admin cabang diterima:", data);
           
           // Tidak perlu melakukan filter lagi karena backend sudah menerapkan filter
           setBookings(data.data);
@@ -144,14 +127,13 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
           handleNoBranchError();
         }
       } catch (error) {
-        showError("Gagal mendapatkan data cabang");
+        showError(error, "Gagal mendapatkan data cabang");
       }
       return;
     }
 
     // Jika user sudah punya data branches
     const userBranchIds = user.branches.map((b: BranchAdmin) => b.branchId);
-    console.log("Filters diterapkan:", filters);
     if (
       filters.endDate !== '' && 
       filters.startDate !== '' && 
@@ -167,7 +149,6 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
       ? filters.branchId 
       : user.branches[0].branchId;
 
-    console.log("Fetching bookings for branch ID:", branchId);
     
     // Kirim filter ke API kecuali branchId (karena sudah di path)
     const apiFilters = {
@@ -183,9 +164,6 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
       apiFilters,
       { page, limit }
     );
-    
-    // Log data untuk debugging
-    console.log("Data booking admin cabang diterima:", data);
     
     // Tidak perlu melakukan filter lagi karena backend sudah menerapkan filter
     setBookings(data.data);
@@ -203,7 +181,6 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
     
     // Branch filter (for super admin only)
     if (includeBranchFilter && filters.branchId) {
-      console.log("Applying branch filter:", filters.branchId);
       filteredData = filteredData.filter(booking => {
         const bookingBranchId = booking.field?.branch?.id || booking.field?.branchId;
         const match = bookingBranchId === filters.branchId;

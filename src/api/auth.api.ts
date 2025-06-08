@@ -91,7 +91,6 @@ class AuthApi {
       // Cookie akan dihapus oleh server
       return response.data;
     } catch (error) {
-      console.error('Logout error:', error);
       // Tetap menghapus cookie meskipun terjadi error
       if (typeof window !== 'undefined') {
         Cookies.remove('is_logged_in', { path: '/' });
@@ -119,7 +118,6 @@ class AuthApi {
       });
       return response.data;
     } catch (error: unknown) {
-      console.error('Error getting auth status:', error);
       
       // Jika error 401, hapus cookie klien supaya konsisten
       const axiosError = error as AxiosErrorResponse;
@@ -148,7 +146,6 @@ class AuthApi {
       // Token akan disimpan sebagai cookie oleh server
       return response.data;
     } catch (error) {
-      console.error('Error refreshing token:', error);
       
       // Jika error 401, hapus cookie klien supaya konsisten
       const axiosError = error as AxiosErrorResponse;

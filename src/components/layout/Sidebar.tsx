@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 interface SidebarProps {
   isOpen: boolean;
   role: Role;
-  onLinkClick?: () => void;
 }
 
 // Menu konfigurasi berdasarkan role
@@ -38,7 +37,7 @@ const menuItemsByRole = {
   ],
 };
 
-export default function Sidebar({ isOpen, role, onLinkClick }: SidebarProps) {
+export default function Sidebar({ isOpen, role }: SidebarProps) {
   const pathname = usePathname();
   const menuItems = menuItemsByRole[role] || menuItemsByRole[Role.USER];
   const activeItem = getActiveItem(pathname, menuItems);

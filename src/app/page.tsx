@@ -43,7 +43,6 @@ export default function HomePage() {
           setFeaturedBranches([]);
         }
       } catch (error) {
-        console.log(error);
         setFeaturedBranches([]);
       } finally {
         setIsLoading(false);
@@ -55,7 +54,6 @@ export default function HomePage() {
         const response = await fieldApi.getAllFields();
         setTotalFields(response.meta?.totalItems || 0);
       } catch (error) {
-        console.log(error);
         setTotalFields(0);
       }
     }

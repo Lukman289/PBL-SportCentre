@@ -39,11 +39,8 @@ class PaymentApi {
         }
       }
       
-      // Jika format tidak dikenali, kembalikan array kosong
-      console.error('Unexpected response format:', response.data);
       return [];
     } catch (error) {
-      console.error('Error fetching user payments:', error);
       return [];
     }
   }
@@ -68,7 +65,6 @@ class PaymentApi {
       
       throw new Error('Unexpected response format');
     } catch (error) {
-      console.error(`Error fetching payment with ID ${id}:`, error);
       throw error;
     }
   }

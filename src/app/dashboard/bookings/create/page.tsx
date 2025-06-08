@@ -10,7 +10,7 @@ import TimeSlotSelector from "@/components/booking/TimeSlotSelector";
 import BookingForm from "@/components/booking/BookingForm";
 import useToastHandler from "@/hooks/useToastHandler";
 import { Branch, PaymentMethod } from "@/types";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox, ComboboxOption } from "@/components/ui/combobox";
 import { MapPinIcon } from "lucide-react";
 
 export default function AdminBookingCreatePage() {
@@ -25,7 +25,7 @@ export default function AdminBookingCreatePage() {
     loading,
     error,
     setSelectedBranch,
-    branches
+    branches,
   } = useAdminBooking(selectedBranchId);
 
   // Mengelola loading state
@@ -39,26 +39,28 @@ export default function AdminBookingCreatePage() {
 
   // Dapatkan daftar cabang yang di-assign ke admin cabang
   useEffect(() => {
-    if (user?.branches && user.branches.length > 0) {
-      // Filter branches berdasarkan branches yang di-assign ke admin
-      const adminBranches = branches.filter(branch => 
-        user.branches?.some(userBranch => userBranch.branchId === branch.id)
-      );
+    if (user?.branches && user.branches.length > 0 && branches.length > 0) {
+      // Filter cabang yang hanya di-assign ke admin
+      const userBranchIds = user.branches.map(branch => branch.branchId);
+      
+      const adminBranches = branches.filter(branch => userBranchIds.includes(branch.id));
       
       setAssignedBranches(adminBranches);
       
-      // Jika belum ada cabang yang dipilih, pilih cabang pertama
+      // Jika belum ada cabang yang dipilih, pilih cabang pertama dari cabang yang di-assign
       if (!selectedBranchId && adminBranches.length > 0) {
-        setSelectedBranchId(adminBranches[0].id);
-        setSelectedBranch(adminBranches[0].id);
+        const firstBranchId = adminBranches[0].id;
+        setSelectedBranchId(firstBranchId);
+        setSelectedBranch(firstBranchId);
       }
     }
   }, [user?.branches, branches, selectedBranchId, setSelectedBranch]);
 
   // Handler untuk perubahan cabang
   const handleBranchChange = (branchId: string) => {
-    setSelectedBranchId(Number(branchId));
-    setSelectedBranch(Number(branchId));
+    const numericBranchId = Number(branchId);
+    setSelectedBranchId(numericBranchId);
+    setSelectedBranch(numericBranchId);
   };
 
   // Handler untuk ketika booking berhasil dibuat
@@ -70,6 +72,14 @@ export default function AdminBookingCreatePage() {
     }
   };
 
+  // Konversi cabang menjadi format opsi untuk Combobox
+  const branchOptions: ComboboxOption[] = assignedBranches.map((branch) => ({
+    value: branch.id.toString(),
+    label: branch.name,
+    description: branch.location || "",
+    icon: <MapPinIcon className="h-4 w-4 opacity-70" />
+  }));
+
   // Render states
   if (loading) {
     return null;
@@ -79,47 +89,36 @@ export default function AdminBookingCreatePage() {
     showError(error, 'Gagal memuat data cabang');
   }
 
+
   // Main render
   return (
     <div className="w-full max-w-full xl:max-w-none p-4 sm:p-6 bg-gray-50 min-h-screen">
       {/* Branch selector (jika admin mengelola lebih dari 1 cabang) */}
-      {assignedBranches.length > 1 && (
+      {assignedBranches.length > 0 && (
         <div className="mb-6 bg-white p-4 rounded-lg shadow-md border border-gray-100">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Pilih Cabang yang Dikelola:
           </label>
-          <Select
+          <Combobox
+            options={branchOptions}
             value={selectedBranchId?.toString() || ""}
             onValueChange={handleBranchChange}
-          >
-            <SelectTrigger className="w-full sm:w-[300px] flex items-center">
-              <MapPinIcon className="h-4 w-4 mr-2 opacity-70" />
-              <SelectValue placeholder="Pilih cabang" />
-            </SelectTrigger>
-            <SelectContent>
-              {assignedBranches.map((branch) => (
-                <SelectItem key={branch.id} value={branch.id.toString()}>
-                  <div className="flex flex-col">
-                    <span>{branch.name}</span>
-                    {branch.location && (
-                      <span className="text-xs text-muted-foreground">{branch.location}</span>
-                    )}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder="Cari dan pilih cabang..."
+            emptyMessage="Tidak ada cabang yang ditemukan"
+            icon={<MapPinIcon className="h-4 w-4 opacity-70" />}
+            triggerClassName="w-full sm:w-[300px]"
+          />
         </div>
       )}
 
       <div className="grid gap-6 md:grid-cols-3">
         <div className="md:col-span-2">
-          <TimeSlotSelector />
+          <TimeSlotSelector key={`timeslot-${selectedBranchId}`} />
         </div>
         
         <div className="md:col-span-1">
           <div className="sticky top-4">
-            <BookingForm isAdminBooking={true} onSuccess={handleBookingSuccess} />
+            <BookingForm isAdminBooking={true} onSuccess={handleBookingSuccess} key={`bookingform-${selectedBranchId}`} />
           </div>
         </div>
       </div>

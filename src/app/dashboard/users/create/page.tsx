@@ -122,15 +122,16 @@ export default function CreateUserPage() {
         showError(response.data.message || 'Terjadi kesalahan');
       }
     } catch (error) {
-      console.error('Error creating user:', error);
       const apiError = error as ApiError;
       
       if (apiError.response?.data?.message) {
         // Handle specific validation errors from backend
         if (apiError.response.data.message.includes('Email sudah digunakan')) {
           setErrors({ email: 'Email sudah digunakan' });
+          showError(apiError.response.data.message, 'Email Sudah Digunakan');
         } else if (apiError.response.data.message.includes('Peran yang diizinkan')) {
           setErrors({ role: apiError.response.data.message });
+          showError(apiError.response.data.message, 'Peran Tidak Diizinkan');
         } else {
           showError(apiError.response.data.message);
         }

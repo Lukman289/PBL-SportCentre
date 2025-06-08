@@ -74,7 +74,6 @@ export default function ProfilePage() {
       setSuccess(true);
       showSuccess('Profil berhasil diperbarui!');
     } catch (error) {
-      console.error('Error updating profile:', error);
       setError('Gagal memperbarui profil. Silakan coba lagi.');
       showError(error, 'Gagal memperbarui profil. Silakan coba lagi.');
     } finally {

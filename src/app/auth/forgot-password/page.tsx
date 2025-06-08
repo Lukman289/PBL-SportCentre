@@ -55,7 +55,6 @@ export default function ForgotPasswordPage() {
         setDevResetUrl(response.resetUrl);
       }
     } catch (error) {
-      console.error("Forgot password error:", error);
       showError(error, "Gagal mengirim permintaan reset password. Silakan coba lagi.");
     } finally {
       setIsLoading(false);

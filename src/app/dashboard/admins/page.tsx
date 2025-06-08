@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
+import useToastHandler from '@/hooks/useToastHandler';
 import { Role, BranchAdmin, Branch } from '@/types';
 import { useAuth } from '@/context/auth/auth.context';
 import { userApi } from '@/api/user.api';
@@ -32,6 +33,7 @@ export default function AdminsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const maxData = 5;
+  const { showError } = useToastHandler();
 
   useEffect(() => {
     if (isLoading) {
@@ -60,7 +62,6 @@ export default function AdminsPage() {
       
       if (response && response.data) {
         const data = response.data;
-        console.log('Fetched admins:', data);
         setAdmins(data);
         setTotalItems(response.meta?.totalItems || 0);
       } else {
@@ -68,7 +69,7 @@ export default function AdminsPage() {
         setTotalItems(0);
       }
     } catch (error) {
-      console.error('Error fetching admins:', error);
+      showError(error, 'Gagal memuat data admin. Silakan coba lagi.');
       setAdmins([]);
     } finally {
       setIsLoading(false);
@@ -87,7 +88,7 @@ export default function AdminsPage() {
         setBranches([]);
       }
     } catch (error) {
-      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      showError(error, 'Gagal memuat data cabang. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
     }
@@ -115,8 +116,7 @@ export default function AdminsPage() {
       setAdmins(updatedAdmins);
       setTotalItems(updatedAdmins.length);
     } catch (error) {
-      console.error('Error removing admin:', error);
-      alert('Gagal menghapus admin. Silakan coba lagi.');
+      showError(error, 'Gagal menghapus admin. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
     }
@@ -146,8 +146,7 @@ export default function AdminsPage() {
       await fetchAdmins(maxData, currentPage);
       setIsAddFormOpen(false);
     } catch (error) {
-      console.error('Error adding admin:', error);
-      alert('Gagal menambahkan admin. Silakan coba lagi.');
+      showError(error, 'Gagal menambahkan admin. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
     }
@@ -158,7 +157,6 @@ export default function AdminsPage() {
     return null;
   }
 
-  // Jika loading, GlobalLoading akan otomatis ditampilkan
   if (isLoading) {
     return null;
   }

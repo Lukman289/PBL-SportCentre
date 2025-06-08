@@ -84,7 +84,6 @@ class UserApi {
       
       return [];
     } catch (error) {
-      console.error('Error fetching all users:', error);
       return [];
     }
   }

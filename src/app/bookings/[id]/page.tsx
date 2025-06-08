@@ -54,7 +54,6 @@ export default function BookingDetailPage() {
         const data = await bookingApi.getBookingById(bookingId, Role.USER);
         setBooking(data);
       } catch (error) {
-        console.error("Error fetching booking data:", error);
         showError(error, "Terjadi kesalahan saat memuat data booking");
       } finally {
         setLoading(false);
@@ -79,7 +78,6 @@ export default function BookingDetailPage() {
       
       setOpenCancelDialog(false);
     } catch (error) {
-      console.error("Error canceling booking:", error);
       showError(error, "Terjadi kesalahan saat membatalkan booking");
     } finally {
       setCancelLoading(false);

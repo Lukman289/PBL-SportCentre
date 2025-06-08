@@ -68,14 +68,12 @@ export default function FieldPage() {
             setSelectedBranchName(firstBranch.name);
           }
         } else {
-          console.error("branches is not an array:", branchesData);
           setBranches([]);
           showError("Data cabang tidak dalam format yang diharapkan", "Error Format Data");
         }
       } catch (error) {
-        console.error("Error fetching branches:", error);
         setBranches([]);
-        showError("Gagal memuat cabang. Silakan coba lagi nanti.", "Error Fetching Cabang");
+        showError(error, "Gagal memuat cabang. Silakan coba lagi nanti.");
       } finally {
         setLoading(false);
       }
@@ -111,14 +109,12 @@ export default function FieldPage() {
         setFields(fieldData.data);
         setTotalItems(fieldData.meta?.totalItems || 0);
       } else {
-        console.error("Unexpected field data format:", fieldData);
         setFields([]);
-        setError("Format data lapangan tidak sesuai.");
+        showError("Format data lapangan tidak sesuai.", "Error Format Data");
       }
     } catch (error) {
-      console.error("Error fetching fields:", error);
       setFields([]);
-      setError("Gagal memuat lapangan. Silakan coba lagi nanti.");
+      showError(error, "Gagal memuat lapangan. Silakan coba lagi nanti.");
     } finally {
       setLoading(false);
     }

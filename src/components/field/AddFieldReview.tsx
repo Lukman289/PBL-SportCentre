@@ -65,7 +65,6 @@ export default function AddFieldReview({ fieldId, onReviewAdded }: { fieldId: nu
         onReviewAdded();
       }
     } catch (error: unknown) {
-      console.error('Error submitting review:', error);
       
       // Menangani error dari backend
       let errorMessage = 'Terjadi kesalahan saat menambahkan ulasan';

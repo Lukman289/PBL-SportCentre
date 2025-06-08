@@ -7,7 +7,7 @@ import { useDurationCalculator } from "@/hooks/useDurationCalculator.hook";
 import { PaymentMethod, PaymentStatus } from "@/types";
 import { BookingFormValues } from "@/context/booking/booking.context";
 import { useState } from "react";
-
+import useToastHandler from "@/hooks/useToastHandler";
 interface BookingFormProps {
   isAdminBooking?: boolean;
   onSuccess?: (paymentMethod: PaymentMethod) => void;
@@ -17,7 +17,7 @@ export default function BookingForm({ isAdminBooking = false, onSuccess }: Booki
   // Menggunakan hook context sesuai dengan jenis user
   const regularBooking = useBookingContext();
   const adminBooking = useAdminBooking();
-  
+  const { showError } = useToastHandler();
   // State untuk metode pembayaran (hanya untuk admin booking)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(PaymentStatus.PAID);
@@ -55,7 +55,7 @@ export default function BookingForm({ isAdminBooking = false, onSuccess }: Booki
           endTime: selectedEndTime,
           paymentMethod: paymentMethod,
           paymentStatus: paymentStatus,
-          branchId: adminBooking.selectedBranch
+          branchId: adminBooking.selectedBranch || 0
         };
         
         const result = await adminBooking.createManualBooking(bookingData);
@@ -70,7 +70,7 @@ export default function BookingForm({ isAdminBooking = false, onSuccess }: Booki
           }
         }
       } catch (error) {
-        console.error("Error saat membuat manual booking:", error);
+        showError(error, "Gagal membuat booking");
       }
     } else {
       await onSubmit(data);

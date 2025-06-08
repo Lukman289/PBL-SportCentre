@@ -98,7 +98,7 @@ export default function MyBookingsPage() {
     }
   };
 
-  const paymentStatusOptions = Object.entries(PaymentStatus).map(([_, value]) => ({
+  const paymentStatusOptions = Object.entries(PaymentStatus).map(([value]) => ({
     label: getStatusText(value),
     value: value,
   }));

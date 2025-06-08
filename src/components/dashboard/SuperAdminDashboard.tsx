@@ -12,13 +12,14 @@ import { useEffect, useState } from 'react';
 import { PeriodFilter, PeriodType } from './filters/PeriodFilter';
 import { useRouter } from 'next/navigation';
 import { userApi } from '@/api';
+import useToastHandler from '@/hooks/useToastHandler';
 
 export const SuperAdminDashboard = () => {
   // State untuk toggle view dan periode
   const [showAdmins, setShowAdmins] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('monthly');
   const [admins, setAdmins] = useState<BranchAdmin[]>([]);
-  
+  const { showError } = useToastHandler();
   const { stats, isLoading, error } = useDashboardStats(Role.SUPER_ADMIN, selectedPeriod);
   const typedStats = stats as SuperAdminStats;
 
@@ -47,7 +48,7 @@ export const SuperAdminDashboard = () => {
       }
       return [];
     } catch (error) {
-      console.error('Error fetching branch admins:', error);
+      showError(error, "Gagal mengambil data admin cabang");
       return [];
     }
   }

@@ -17,6 +17,7 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
+  password: string;
   role: Role;
   branches?: BranchAdmin[]; // Relasi dengan cabang (sesuai schema)
   createdAt: string;

@@ -130,8 +130,7 @@ export default function FieldEditPage() {
                         setIsBranchSelectionDisabled(true);
                     }
                 } catch (branchError) {
-                    console.error('Error fetching branch data:', branchError);
-                    // Fallback: fetch all user branches
+                    showError(branchError, 'Gagal memuat data cabang. Silakan coba lagi.');
                     const branchesResponse = await branchApi.getUserBranches();
                     const branchesData = branchesResponse.data || [];
                     setBranches(branchesData);

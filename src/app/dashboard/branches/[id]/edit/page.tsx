@@ -228,21 +228,7 @@ export default function EditBranchPage() {
     setError(null);
 
     try {
-      const branchId = Number(id);
       const formData = new FormData();
-
-      // Debug: Log data yang akan dikirim
-      console.log('🔍 Data to submit:', {
-        name: data.name,
-        location: data.location,
-        status: data.status,
-        ownerId: data.ownerId,
-        hasFile: selectedFile ? 'Yes' : 'No',
-        removeImage: removeImage,
-        currentImageUrl: currentImageUrl
-      });
-
-      // Tambahkan field wajib
       formData.append('name', data.name);
       formData.append('location', data.location);
       formData.append('status', data.status);
@@ -256,29 +242,17 @@ export default function EditBranchPage() {
       if (removeImage) {
         // Kirim flag untuk menghapus gambar
         formData.append('removeImage', 'true');
-        console.log('📸 Removing image');
       } else if (selectedFile) {
         // Kirim file baru
         formData.append('imageUrl', selectedFile);
-        console.log('📸 Uploading new image:', selectedFile.name);
       } else if (currentImageUrl) {
         // Pertahankan gambar lama
         formData.append('keepCurrentImage', 'true');
-        console.log('📸 Keeping current image');
       }
 
-      // Debug: Log FormData contents
-      console.log('📤 FormData contents:');
-      for (const [key, value] of formData.entries()) {
-        console.log(`  ${key}:`, value instanceof File ? `File: ${value.name}` : value);
-      }
 
-      const result = await branchApi.updateBranch(branchId, formData);
-      console.log('✅ Update result:', result);
-      
       router.push(isSuperAdmin ? '/dashboard/branches' : '/dashboard/my-branches');
     } catch (err) {
-      console.error('❌ Update error:', err);
       const error = err as { response?: { data?: { message?: string } } };
       if (error.response?.data?.message) {
         showError(error.response.data.message, 'Error Cabang');

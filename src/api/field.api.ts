@@ -12,6 +12,7 @@ import {
 import { bookingApi } from './booking.api';
 import { Booking } from '../types';
 import { getLocalHourFromDate } from '../utils/timezone.utils';
+import useToastHandler from '../hooks/useToastHandler';
 
 // Type guards for better type checking
 function isStandardResponse(data: unknown): data is { status: boolean; data: Field } {
@@ -36,7 +37,6 @@ class FieldApi {
       const response = await axiosInstance.get<FieldResponseWithMeta>('/fields', { params: params });
       return response.data;
     } catch (error) {
-      console.error('Error fetching all fields:', error);
       return { data: [], meta: { page: 1, limit: 10, totalItems: 0, totalPages: 1, hasNextPage: false, hasPrevPage: false } };
     }
   }
@@ -56,7 +56,6 @@ class FieldApi {
         return response.data;
       }
     } catch (error) {
-      console.error(`Error fetching field with ID ${id}:`, error);
       return null;
     }
   }
@@ -71,7 +70,6 @@ class FieldApi {
       const response = await axiosInstance.get<FieldResponseWithMeta>(`/branches/${branchId}/fields`, { params: params });
       return response.data;
     } catch (error) {
-      console.error(`Error fetching fields for branch ID ${branchId}:`, error);
       return { data: [], meta: { page: 1, limit: 10, totalItems: 0, totalPages: 1, hasNextPage: false, hasPrevPage: false } };
     }
   }
@@ -110,10 +108,8 @@ class FieldApi {
       }
 
       // Jika format tidak dikenali, kembalikan array kosong
-      console.error('Unexpected response format:', response.data);
       return [];
     } catch (error) {
-      console.error('Error fetching field types:', error);
       return [];
     }
   }
@@ -175,7 +171,6 @@ class FieldApi {
    */
   async getFieldReviews(fieldId: number): Promise<FieldReviewResponseWithMeta> {
     const response = await axiosInstance.get<FieldReviewResponseWithMeta>(`/field-reviews?fieldId=${fieldId}`);
-    console.log("reviews data: ", response.data);
     return response.data;
   }
 
@@ -193,7 +188,6 @@ class FieldApi {
       fieldId,
       ...data
     });
-    console.log("create field review response: ", response.data);
     return response.data.data;
   }
 
@@ -204,6 +198,7 @@ class FieldApi {
    * @returns Promise dengan data slot waktu tersedia
    */
   async checkFieldAvailability(fieldId: number, date: string): Promise<{ slots: { time: string, available: boolean }[] }> {
+
     try {
       try {
         // Coba endpoint pertama
@@ -221,8 +216,6 @@ class FieldApi {
         throw new Error('Unexpected response format');
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
-        console.warn(`Endpoint /fields/${fieldId}/availability tidak tersedia, mencoba endpoint alternatif...`);
-
         // Gunakan endpoint alternatif jika endpoint utama tidak ditemukan
         const response = await axiosInstance.get<AvailabilityResponse>(`/fields/availability`, {
           params: {
@@ -252,7 +245,6 @@ class FieldApi {
               const localStartHour = getLocalHourFromDate(startTimeUTC);
               const localEndHour = getLocalHourFromDate(endTimeUTC);
 
-              console.log(`Slot hours WIB - start: ${localStartHour}:00, end: ${localEndHour}:00`);
 
               // Handle kasus di mana end hour lebih kecil dari start hour (melewati tengah malam)
               if (localEndHour < localStartHour) {
@@ -288,7 +280,6 @@ class FieldApi {
         throw new Error('Tidak dapat menemukan data ketersediaan lapangan');
       }
     } catch (error) {
-      console.error(`Error checking field availability for field ID ${fieldId}:`, error);
 
       // Fallback: buat semua slot tersedia
       const timeSlots = Array.from({ length: 14 }, (_, i) => `${(i + 8).toString().padStart(2, '0')}:00`);
@@ -317,7 +308,6 @@ class FieldApi {
       const cacheKey = `${selectedBranch}_${selectedDate}`;
       sessionStorage.removeItem(cacheKey);
 
-      console.log('Fetching availability for date:', selectedDate);
       const booked: { [key: number]: string[] } = {};
 
       // Gunakan endpoint untuk mendapatkan ketersediaan semua lapangan sekaligus
@@ -334,8 +324,6 @@ class FieldApi {
         const responseData = response.data;
 
         if (responseData && responseData.success && Array.isArray(responseData.data)) {
-          console.log('Successfully fetched availability data:', responseData.data.length, 'fields');
-
           // Iterasi setiap lapangan dalam respons
           responseData.data.forEach((fieldAvailability) => {
             const fieldId = fieldAvailability.fieldId;
@@ -350,15 +338,9 @@ class FieldApi {
               // Parse ISO string ke objek Date
               const startTimeUTC = new Date(slot.start);
               const endTimeUTC = new Date(slot.end);
-
-              // Log untuk debugging
-              console.log(`Slot original UTC - start: ${startTimeUTC.toISOString()}, end: ${endTimeUTC.toISOString()}`);
-
-              // Gunakan utility function untuk mendapatkan jam lokal (WIB)
               const localStartHour = getLocalHourFromDate(startTimeUTC);
               const localEndHour = getLocalHourFromDate(endTimeUTC);
 
-              console.log(`Slot hours WIB - start: ${localStartHour}:00, end: ${localEndHour}:00`);
 
               // Penanganan khusus: jika slot mencakup 00:00-24:00 (seluruh hari)
               if (localStartHour === 0 && localEndHour === 0 &&
@@ -391,23 +373,14 @@ class FieldApi {
 
             // Semua jam yang tidak ada dalam availableHoursSet dianggap terpesan
             const bookedHours = times.filter(time => !Array.from(availableHoursSet).includes(time));
-
-            // Debug output
-            console.log(`Field #${fieldId}: Available hours:`, Array.from(availableHoursSet));
-            console.log(`Field #${fieldId}: Booked hours:`, bookedHours);
-
-            // Simpan jam yang terpesan untuk lapangan ini
-            booked[fieldId] = bookedHours;
+            booked[fieldId] = bookedHours;  
           });
         } else {
-          console.error('Invalid response format:', responseData);
         }
       } catch (error) {
-        console.error("Error fetching field availability:", error);
 
         // Fallback ke metode alternatif jika endpoint utama gagal
         try {
-          console.log('Using fallback method for availability');
           const filteredFields = fields.filter(field => field.branchId === selectedBranch);
 
           // Inisialisasi booked entries untuk semua lapangan (penting untuk reset)
@@ -425,7 +398,6 @@ class FieldApi {
             return bookingDate === selectedDate;
           });
 
-          console.log('Relevant bookings found:', relevantBookings.length);
 
           // Kelompokkan booking berdasarkan lapangan
           relevantBookings.forEach((booking: Booking) => {
@@ -469,14 +441,11 @@ class FieldApi {
             }
           });
         } catch (fallbackError) {
-          console.error("Fallback availability fetch failed:", fallbackError);
         }
       }
 
-      console.log('Final booked slots:', booked);
       return booked;
     } catch (error) {
-      console.error("Error fetching booked time slots:", error);
       return {};
     }
   }
@@ -510,7 +479,6 @@ class FieldApi {
 
       throw new Error('Unexpected response format');
     } catch (error) {
-      console.error('Error creating field with image:', error);
       throw error;
     }
   }
@@ -541,7 +509,6 @@ class FieldApi {
 
       throw new Error('Unexpected response format');
     } catch (error) {
-      console.error('Error updating field with image:', error);
       throw error;
     }
   }

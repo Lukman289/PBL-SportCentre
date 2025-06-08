@@ -80,7 +80,6 @@ export default function RegisterPage() {
         router.push('/auth/login');
       }, 3000);
     } catch (error) {
-      console.error('Register error:', error);
       showError(error, 'Gagal mendaftar. Silakan coba lagi.');
       
       // Tetap menyimpan error untuk ditampilkan dalam Alert

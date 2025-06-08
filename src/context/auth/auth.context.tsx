@@ -19,7 +19,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (identifier: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, phone?: string, role?: Role) => Promise<void>;
+  register: (name: User['name'], email: User['email'], password: User['password'], phone?: User['phone'], role?: Role) => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (updatedUser: User) => void;
 }
@@ -50,7 +50,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initAuth = async () => {
       setIsLoading(true);
       try {
-        console.log("logged? :", hasAuthCookie());
         
         if (hasAuthCookie()) {
           try {
@@ -71,7 +70,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch (error) {
         const axiosError = error as AxiosErrorResponse;
         if (axiosError.response?.status !== 401) {
-          console.error('Error initializing auth:', error);
         }
         // Reset user ke null untuk memastikan keadaan tidak terautentikasi
         setUser(null);

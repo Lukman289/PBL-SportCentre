@@ -34,7 +34,6 @@ export const dashboardApi = {
       
       return response.data;
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
       throw error;
     }
   }

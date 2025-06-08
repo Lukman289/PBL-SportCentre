@@ -62,7 +62,6 @@ class BranchApi {
       
       return response.data;
     } catch (error) {
-      console.error('Error fetching branch by ID:', error);
       throw error;
     }
   }
@@ -81,13 +80,6 @@ async createBranch(data: CreateBranchRequest): Promise<Branch> {
       formData.append('imageUrl', data.imageUrl);
     }
     
-    console.log('FormData being sent:', {
-      name: data.name,
-      location: data.location,
-      status: data.status,
-      ownerId: data.ownerId,
-      hasImage: !!data.imageUrl
-    });
     
     const response = await axiosInstance.post<Branch>('/branches', formData, {
       headers: {
@@ -138,7 +130,6 @@ async createBranch(data: CreateBranchRequest): Promise<Branch> {
     const response = await axiosInstance.get<{ data: BranchAdmin[] }>(`/branches/${branchId}/admins`);
     return response.data;
   } catch (error) {
-    console.error('Gagal mengambil data admin cabang:', error);
     return { data: [] }; // Kembalikan array kosong jika error
   }
 }

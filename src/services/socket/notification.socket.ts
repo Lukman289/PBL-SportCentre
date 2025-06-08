@@ -10,7 +10,6 @@ export const joinNotificationRoom = (userId: number) => {
 
   const roomId = `notification_${userId}`;
   joinRoom(roomId);
-  console.log('Joined notification room for user:', userId);
 };
 
 /**
@@ -23,7 +22,6 @@ export const subscribeToNotifications = (callback: (data: Notification) => void)
   if (!socket) return () => {};
 
   const handleNewNotification = (notification: Notification) => {
-    console.log('Received new notification:', notification);
     callback(notification);
   };
 
@@ -45,7 +43,6 @@ export const subscribeToNotificationUpdates = (callback: (data: { id: number, re
   if (!socket) return () => {};
 
   const handleNotificationUpdate = (data: { id: number, read: boolean }) => {
-    console.log('Notification status updated:', data);
     callback(data);
   };
 

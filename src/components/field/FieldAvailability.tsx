@@ -33,8 +33,6 @@ export default function FieldAvailability({ field }: FieldAvailabilityProps) {
     );
   };
 
-  console.log("field: ", field);
-
   // Gabung ke room lapangan saat komponen dimount
   useEffect(() => {
     if (field && field.id) {
@@ -43,7 +41,6 @@ export default function FieldAvailability({ field }: FieldAvailabilityProps) {
       // Berlangganan perubahan ketersediaan lapangan
       const unsubscribe = subscribeToFieldAvailabilityChanges((data) => {
         if (data.fieldId === field.id) {
-          console.log("Ketersediaan lapangan berubah:", data);
           // Refresh data ketersediaan saat ada perubahan
           refreshAvailability();
         }

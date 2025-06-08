@@ -30,11 +30,8 @@ export default function BookingCalendar({ bookings, userRole }: BookingCalendarP
     // Periksa apakah data booking tersedia
     if (bookings && bookings.length > 0) {
       setIsDataAvailable(true);
-      console.log(`${bookings.length} booking tersedia untuk ditampilkan`);
-      console.log("Contoh booking pertama:", bookings[0]);
     } else {
       setIsDataAvailable(false);
-      console.log("Tidak ada data booking tersedia");
     }
   }, [bookings]);
   
@@ -78,7 +75,6 @@ export default function BookingCalendar({ bookings, userRole }: BookingCalendarP
     
     bookings.forEach(booking => {
       if (!booking.bookingDate) {
-        console.warn("Booking tanpa tanggal:", booking);
         return;
       }
       

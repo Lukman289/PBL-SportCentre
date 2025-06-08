@@ -29,7 +29,6 @@ class BookingApi {
         endpoint = `/bookings/users/${userId}/bookings?include=field.branch`;
       } else {
         // Jika tidak ada userId, ini adalah admin yang mengakses semua booking (akan ditangani di getAllBookings)
-        console.error('User ID tidak ditemukan, gunakan getAllBookings() untuk admin');
         return [];
       }
       
@@ -56,10 +55,8 @@ class BookingApi {
       }
       
       // Jika format tidak dikenali, kembalikan array kosong
-      console.error('Unexpected response format:', response.data);
       return [];
     } catch (error) {
-      console.error('Error fetching user bookings:', error);
       return [];
     }
   }
@@ -70,40 +67,6 @@ class BookingApi {
    */
   async getAllBookings(filters?: { branchId?: number; status?: string; startDate?: string; endDate?: string; search?: string }, params?: {limit?: number, page?: number}): Promise<BookingResponseWithMeta> {
     try {
-      console.log("Fetching all bookings for admin with filters:", filters);
-      
-      // Buat query parameters jika ada filter
-      // let queryParams = '';
-      // if (filters) {
-      //   const params = new URLSearchParams();
-      //   if (filters.branchId) {
-      //     params.append('branchId', filters.branchId.toString());
-      //   }
-      //   if (filters.status) {
-      //     params.append('status', filters.status);
-      //   }
-      //   if (filters.startDate) {
-      //     params.append('startDate', filters.startDate);
-      //   }
-      //   if (filters.endDate) {
-      //     params.append('endDate', filters.endDate);
-      //   }
-      //   if (filters.search) {
-      //     params.append('search', filters.search);
-      //   }
-        
-      //   // Coba berbagai format parameter include yang mungkin didukung oleh backend
-      //   params.append('include', 'field.branch');
-      //   params.append('includes', 'field.branch'); // Alternatif format
-      //   params.append('_include', 'field.branch'); // Alternatif format
-      //   params.append('with', 'field.branch'); // Alternatif format
-        
-      //   queryParams = params.toString() ? `?${params.toString()}` : '';
-      // } else {
-      //   // Jika tidak ada filter, tetap tambahkan parameter include
-      //   queryParams = '?include=field.branch&includes=field.branch&_include=field.branch&with=field.branch';
-      // }
-
       const query = new URLSearchParams();
 
       if (filters?.branchId) query.append('branchId', filters.branchId.toString());
@@ -121,30 +84,8 @@ class BookingApi {
       const response = await axiosInstance.get<BookingResponseWithMeta>(
         `/bookings/admin/bookings${queryParams}`
       );
-      
-      console.log("Admin bookings response:", response.data);
-      
-      // Handle format respons yang berbeda-beda
-      // if (response.data && typeof response.data === 'object') {
-      //   if ('data' in response.data && Array.isArray(response.data.data)) {
-      //     return response.data.data;
-      //   }
-      //   else if ('bookings' in response.data && Array.isArray(response.data.bookings)) {
-      //     return response.data.bookings;
-      //   }
-      //   else if (Array.isArray(response.data)) {
-      //     return response.data;
-      //   }
-      //   // Format dengan status dan data
-      //   else if ('status' in response.data && 'data' in response.data && Array.isArray(response.data.data)) {
-      //     return response.data.data;
-      //   }
-      // }
-      
-      // console.error('Unexpected response format:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error fetching all bookings:', error);
       return { data: [], meta: { page: 1, limit: 10, totalItems: 0, totalPages: 1, hasNextPage: false, hasPrevPage: false } };
     }
   }
@@ -156,7 +97,6 @@ class BookingApi {
    */
   async getBranchBookings(branchId: number, filters?: { status?: string; startDate?: string; endDate?: string; search?: string }, params?: {limit?: number, page?: number}): Promise<BookingResponseWithMeta> {
     try {
-      console.log(`Fetching bookings for branch ID: ${branchId} with filters:`, filters);
 
       const query = new URLSearchParams();
 
@@ -176,29 +116,8 @@ class BookingApi {
       const response = await axiosInstance.get<BookingResponseWithMeta>(
         `/bookings/branches/${branchId}/bookings${queryParams}`
       );
-      
-      // console.log(`API Response URL: /bookings/branches/${branchId}/bookings${queryParams}`);
-      // console.log("Raw response from API:", response);
-      // console.log("Branch bookings response:", response.data);
-      
-      // Handle berbagai format respon
-      // if (response.data) {
-      //   if (Array.isArray(response.data)) {
-      //     return response.data;
-      //   }
-      //   else if ('data' in response.data && Array.isArray(response.data.data)) {
-      //     console.log('Response contains data array:', response.data.data);
-      //     return response.data.data;
-      //   }
-      //   else if ('bookings' in response.data && Array.isArray(response.data.bookings)) {
-      //     return response.data.bookings;
-      //   }
-      // }
-      
-      // console.error('Unexpected response format:', response.data);
       return response.data;
     } catch (error) {
-      console.error(`Error fetching bookings for branch ID ${branchId}:`, error);
       return { data: [], meta: { page: 1, limit: 10, totalItems: 0, totalPages: 1, hasNextPage: false, hasPrevPage: false } };
     }
   }
@@ -229,8 +148,6 @@ class BookingApi {
         endpoint = `/bookings/${id}/user?include=field.branch,payment`;
       }
       
-      console.log(`Fetching booking with ID ${id} using endpoint: ${endpoint}`);
-      
       const response = await axiosInstance.get<{ data: Booking } | { booking: Booking } | Booking>(endpoint);
       
       if (response.data && typeof response.data === 'object') {
@@ -245,7 +162,6 @@ class BookingApi {
       
       throw new Error('Unexpected response format');
     } catch (error) {
-      console.error(`Error fetching booking with ID ${id}:`, error);
       throw error;
     }
   }
@@ -257,16 +173,12 @@ class BookingApi {
    */
   async createBooking(data: BookingRequest): Promise<Booking> {
     try {
-      console.log('Original booking data:', data);
       
       // Konversi waktu lokal ke UTC untuk dikirim ke server
       
       // Gabungkan tanggal dan waktu, lalu konversi ke UTC
-      const startDateTime = combineDateAndTime(data.bookingDate, data.startTime);
-      const endDateTime = combineDateAndTime(data.bookingDate, data.endTime);
-      
-      console.log('Local date/time - Start:', startDateTime.toString());
-      console.log('Local date/time - End:', endDateTime.toString());
+      combineDateAndTime(data.bookingDate, data.startTime);
+      combineDateAndTime(data.bookingDate, data.endTime);
       
       // Data yang akan dikirim ke server (format tetap sama, tapi nilai waktu dalam UTC)
       const requestData = {
@@ -277,15 +189,12 @@ class BookingApi {
         userId: data.userId || JSON.parse(localStorage.getItem('user') || '{}').id
       };
       
-      console.log('Sending booking data to server:', JSON.stringify(requestData, null, 2));
-      
       const response = await axiosInstance.post<
         { booking: Booking & { payment?: Payment & { paymentUrl?: string } } } |
         { data: Booking & { payment?: Payment & { paymentUrl?: string } } } |
         (Booking & { payment?: Payment & { paymentUrl?: string } })
       >('/bookings', requestData);
       
-      console.log('Booking API response:', response.data);
       
       // Periksa format respons dan ekstrak data booking dengan benar
       if (response.data && typeof response.data === 'object') {
@@ -305,7 +214,6 @@ class BookingApi {
 
       throw new Error('Format respons tidak valid: ' + JSON.stringify(response.data));
     } catch (error) {
-      console.error('Error creating booking:', error);
       throw error;
     }
   }
@@ -320,7 +228,6 @@ class BookingApi {
       const response = await axiosInstance.delete<{ message: string }>(`/bookings/bookings/${id}`);
       return response.data;
     } catch (error) {
-      console.error(`Error cancelling booking with ID ${id}:`, error);
       throw error;
     }
   }
@@ -362,7 +269,6 @@ class BookingApi {
         return response.data as Payment;
       }
     } catch (error) {
-      console.error(`Error marking payment ${paymentId} as paid:`, error);
       throw error;
     }
   }
@@ -386,7 +292,6 @@ class BookingApi {
         return response.data as Payment;
       }
     } catch (error) {
-      console.error(`Error updating payment ${paymentId} status:`, error);
       throw error;
     }
   }
@@ -400,16 +305,9 @@ class BookingApi {
     try {
       const { branchId, paymentStatus, paymentMethod, ...bookingData } = data;
       
-      console.log(`Creating manual booking for branch ID ${branchId}:`, bookingData);
-      console.log('Payment Status:', paymentStatus);
-      console.log('Payment Method:', paymentMethod);
-      
       // Gabungkan tanggal dan waktu dalam timezone WIB
-      const startDateTime = combineDateAndTime(data.bookingDate, data.startTime);
-      const endDateTime = combineDateAndTime(data.bookingDate, data.endTime);
-      
-      console.log('Local date/time (WIB) - Start:', startDateTime.toString());
-      console.log('Local date/time (WIB) - End:', endDateTime.toString());
+      combineDateAndTime(data.bookingDate, data.startTime);
+      combineDateAndTime(data.bookingDate, data.endTime);
       
       // Gunakan endpoint baru untuk booking admin
       const response = await axiosInstance.post<
@@ -423,7 +321,6 @@ class BookingApi {
         paymentMethod // Sertakan metode pembayaran
       });
 
-      console.log("Response dari API backend:", response.data);
 
       // Handle berbagai format respons dan pastikan payment dan paymentUrl disertakan
       if ('data' in response.data) {
@@ -432,7 +329,6 @@ class BookingApi {
           const paymentUrl = response.data.data.paymentUrl || 
                             (response.data.data.payment && response.data.data.payment.paymentUrl);
                             
-          console.log("Extracted paymentUrl from response.data.data:", paymentUrl);
                             
           const result = {
             ...response.data.data.booking,
@@ -451,7 +347,6 @@ class BookingApi {
         const paymentUrl = response.data.paymentUrl || 
                           (response.data.payment && response.data.payment.paymentUrl);
                           
-        console.log("Extracted paymentUrl from response.data:", paymentUrl);
                           
         const result = {
           ...response.data.booking,
@@ -467,7 +362,6 @@ class BookingApi {
         return response.data as Booking & { payment?: Payment & { paymentUrl?: string } };
       }
     } catch (error) {
-      console.error('Error creating manual booking:', error);
       throw error;
     }
   }

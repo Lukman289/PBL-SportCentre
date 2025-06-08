@@ -8,5 +8,5 @@ interface HistoriesLayoutProps {
 }
 
 export default function HistoriesLayout({ children }: HistoriesLayoutProps) {
-  return <ResponsiveLayout>{children}</ResponsiveLayout>;
+  return <ResponsiveLayout showBottomNav={true}>{children}</ResponsiveLayout>;
 } 

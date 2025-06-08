@@ -8,5 +8,5 @@ interface ProfileLayoutProps {
 }
 
 export default function ProfileLayout({ children }: ProfileLayoutProps) {
-  return <ResponsiveLayout>{children}</ResponsiveLayout>;
+  return <ResponsiveLayout showBottomNav={true}>{children}</ResponsiveLayout>;
 } 

@@ -8,5 +8,5 @@ interface BookingsLayoutProps {
 }
 
 export default function BookingsLayout({ children }: BookingsLayoutProps) {
-  return <ResponsiveLayout>{children}</ResponsiveLayout>;
+  return <ResponsiveLayout showBottomNav={true}>{children}</ResponsiveLayout>;
 } 

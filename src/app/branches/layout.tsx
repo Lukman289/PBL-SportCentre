@@ -8,5 +8,5 @@ interface BranchesLayoutProps {
 }
 
 export default function BranchesLayout({ children }: BranchesLayoutProps) {
-  return <ResponsiveLayout>{children}</ResponsiveLayout>;
+  return <ResponsiveLayout showBottomNav={true}>{children}</ResponsiveLayout>;
 } 

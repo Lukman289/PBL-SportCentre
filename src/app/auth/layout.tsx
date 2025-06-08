@@ -8,5 +8,5 @@ interface AuthLayoutProps {
 }
 
 export default function AuthLayout({ children }: AuthLayoutProps) {
-  return <ResponsiveLayout>{children}</ResponsiveLayout>;
-} 
+  return <ResponsiveLayout showBottomNav={true}>{children}</ResponsiveLayout>;
+}

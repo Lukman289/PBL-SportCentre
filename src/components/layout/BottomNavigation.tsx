@@ -1,14 +1,16 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Search, Calendar, User, MapPin } from 'lucide-react';
+import { Home, Search, Calendar, User, MapPin, LogIn } from 'lucide-react';
 import { useMobile } from '@/context/mobile/MobileContext';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/auth/auth.context';
 
 export function BottomNavigation() {
   const { isMobile, showBottomNav } = useMobile();
   const pathname = usePathname();
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
   if (!isMobile || !showBottomNav) {
     return null;
@@ -38,14 +40,25 @@ export function BottomNavigation() {
       label: 'Cabang',
       href: '/branches',
       active: pathname === '/branches' || pathname.startsWith('/branches/'),
-    },
-    {
+    }
+  ];
+  
+  // Tambahkan tombol Profile jika sudah login, atau tombol Login jika belum
+  if (isAuthenticated) {
+    navItems.push({
       icon: User,
       label: 'Profil',
       href: '/profile',
       active: pathname === '/profile',
-    },
-  ];
+    });
+  } else {
+    navItems.push({
+      icon: LogIn,
+      label: 'Login',
+      href: '/auth/login',
+      active: pathname === '/auth/login',
+    });
+  }
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg">

@@ -3,10 +3,10 @@
 import { ReactNode } from 'react';
 import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 
-interface FieldsLayoutProps {
+interface RegisterLayoutProps {
   children: ReactNode;
 }
 
-export default function FieldsLayout({ children }: FieldsLayoutProps) {
+export default function RegisterLayout({ children }: RegisterLayoutProps) {
   return <ResponsiveLayout showBottomNav={true}>{children}</ResponsiveLayout>;
 } 

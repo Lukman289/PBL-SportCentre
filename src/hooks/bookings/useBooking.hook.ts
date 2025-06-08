@@ -1,8 +1,7 @@
 import { useBookingContext } from "@/context/booking/booking.context";
 
 /**
- * Hook untuk mengakses BookingContext 
- * 
+ * Hook untuk mengakses BookingContext
  * @returns BookingContext yang berisi state dan fungsi-fungsi booking
  */
 export const useBooking = () => {

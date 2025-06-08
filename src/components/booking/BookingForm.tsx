@@ -14,15 +14,16 @@ interface BookingFormProps {
 }
 
 export default function BookingForm({ isAdminBooking = false, onSuccess }: BookingFormProps) {
-  // Menggunakan hook context sesuai dengan jenis user
-  const regularBooking = useBookingContext();
-  const adminBooking = useAdminBooking();
+  // Selalu gunakan BookingContext untuk data umum booking
+  const bookingContext = useBookingContext();
+  // Admin booking hook hanya untuk fungsi createManualBooking
+  const adminHook = useAdminBooking();
   const { showError } = useToastHandler();
+  
   // State untuk metode pembayaran (hanya untuk admin booking)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(PaymentStatus.PAID);
   
-  // Pilih context berdasarkan jenis booking
   const {
     selectedFieldName,
     selectedBranchName,
@@ -33,7 +34,7 @@ export default function BookingForm({ isAdminBooking = false, onSuccess }: Booki
     form,
     onSubmit,
     loading
-  } = isAdminBooking ? adminBooking : regularBooking;
+  } = bookingContext;
 
   // Menggunakan custom hook untuk menghitung durasi
   const { durationInHours } = useDurationCalculator();
@@ -45,20 +46,19 @@ export default function BookingForm({ isAdminBooking = false, onSuccess }: Booki
   // Fungsi untuk menangani submit form
   const handleSubmit = async (data: BookingFormValues) => {
     if (isAdminBooking) {
-      // Untuk admin cabang, gunakan createManualBooking dengan status yang dipilih
       try {
         const bookingData = {
           fieldId: selectedField,
-          userId: adminBooking.user?.id || 0,
-          bookingDate: selectedDate,
-          startTime: selectedStartTime,
-          endTime: selectedEndTime,
+          userId: adminHook.user?.id || 0,
+          bookingDate: selectedDate || "",
+          startTime: selectedStartTime || "",
+          endTime: selectedEndTime || "",
           paymentMethod: paymentMethod,
           paymentStatus: paymentStatus,
-          branchId: adminBooking.selectedBranch || 0
+          branchId: adminHook.selectedBranch || 0
         };
         
-        const result = await adminBooking.createManualBooking(bookingData);
+        const result = await adminHook.createManualBooking(bookingData);
         if (result) {
           // Jika ada paymentUrl dan menggunakan metode online, redirect ke halaman pembayaran
           if (result.payment?.paymentUrl && paymentMethod !== PaymentMethod.CASH) {

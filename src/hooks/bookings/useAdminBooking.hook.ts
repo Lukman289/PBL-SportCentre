@@ -3,7 +3,6 @@ import { useAuth } from "@/context/auth/auth.context";
 import { bookingApi } from "@/api";
 import { useState, useCallback, useEffect } from "react";
 import { Booking, Branch, Field, PaymentMethod, PaymentStatus, User } from "@/types";
-import { BookingFormValues } from "@/context/booking/booking.context";
 import { subscribeToBookingUpdates } from "@/services/socket/booking.socket";
 import { subscribeToFieldAvailability, joinFieldAvailabilityRoom } from "@/services/socket";
 import useToastHandler from "../useToastHandler";
@@ -17,7 +16,6 @@ import useToastHandler from "../useToastHandler";
  */
 export const useAdminBooking = (branchId?: number) => {
   const bookingContext = useBookingContext();
-  const { socketInitialized, setSelectedBranch: setContextBranch, refreshAvailability } = bookingContext;
   const { user } = useAuth();
   const [branchBookings, setBranchBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -30,26 +28,22 @@ export const useAdminBooking = (branchId?: number) => {
     if (branchId) {
       setSelectedBranchState(branchId);
       // Perbarui juga di context booking untuk TimeSlotSelector
-      setContextBranch(branchId);
+      bookingContext.setSelectedBranch(branchId);
       
-      // Refresh ketersediaan lapangan untuk cabang yang baru dipilih
-      setTimeout(() => {
-        refreshAvailability();
-      }, 100);
     } else if (user?.branches && user.branches.length > 0 && !selectedBranch) {
       // Jika tidak ada branchId parameter dan belum ada cabang yang dipilih,
       // tetapi user memiliki cabang yang di-assign, pilih cabang pertama
       const firstBranchId = user.branches[0].branchId;
       setSelectedBranchState(firstBranchId);
       // Perbarui juga di context booking untuk TimeSlotSelector
-      setContextBranch(firstBranchId);
+      bookingContext.setSelectedBranch(firstBranchId);
       
       // Refresh ketersediaan lapangan untuk cabang default
       setTimeout(() => {
-        refreshAvailability();
+        bookingContext.refreshAvailability();
       }, 100);
     }
-  }, [branchId, user?.branches, selectedBranch, setContextBranch, refreshAvailability]);
+  }, [branchId, user?.branches, selectedBranch, bookingContext]);
 
   // Gunakan selectedBranch sebagai adminBranchId
   const adminBranchId = selectedBranch || 0;
@@ -58,13 +52,13 @@ export const useAdminBooking = (branchId?: number) => {
   const setSelectedBranch = useCallback((branchId: number) => {
     setSelectedBranchState(branchId);
     // Perbarui juga di context booking untuk TimeSlotSelector
-    setContextBranch(branchId);
+    bookingContext.setSelectedBranch(branchId);
     
     // Refresh ketersediaan lapangan untuk cabang yang baru dipilih
     setTimeout(() => {
-      refreshAvailability();
+      bookingContext.refreshAvailability();
     }, 100);
-  }, [setContextBranch, refreshAvailability]);
+  }, [bookingContext]);
 
   // Fungsi untuk mengambil semua booking di cabang
   const fetchBranchBookings = useCallback(async () => {
@@ -131,7 +125,7 @@ export const useAdminBooking = (branchId?: number) => {
     };
     
     if (!userId) {
-      const errorMsg = "ID user tidak ditemukan";
+      const errorMsg = "User ID tidak ditemukan";
       showError(errorMsg);
       return null;
     }
@@ -139,8 +133,6 @@ export const useAdminBooking = (branchId?: number) => {
     setLoading(true);
     try {
       const response = await bookingApi.createManualBooking(bookingData);
-      
-      // Pastikan ada payment dan paymentUrl di respons
       
       // Sesuaikan pesan berdasarkan status pembayaran
       const statusText = data.paymentStatus === PaymentStatus.PAID 
@@ -161,7 +153,6 @@ export const useAdminBooking = (branchId?: number) => {
       setBranchBookings(prevBookings => [...prevBookings, response]);
 
       // Refresh ketersediaan lapangan setelah booking berhasil dibuat
-      // Ini akan memperbarui grid ketersediaan lapangan tanpa perlu reload
       if (bookingContext.refreshAvailability) {
         showSuccess("Memperbarui ketersediaan lapangan setelah booking manual...");
         await bookingContext.refreshAvailability();
@@ -193,7 +184,7 @@ export const useAdminBooking = (branchId?: number) => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, bookingContext]);
+  }, [user?.id, bookingContext.refreshAvailability]);
 
   // Fungsi untuk mengubah status pembayaran
   const updatePaymentStatus = useCallback(async (paymentId: number, status: PaymentStatus) => {
@@ -215,7 +206,7 @@ export const useAdminBooking = (branchId?: number) => {
 
   // Subscribe ke socket untuk pembaruan booking real-time
   useEffect(() => {
-    if (!socketInitialized || !adminBranchId) return;
+    if (!bookingContext.socketInitialized || !adminBranchId) return;
 
     // Subscribe ke pembaruan booking melalui socket
     const unsubscribe = subscribeToBookingUpdates(({ booking }) => {
@@ -246,12 +237,11 @@ export const useAdminBooking = (branchId?: number) => {
     return () => {
       unsubscribe();
     };
-  }, [socketInitialized, adminBranchId, fetchBranchBookings]);
+  }, [bookingContext.socketInitialized, adminBranchId, fetchBranchBookings]);
 
   // Subscribe ke socket untuk pembaruan ketersediaan lapangan
   useEffect(() => {
-    if (!socketInitialized || !adminBranchId || !bookingContext.selectedDate) return;
-
+    if (!bookingContext.socketInitialized || !adminBranchId || !bookingContext.selectedDate) return;
 
     // Gabung ke room ketersediaan lapangan berdasarkan tanggal dan cabang
     joinFieldAvailabilityRoom(adminBranchId, bookingContext.selectedDate);
@@ -266,51 +256,25 @@ export const useAdminBooking = (branchId?: number) => {
     return () => {
       unsubscribe();
     };
-  }, [socketInitialized, adminBranchId, bookingContext.selectedDate]);
+  }, [bookingContext.socketInitialized, adminBranchId, bookingContext.selectedDate]);
 
-  // Fungsi untuk membuat booking dengan context yang sama seperti user biasa
-  const createBooking = useCallback(async (data: BookingFormValues) => {
-    if (!user?.id) {
-      setError("User ID tidak ditemukan");
-      return null;
-    }
-
-    // Gunakan ID admin cabang sebagai userId
-    const bookingData = {
-      fieldId: data.fieldId,
-      bookingDate: data.bookingDate,
-      startTime: data.startTime,
-      endTime: data.endTime,
-    };
-
-    try {
-      return await bookingApi.createBooking(bookingData);
-    } catch (error) {
-      showError(error, "Gagal membuat booking");
-      return null;
-    }
-  }, [user?.id]);
-
-  // Return semua fungsi dan state yang dibutuhkan
+  // Return nilai dan fungsi yang diperlukan
   return {
-    // State dari booking context
+    // Data dan fungsi booking umum dari BookingContext
     ...bookingContext,
     
-    // State khusus admin
+    // State dan fungsi khusus admin
     branchBookings,
-    adminBranchId,
+    adminBranchId, 
     user,
     selectedBranch,
     setSelectedBranch,
-    
-    // Fungsi khusus admin
     fetchBranchBookings,
     createManualBooking,
     updatePaymentStatus,
-    createBooking,
     
-    // State loading dan error khusus admin
-    loading,
-    error,
+    // Loading dan error state khusus admin
+    loading: loading || bookingContext.loading,
+    error: error || bookingContext.error,
   };
 }; 

@@ -12,6 +12,7 @@ import useToastHandler from "@/hooks/useToastHandler";
 import { Branch, PaymentMethod } from "@/types";
 import { Combobox, ComboboxOption } from "@/components/ui/combobox";
 import { MapPinIcon } from "lucide-react";
+import { useBookingContext } from "@/context/booking/booking.context";
 
 export default function AdminBookingCreatePage() {
   const { user } = useAuth();
@@ -19,14 +20,16 @@ export default function AdminBookingCreatePage() {
   const [assignedBranches, setAssignedBranches] = useState<Branch[]>([]);
   const [selectedBranchId, setSelectedBranchId] = useState<number | undefined>(undefined);
   const { showLoading, hideLoading } = useGlobalLoading();
+  const bookingContext = useBookingContext();
   
   // Menggunakan custom hook untuk admin cabang dengan branch ID yang dipilih
+  const adminBooking = useAdminBooking(selectedBranchId);
   const {
     loading,
     error,
     setSelectedBranch,
     branches,
-  } = useAdminBooking(selectedBranchId);
+  } = adminBooking;
 
   // Mengelola loading state
   useEffect(() => {
@@ -39,7 +42,7 @@ export default function AdminBookingCreatePage() {
 
   // Dapatkan daftar cabang yang di-assign ke admin cabang
   useEffect(() => {
-    if (user?.branches && user.branches.length > 0 && branches.length > 0) {
+    if (user?.branches && user.branches.length > 0 && branches && branches.length > 0) {
       // Filter cabang yang hanya di-assign ke admin
       const userBranchIds = user.branches.map(branch => branch.branchId);
       
@@ -61,6 +64,17 @@ export default function AdminBookingCreatePage() {
     const numericBranchId = Number(branchId);
     setSelectedBranchId(numericBranchId);
     setSelectedBranch(numericBranchId);
+    
+    // Langsung perbarui BookingContext untuk memastikan data yang konsisten
+    if (branches && branches.length > 0) {
+      const branch = branches.find(b => b.id === numericBranchId);
+      if (branch) {
+        const syntheticEvent = {
+          target: { value: numericBranchId.toString() }
+        } as React.ChangeEvent<HTMLSelectElement>;
+        bookingContext.branchChanged(syntheticEvent);
+      }
+    }
   };
 
   // Handler untuk ketika booking berhasil dibuat
@@ -89,6 +103,8 @@ export default function AdminBookingCreatePage() {
     showError(error, 'Gagal memuat data cabang');
   }
 
+  // Buat ID unik untuk komponen yang bergantung pada cabang
+  const componentKey = `branch-${selectedBranchId || 'default'}-${Date.now()}`;
 
   // Main render
   return (
@@ -113,12 +129,18 @@ export default function AdminBookingCreatePage() {
 
       <div className="grid gap-6 md:grid-cols-3">
         <div className="md:col-span-2">
-          <TimeSlotSelector key={`timeslot-${selectedBranchId}`} />
+          {/* Gunakan key yang selalu berubah saat cabang berubah */}
+          <TimeSlotSelector key={componentKey} />
         </div>
         
         <div className="md:col-span-1">
           <div className="sticky top-4">
-            <BookingForm isAdminBooking={true} onSuccess={handleBookingSuccess} key={`bookingform-${selectedBranchId}`} />
+            {/* Gunakan key yang selalu berubah saat cabang berubah */}
+            <BookingForm 
+              isAdminBooking={true} 
+              onSuccess={handleBookingSuccess} 
+              key={componentKey} 
+            />
           </div>
         </div>
       </div>

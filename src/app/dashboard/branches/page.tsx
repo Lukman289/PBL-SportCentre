@@ -130,7 +130,7 @@ export default function BranchesPage() {
             Kelola semua cabang perusahaan Anda
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center justify-between">
           <Button variant="outline" onClick={handleRefresh} disabled={isLoading}>
             <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             {isLoading ? 'Memuat...' : 'Refresh'}
@@ -232,14 +232,6 @@ export default function BranchesPage() {
               {/* Pagination Controls */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between px-6 py-4 border-t">
-                  <div className="text-sm text-muted-foreground">
-                    Menampilkan{' '}
-                    <span className="font-medium">
-                      {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, branches.length)}
-                    </span>{' '}
-                    dari <span className="font-medium">{branches.length}</span> cabang
-                  </div>
-                  
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
@@ -260,7 +252,9 @@ export default function BranchesPage() {
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
+                  </div>
 
+                  <div className="flex items-center space-x-2">
                     {getPageNumbers().map((pageNum, index) => (
                       <Button
                         key={index}
@@ -273,7 +267,9 @@ export default function BranchesPage() {
                         {pageNum}
                       </Button>
                     ))}
+                  </div>
 
+                  <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
                       size="sm"

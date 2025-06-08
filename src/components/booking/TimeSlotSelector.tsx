@@ -130,28 +130,34 @@ export default function TimeSlotSelector() {
         </div>
       </div>
       
-      <div className="overflow-x-auto overscroll-x-contain scroll-smooth -webkit-overflow-scrolling-touch relative" style={{maxWidth: '100%', WebkitOverflowScrolling: 'touch'}}>
+      <div className="overflow-x-auto scroll-smooth relative" style={{maxWidth: '100%', WebkitOverflowScrolling: 'touch'}}>
         <table className="w-full border-collapse">
           <thead>
-            <th className="min-w-[180px] w-[180px] max-w-[180px] border p-3 text-left font-medium bg-gray-50 sticky left-0 z-10">
-            </th>
-                {timeSlots.map((time, index) => (
-                <th key={index} className="min-w-[80px] w-[80px] border p-2 text-center font-medium text-xs sm:text-sm text-gray-700 bg-gray-200">
+            <tr>
+              <th className="min-w-[160px] w-[160px] border p-2 bg-gray-50 sticky left-0 z-10"></th>
+              {timeSlots.map((time, index) => (
+                <th
+                  key={index}
+                  className="min-w-[70px] w-[70px] border p-1 text-center text-[10px] sm:text-xs font-medium bg-gray-200 text-gray-700"
+                >
                   {time}
                 </th>
               ))}
+            </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-200 text-[12px] sm:text-sm">
             {filteredFields.map((field) => (
-              <tr 
-                key={field.id} 
+              <tr
+                key={field.id}
                 className={`hover:bg-gray-50/80 transition-colors ${
-                  field.name.includes("Sepak Bola Mini A") ? "bg-blue-50" : ""
+                  field.name.includes('Sepak Bola Mini A') ? 'bg-gray-50' : ''
                 }`}
               >
-                <td className={`min-w-[180px] w-[180px] max-w-[180px] border p-3 font-medium text-gray-800 sticky left-0 z-10 shadow-sm ${
-                  field.name.includes("Sepak Bola Mini A") ? "bg-blue-50 font-semibold" : "bg-gray-50"
-                }`}>
+                <td
+                  className={`min-w-[160px] w-[160px] border p-2 sticky left-0 z-10 font-medium text-gray-800 shadow-sm ${
+                    field.name.includes('Sepak Bola Mini A') ? 'bg-gray-50 font-semibold' : 'bg-gray-50'
+                  }`}
+                >
                   <div className="truncate" title={field.name}>
                     {field.name}
                   </div>
@@ -160,41 +166,39 @@ export default function TimeSlotSelector() {
                   const status = getTimeSlotStatus(field, time);
                   const isDisabled = isTimeSlotDisabled(field, time);
                   const isInRange = isInSelectedRange(field, time);
-                  
-                  let cellClass = "";
+
+                  let cellClass = '';
                   let content = null;
-                  
+
                   if (selectedFieldId === field.id && selectedStartTime === time) {
-                    cellClass = "bg-black text-white";
+                    cellClass = 'bg-black text-white';
                     content = <div className="text-xs font-bold">Mulai</div>;
                   } else if (selectedFieldId === field.id && selectedEndTime === time) {
-                    cellClass = "bg-black text-white";
+                    cellClass = 'bg-black text-white';
                     content = <div className="text-xs font-bold">Selesai</div>;
                   } else if (isInRange) {
-                    cellClass = "bg-gray-800 text-white";
+                    cellClass = 'bg-gray-800 text-white';
                     content = <div className="w-2 h-2 rounded-full bg-white mx-auto"></div>;
-                  } else if (status === "Terpesan") {
-                    cellClass = "bg-red-100 text-red-700 border border-red-200";
+                  } else if (status === 'Terpesan') {
+                    cellClass = 'bg-red-100 text-red-700 border border-red-200';
                     content = <XIcon className="h-4 w-4 mx-auto" />;
-                  } else if (status === "Maintenance") {
-                    cellClass = "bg-yellow-100 text-yellow-700 border border-yellow-200";
+                  } else if (status === 'Maintenance') {
+                    cellClass = 'bg-yellow-100 text-yellow-700 border border-yellow-200';
                     content = <AlertTriangleIcon className="h-4 w-4 mx-auto" />;
-                  } else if (status === "Tersedia") {
-                    cellClass = "bg-green-100 text-green-700 border border-green-200";
+                  } else if (status === 'Tersedia') {
+                    cellClass = 'bg-green-100 text-green-700 border border-green-200';
                     content = <CheckIcon className="h-4 w-4 mx-auto" />;
                   } else {
-                    cellClass = "bg-gray-100 text-gray-600";
+                    cellClass = 'bg-gray-100 text-gray-600';
                     content = <XIcon className="h-4 w-4 mx-auto" />;
                   }
-                  
+
                   return (
                     <Tooltip key={index} delayDuration={300}>
                       <TooltipTrigger asChild>
-                        <td 
-                          className={`min-w-[80px] w-[80px] border text-center h-[45px] ${cellClass} ${
-                            isDisabled 
-                            ? 'cursor-not-allowed opacity-80' 
-                            : 'cursor-pointer hover:opacity-90 active:scale-95'
+                        <td
+                          className={`min-w-[70px] w-[70px] border text-center h-[40px] ${cellClass} ${
+                            isDisabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:opacity-90 active:scale-95'
                           } transition-all duration-150`}
                           onClick={() => !isDisabled && handleTimeSlotClick(time, field)}
                         >
@@ -222,6 +226,8 @@ export default function TimeSlotSelector() {
       {/* Petunjuk scrolling */}
       <div className="p-2 bg-gray-50 text-center border-t border-gray-200 text-xs text-gray-500 flex items-center justify-center">
         <span>Geser ke kanan untuk melihat lebih banyak waktu</span>
+        <ChevronRightIcon className="h-4 w-4 ml-1 animate-pulse" />
+        <ChevronRightIcon className="h-4 w-4 ml-1 animate-pulse" />
         <ChevronRightIcon className="h-4 w-4 ml-1 animate-pulse" />
       </div>
     </div>

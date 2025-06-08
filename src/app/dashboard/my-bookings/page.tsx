@@ -98,7 +98,7 @@ export default function MyBookingsPage() {
     }
   };
 
-  const paymentStatusOptions = Object.entries(PaymentStatus).map(([value]) => ({
+  const paymentStatusOptions = Object.entries(PaymentStatus).map(([_, value]) => ({
     label: getStatusText(value),
     value: value,
   }));
@@ -113,7 +113,7 @@ export default function MyBookingsPage() {
         <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>Histori Booking</CardTitle>
-              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              <div className="flex flex-col sm:flex-row gap-3 w-auto">
                 <select
                   value={statusFilter}
                   onChange={handleFilterChange}

@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Branch, Field } from '@/types';
 import { fieldApi } from '@/api';
-import { Search, X } from 'lucide-react';
+import { RefreshCw, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import Image from 'next/image';
@@ -179,7 +179,7 @@ export default function FieldPage() {
       >
         <h1 className="text-3xl font-bold">Daftar Lapangan</h1>
         
-        <motion.div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+        <motion.div className="flex flex-row gap-3 w-full justify-between md:w-auto">
           <select
             value={selectedBranch}
             onChange={handleBranchChange}
@@ -194,7 +194,8 @@ export default function FieldPage() {
           </select>
           
           <Button variant="outline" onClick={handleRefresh}>
-            Muat Ulang
+            <span className="hidden sm:block">Muat Ulang</span>
+            <RefreshCw size={16} className="block sm:hidden" />
           </Button>
         </motion.div>
       </motion.div>

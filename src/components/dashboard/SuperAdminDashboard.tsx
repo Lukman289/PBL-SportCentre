@@ -78,7 +78,7 @@ export const SuperAdminDashboard = () => {
 
   return (
     <div className="animate-fade-in-up">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 flex-col md:flex-row gap-4">
         <div>
           <h1 className="text-2xl font-bold">Dashboard Super Admin</h1>
           <p className="text-sm text-muted-foreground mt-1">

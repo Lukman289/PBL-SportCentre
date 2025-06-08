@@ -55,7 +55,7 @@ export function TestimonialsSection({
 
   return (
     <motion.section 
-      className={`py-20 ${bgClass} rounded-3xl my-16`}
+      className={`py-20 ${bgClass} md:rounded-3xl my-16`}
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}

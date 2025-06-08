@@ -111,14 +111,14 @@ export const OwnerCabangDashboard = () => {
 
   return (
     <div className="animate-fade-in-up">
-      <div className="flex items-center justify-between mb-6">
-        <div>
+      <div className="flex flex-col md:flex-row items-center justify-between mb-6">
+        <div className="mb-4 md:mb-0">
           <h1 className="text-2xl font-bold">Dashboard Owner Cabang</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Gambaran performa bisnis Anda {getPeriodText(selectedPeriod)}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-5 lg:gap-2">
           <PeriodFilter 
             onChange={setSelectedPeriod} 
             defaultValue={selectedPeriod}

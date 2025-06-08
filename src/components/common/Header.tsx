@@ -305,7 +305,7 @@ export function Header() {
                       <SheetClose asChild>
                         <Button
                           variant="destructive"
-                          className="w-full rounded-full transition-all duration-300 hover:scale-105"
+                          className="w-full text-white rounded-full transition-all duration-300 hover:scale-105"
                           onClick={handleLogout}
                         >
                           <LogOut size={16} className="mr-2" />

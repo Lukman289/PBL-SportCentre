@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 interface SidebarProps {
   isOpen: boolean;
   role: Role;
+  onLinkClick?: () => void;
 }
 
 // Menu konfigurasi berdasarkan role
@@ -37,7 +38,7 @@ const menuItemsByRole = {
   ],
 };
 
-export default function Sidebar({ isOpen, role }: SidebarProps) {
+export default function Sidebar({ isOpen, role, onLinkClick }: SidebarProps) {
   const pathname = usePathname();
   const menuItems = menuItemsByRole[role] || menuItemsByRole[Role.USER];
   const activeItem = getActiveItem(pathname, menuItems);
@@ -61,7 +62,7 @@ export default function Sidebar({ isOpen, role }: SidebarProps) {
   }
 
   return (
-    <div
+    <aside
       className={cn(
         "fixed inset-y-0 left-0 z-20 w-64 transform bg-background border-r border-border transition-all duration-300 ease-in-out",
         isOpen ? "translate-x-0" : "-translate-x-full"
@@ -124,7 +125,7 @@ export default function Sidebar({ isOpen, role }: SidebarProps) {
           Keluar
         </Link>
       </div>
-    </div>
+    </aside>
   );
 }
 

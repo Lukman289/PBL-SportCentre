@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/table';
 import { User, Role } from '@/types';
 import { useAuth } from '@/context/auth/auth.context';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Search, X } from 'lucide-react';
 import { userApi } from '@/api';
 import useToastHandler from '@/hooks/useToastHandler';
 
@@ -229,7 +229,8 @@ function UsersContent() {
             onClick={handleRefresh}
             disabled={isLoading}
           >
-            {isLoading ? 'Memuat...' : 'Refresh'}
+            <span className="hidden sm:block">{isLoading ? 'Memuat...' : 'Refresh'}</span>
+            <RefreshCw size={16} className="block sm:hidden" />
           </Button>
           {/* Hanya super admin yang bisa menambah user */}
           {user?.role === Role.SUPER_ADMIN && (
@@ -347,10 +348,6 @@ function UsersContent() {
               {/* Pagination Controls */}
               {totalPages > 1 && filteredUsers.length > itemsPerPage && (
                 <div className="flex items-center justify-between mt-6">
-                  <div className="text-sm text-muted-foreground">
-                    Halaman {currentPage} dari {totalPages}
-                  </div>
-                  
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
@@ -371,7 +368,9 @@ function UsersContent() {
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
+                  </div>
 
+                  <div className="flex items-center space-x-2">
                     {getPageNumbers().map((pageNum, index) => (
                       <Button
                         key={index}
@@ -384,7 +383,9 @@ function UsersContent() {
                         {pageNum}
                       </Button>
                     ))}
+                  </div>
 
+                  <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
                       size="sm"

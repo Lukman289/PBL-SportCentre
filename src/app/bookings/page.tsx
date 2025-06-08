@@ -122,54 +122,51 @@ export default function BookingsPage() {
 
   // Main render
   return (
-    <motion.div 
-      className="container mx-auto mt-8 py-8 px-4"
+    <motion.div
+      className="container mx-auto mt-4 md:mt-8 py-6 px-2 sm:px-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Header */}
-      <motion.div 
-        className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4"
+      <motion.div
+        className="flex flex-row justify-between items-start md:items-center mb-6 mr-2 gap-4"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-3xl font-bold">Reservasi Lapangan</h1>
-        
-        <Button 
-          variant="outline" 
+        <h1 className="text-2xl sm:text-3xl font-bold">Reservasi Lapangan</h1>
+        <Button
+          variant="outline"
           onClick={refreshAvailability}
           disabled={refreshing}
-          className="w-full md:w-auto"
+          className="w-fitt lg:w-fauto text-sm"
         >
           {refreshing ? (
             <>
               <RefreshCwIcon className="animate-spin h-4 w-4 mr-2" />
-              <span>Memperbarui Data...</span>
+              Memperbarui Data...
             </>
           ) : (
             <>
-              <RefreshCwIcon className="h-4 w-4 mr-2" />
-              <span>Muat Ulang</span>
+              <RefreshCwIcon size={16} className="lg:mr-2"/>
+              <span className="hidden sm:block">Muat Ulang</span>
             </>
           )}
         </Button>
       </motion.div>
 
-      {/* Filter Area */}
-      <motion.div 
-        className="flex flex-col sm:flex-row gap-4 mb-8"
+      <motion.div
+        className="flex flex-col sm:flex-row gap-4 mb-6"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        <motion.div className="relative flex-1" variants={itemVariants}>
+        <motion.div className="w-full sm:w-1/2" variants={itemVariants}>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Pilih Cabang
           </label>
-          <Select 
-            value={selectedBranch?.toString() || ""} 
+          <Select
+            value={selectedBranch?.toString() || ""}
             onValueChange={handleBranchChange}
           >
             <SelectTrigger className="w-full">
@@ -184,7 +181,9 @@ export default function BookingsPage() {
                   <div className="flex flex-col">
                     <span>{branch.name}</span>
                     {branch.location && (
-                      <span className="text-xs text-muted-foreground">{branch.location}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {branch.location}
+                      </span>
                     )}
                   </div>
                 </SelectItem>
@@ -193,8 +192,7 @@ export default function BookingsPage() {
           </Select>
         </motion.div>
 
-        {/* Pemilih Tanggal */}
-        <motion.div className="relative flex-1" variants={itemVariants}>
+        <motion.div className="w-full sm:w-1/2" variants={itemVariants}>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Pilih Tanggal
           </label>
@@ -206,7 +204,9 @@ export default function BookingsPage() {
               >
                 <CalendarIcon className="mr-2 h-4 w-4 text-gray-500" />
                 {selectedDate
-                  ? format(new Date(selectedDate), "EEEE, dd MMMM yyyy", { locale: id })
+                  ? format(new Date(selectedDate), "EEEE, dd MMMM yyyy", {
+                      locale: id,
+                    })
                   : "Pilih Tanggal"}
               </Button>
             </PopoverTrigger>
@@ -223,10 +223,9 @@ export default function BookingsPage() {
         </motion.div>
       </motion.div>
 
-      {/* Informasi yang dipilih */}
       {selectedBranch && selectedDate && (
-        <motion.div 
-          className="mb-6 px-4 py-3 bg-blue-50 rounded-lg border border-blue-100 flex flex-wrap items-center gap-3"
+        <motion.div
+          className="mb-6 px-4 py-3 bg-blue-50 rounded-lg border border-blue-100 flex flex-col sm:flex-row items-start sm:items-center gap-3"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3 }}
@@ -235,35 +234,32 @@ export default function BookingsPage() {
             <MapPinIcon className="h-4 w-4 mr-1 text-blue-500" />
             <span className="text-sm font-medium">{selectedBranchName}</span>
           </div>
-          <div className="w-1 h-4 bg-blue-200 rounded-full mx-1"></div>
+          <div className="w-full sm:w-1 h-4 bg-blue-200 sm:rounded-full sm:mx-1"></div>
           <div className="flex items-center text-blue-800">
             <CalendarIcon className="h-4 w-4 mr-1 text-blue-500" />
             <span className="text-sm font-medium">{formattedDate}</span>
           </div>
-          <div className="ml-auto flex items-center text-green-700 bg-green-50 px-2 py-1 rounded-full text-xs">
+          <div className="sm:ml-auto flex items-center text-green-700 bg-green-50 px-2 py-1 rounded-full text-xs">
             <CheckIcon className="h-3 w-3 mr-1" />
             <span>Ready</span>
           </div>
         </motion.div>
       )}
 
-      <motion.div 
-        className="grid gap-8 md:grid-cols-3"
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-3 gap-6"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        <motion.div 
-          className="md:col-span-2"
-          variants={itemVariants}
-        >
+        <motion.div className="md:col-span-2" variants={itemVariants}>
           <Card className="shadow-md overflow-hidden border-gray-200 hover:shadow-lg transition-shadow duration-300">
             <CardContent className="p-0">
               <TimeSlotSelector />
             </CardContent>
           </Card>
-          
-          <motion.div 
+
+          <motion.div
             className="mt-4 rounded-lg bg-gray-50 border border-gray-200 p-4 flex items-start shadow-sm hover:shadow-md transition-shadow duration-300"
             whileHover={{ y: -2 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}

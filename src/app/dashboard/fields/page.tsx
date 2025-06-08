@@ -204,7 +204,7 @@ export default function FieldPage() {
   }
 
   return (
-    <div className="container mx-auto mt-8 py-8 px-4">
+    <div className="container mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Manajemen Lapangan</h1>
         <Button onClick={handleAddField}>

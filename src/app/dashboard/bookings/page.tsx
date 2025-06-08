@@ -134,13 +134,15 @@ export default function BookingsPage() {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+      <div className="flex flex-row justify-between items-start md:items-center mb-6 gap-4">
         <PageTitle title="Daftar Booking" />
         
         {user?.role === Role.ADMIN_CABANG && (
           <Link href="/dashboard/bookings/create">
             <Button variant="default" className="flex items-center gap-2">
-              <Plus size={16} /> Tambah Booking Manual
+              <Plus size={16} className="block sm:hidden"/> 
+              <span className="hidden sm:block">Tambah</span>
+              <span>Booking</span>
             </Button>
           </Link>
         )}

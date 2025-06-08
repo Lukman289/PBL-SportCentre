@@ -19,8 +19,14 @@ import {
   PopoverTrigger 
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { useMobileLayout } from "@/hooks/useMobileLayout";
 
 export default function BookingsPage() {
+  // Mengaktifkan bottom navigation di halaman ini
+  useMobileLayout({
+    includePaths: ['/bookings', '/bookings/*']
+  });
+  
   const { showSuccess } = useToastHandler();
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [branchSearchOpen, setBranchSearchOpen] = useState(false);

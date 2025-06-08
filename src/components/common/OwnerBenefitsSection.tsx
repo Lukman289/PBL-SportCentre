@@ -56,15 +56,15 @@ export function OwnerBenefitsSection() {
               alt="Sport Center Management"
               width={600}
               height={400}
-              className="rounded-xl shadow-md object-cover h-[400px]"
+              className=" md:rounded-xl shadow-md object-cover h-[400px]"
             />
           </motion.div>
           
           <motion.div
-            className="flex flex-col justify-center"
+            className="flex flex-col justify-center "
             variants={fadeInUp}
           >
-            <h3 className="text-2xl font-bold mb-6">Tingkatkan Efisiensi Operasional</h3>
+            <h3 className="text-2xl font-bold mb-6 text-center">Tingkatkan Efisiensi Operasional</h3>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <div className="bg-primary/10 p-2 rounded-full mt-1">
@@ -104,7 +104,7 @@ export function OwnerBenefitsSection() {
               </li>
             </ul>
             
-            <div className="mt-8">
+            <div className="mt-8 items-center lg:items-start flex justify-center lg:justify-start">
               <Link href="/auth/register?role=owner">
                 <Button size="lg" className="gap-2">
                   Mulai Sekarang <ArrowRight className="w-4 h-4" />

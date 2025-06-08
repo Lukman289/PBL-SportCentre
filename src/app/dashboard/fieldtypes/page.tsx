@@ -149,7 +149,7 @@ export default function FieldTypesPage() {
                     <h1 className="text-2xl font-bold tracking-tight">Manajemen Tipe Field</h1>
                     <p className="text-muted-foreground">Kelola semua tipe field dalam sistem</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center justify-between">
                     <Button variant="outline" onClick={handleRefresh} disabled={isLoading}>
                         <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
                         {isLoading ? 'Memuat...' : 'Refresh'}

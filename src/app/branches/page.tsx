@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Branch } from '@/types';
-import { Search, X } from 'lucide-react';
+import { RefreshCw, Search, X } from 'lucide-react';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import useToastHandler from '@/hooks/useToastHandler';
 import { motion } from 'framer-motion';
@@ -118,7 +118,8 @@ export default function BranchesPage() {
       >
         <h1 className="text-3xl font-bold">Daftar Cabang</h1>
         <Button variant="outline" onClick={handleRefresh}>
-          Muat Ulang
+          <span className="hidden sm:block">Muat Ulang</span>
+          <RefreshCw size={16} className="block sm:hidden" />
         </Button>
       </motion.div>
 

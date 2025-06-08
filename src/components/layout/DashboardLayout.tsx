@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useState, useEffect, useRef } from 'react';
 import Sidebar from './Sidebar';
 import { useAuth } from '@/context/auth/auth.context';
 import { Role } from '@/types';
@@ -12,6 +12,7 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { user, isLoading } = useAuth();
+  const layoutRef = useRef<HTMLDivElement>(null);
 
   // Responsive sidebar
   useEffect(() => {
@@ -23,13 +24,27 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       }
     };
 
-    // Setup on mount
     handleResize();
     window.addEventListener('resize', handleResize);
-
-    // Cleanup
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Otomatis tutup sidebar pada tampilan mobile
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        layoutRef.current &&
+        !layoutRef.current.contains(event.target as Node) &&
+        window.innerWidth < 768 &&
+        isSidebarOpen
+      ) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSidebarOpen]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -49,9 +64,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      <Sidebar isOpen={isSidebarOpen} role={user.role} />
-      
-      <div 
+      <Sidebar
+        isOpen={isSidebarOpen}
+        role={user.role}
+        onLinkClick={() => {
+          if (window.innerWidth < 768) {
+            setIsSidebarOpen(false);
+          }
+        }}
+      />
+
+      <div
+        ref={layoutRef}
         className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
           isSidebarOpen ? 'md:ml-64' : 'ml-0'
         } overflow-hidden`}
@@ -80,20 +104,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </svg>
           </button>
           <div className="font-medium text-foreground">
-            Dashboard {user.role === Role.SUPER_ADMIN 
-              ? 'Super Admin' 
+            Dashboard {user.role === Role.SUPER_ADMIN
+              ? 'Super Admin'
               : user.role === Role.ADMIN_CABANG
               ? 'Admin Cabang'
               : user.role === Role.OWNER_CABANG
               ? 'Owner Cabang'
-              : 'Pengguna'
-            }
+              : 'Pengguna'}
           </div>
         </header>
-        <main className="p-6 overflow-auto flex-1 bg-background">
-          {children}
-        </main>
+        <main className="p-6 overflow-auto flex-1 bg-background">{children}</main>
       </div>
     </div>
   );
-} 
+}

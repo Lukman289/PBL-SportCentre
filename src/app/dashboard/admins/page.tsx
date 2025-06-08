@@ -18,12 +18,11 @@ import { useAuth } from '@/context/auth/auth.context';
 import { userApi } from '@/api/user.api';
 import { branchApi } from '@/api/branch.api';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
-import { Search, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 
 export default function AdminsPage() {
   const [admins, setAdmins] = useState<BranchAdmin[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
-  // const [adminsPaginate, setAdminsPaginate] = useState<BranchAdmin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
@@ -336,7 +335,8 @@ export default function AdminsPage() {
                 disabled={currentPage === 1} 
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               >
-                Sebelumnya
+                <ChevronLeft className="h-4 w-4" />
+                <span className="hidden md:block">Sebelumnya</span>
               </Button>
               <span className="text-sm text-gray-500">
                 Halaman {currentPage} dari {Math.ceil(totalItems / maxData)}
@@ -346,7 +346,8 @@ export default function AdminsPage() {
                 disabled={currentPage >= Math.ceil(totalItems / maxData)} 
                 onClick={() => setCurrentPage((prev) => prev + 1)}
               >
-                Selanjutnya
+                <span className="hidden md:block">Selanjutnya</span>
+                <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           )}

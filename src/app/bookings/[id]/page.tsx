@@ -29,8 +29,13 @@ import {
 import { Ban, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import useToastHandler from "@/hooks/useToastHandler";
+import { useMobileLayout } from "@/hooks/useMobileLayout";
 
 export default function BookingDetailPage() {
+  useMobileLayout({
+    includePaths: ['/bookings/*']
+  });
+
   const params = useParams();
   const { showError, showSuccess } = useToastHandler();
   const [booking, setBooking] = useState<Booking | null>(null);

@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import useAuth from '@/hooks/useAuth.hook';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import useToastHandler from '@/hooks/useToastHandler';
+import { useMobileLayout } from '@/hooks/useMobileLayout';
 
 const loginSchema = z.object({
   identifier: z.string().min(1, 'Email atau nomor telepon wajib diisi'),
@@ -22,6 +23,10 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  useMobileLayout({
+    includePaths: ['/auth/login']
+  });
+
   const router = useRouter();
   const { login } = useAuth();
   const { withLoading } = useGlobalLoading();

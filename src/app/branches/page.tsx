@@ -11,8 +11,13 @@ import { RefreshCw, Search, X } from 'lucide-react';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import useToastHandler from '@/hooks/useToastHandler';
 import { motion } from 'framer-motion';
+import { useMobileLayout } from '@/hooks/useMobileLayout';
 
 export default function BranchesPage() {
+  useMobileLayout({
+    includePaths: ['/branches', '/branches/*']
+  });
+
   const [branches, setBranches] = useState<Branch[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searched, setSearched] = useState(false);

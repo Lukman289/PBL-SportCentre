@@ -1,11 +1,12 @@
 'use client';
 
-import { MainLayout } from '@/components/layout/MainLayout';
+import { ReactNode } from 'react';
+import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 
-export default function FieldsLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return <MainLayout>{children}</MainLayout>;
+interface FieldsLayoutProps {
+  children: ReactNode;
+}
+
+export default function FieldsLayout({ children }: FieldsLayoutProps) {
+  return <ResponsiveLayout>{children}</ResponsiveLayout>;
 } 

@@ -11,8 +11,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import Image from 'next/image';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import useToastHandler from '@/hooks/useToastHandler';
+import { useMobileLayout } from '@/hooks/useMobileLayout';
 
 export default function BranchDetailPage() {
+  // Mengaktifkan bottom navigation di halaman ini
+  useMobileLayout({
+    includePaths: ['/branches/*']
+  });
+
   const params = useParams<{ id: string }>();
   const [branch, setBranch] = useState<Branch | null>(null);
   const [fields, setFields] = useState<Field[]>([]);

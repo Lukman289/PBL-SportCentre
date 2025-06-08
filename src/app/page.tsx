@@ -18,8 +18,14 @@ import {
   JoinStepsSection,
   FeatureComparisonSection
 } from "@/components/common";
+import { useMobileLayout } from "@/hooks/useMobileLayout";
 
 export default function HomePage() {
+  // Mengaktifkan bottom navigation di halaman ini
+  useMobileLayout({
+    includePaths: ['/']
+  });
+
   const [featuredBranches, setFeaturedBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalBranches, setTotalBranches] = useState(0);
@@ -37,6 +43,7 @@ export default function HomePage() {
           setFeaturedBranches([]);
         }
       } catch (error) {
+        console.log(error);
         setFeaturedBranches([]);
       } finally {
         setIsLoading(false);
@@ -48,6 +55,7 @@ export default function HomePage() {
         const response = await fieldApi.getAllFields();
         setTotalFields(response.meta?.totalItems || 0);
       } catch (error) {
+        console.log(error);
         setTotalFields(0);
       }
     }

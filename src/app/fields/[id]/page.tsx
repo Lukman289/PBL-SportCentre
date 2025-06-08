@@ -12,8 +12,13 @@ import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import useToastHandler from '@/hooks/useToastHandler';
+import { useMobileLayout } from '@/hooks/useMobileLayout';
 
 export default function FieldDetailPage() {
+  useMobileLayout({
+    includePaths: ['/fields/*']
+  });
+
   const params = useParams();
   const fieldIdParam = params?.id as string;
   const { showError } = useToastHandler();
@@ -43,9 +48,9 @@ export default function FieldDetailPage() {
           } else {
             throw new Error('Data lapangan tidak ditemukan.');
           }
-        } catch (error) {
+        } catch (error: unknown) {
           setField(null);
-          showError("Gagal memuat data lapangan. Silakan coba lagi nanti.");
+          showError(error, "Gagal memuat data lapangan. Silakan coba lagi nanti.");
         } finally {
           setLoading(false);
         }

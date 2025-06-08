@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
+import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -8,8 +9,9 @@ interface MainLayoutProps {
 
 export function HomeLayout({ children }: MainLayoutProps) {
   return (
-    <div className="flex flex-col w-full min-h-screen relative overflow-hidden">
-      {/* Elemen dekoratif - lingkaran besar di pojok kanan atas dengan animasi */}
+    <ResponsiveLayout>
+      <div className="flex flex-col w-full min-h-screen relative overflow-hidden">
+        {/* Elemen dekoratif - lingkaran besar di pojok kanan atas dengan animasi */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-primary/5 -translate-y-1/2 translate-x-1/3 blur-3xl animate-pulse-slow" />
       
       {/* Elemen dekoratif - lingkaran kecil di pojok kiri bawah dengan animasi */}
@@ -85,6 +87,7 @@ export function HomeLayout({ children }: MainLayoutProps) {
         .animate-delay-800 { animation-delay: 0.8s; }
         .animate-delay-900 { animation-delay: 0.9s; }
       `}</style>
-    </div>
+      </div>
+    </ResponsiveLayout>
   );
 } 

@@ -1,11 +1,12 @@
 'use client';
 
-import { MainLayout } from '@/components/layout/MainLayout';
+import { ReactNode } from 'react';
+import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 
-export default function BranchesLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return <MainLayout>{children}</MainLayout>;
+interface BranchesLayoutProps {
+  children: ReactNode;
+}
+
+export default function BranchesLayout({ children }: BranchesLayoutProps) {
+  return <ResponsiveLayout>{children}</ResponsiveLayout>;
 } 

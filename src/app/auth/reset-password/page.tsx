@@ -5,8 +5,14 @@ import { Suspense, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getResetPasswordToken } from "@/utils/cookie.utils";
+import { useMobileLayout } from "@/hooks/useMobileLayout";
 
 function ResetPasswordContent() {
+  // Mengaktifkan bottom navigation di halaman ini
+  useMobileLayout({
+    includePaths: ['/auth/reset-password']
+  });
+
   const router = useRouter();
 
   useEffect(() => {

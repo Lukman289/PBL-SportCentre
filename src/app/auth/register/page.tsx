@@ -23,6 +23,7 @@ import useAuth from '@/hooks/useAuth.hook';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import { Role } from '@/types';
 import useToastHandler from '@/hooks/useToastHandler';
+import { useMobileLayout } from '@/hooks/useMobileLayout';
 
 const registerSchema = z
   .object({
@@ -45,6 +46,10 @@ const registerSchema = z
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
+  useMobileLayout({
+    includePaths: ['/auth/register']
+  });
+
   const router = useRouter();
   const { register } = useAuth();
   const { withLoading } = useGlobalLoading();

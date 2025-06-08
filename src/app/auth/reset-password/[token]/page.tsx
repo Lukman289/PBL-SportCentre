@@ -18,8 +18,14 @@ import { ResetPasswordRequest } from "@/types";
 import { Loader2 } from "lucide-react";
 import { setResetPasswordToken, getResetPasswordToken } from "@/utils/cookie.utils";
 import useToastHandler from "@/hooks/useToastHandler";
+import { useMobileLayout } from "@/hooks/useMobileLayout";
 
 export default function ResetPasswordTokenPage() {
+  // Mengaktifkan bottom navigation di halaman ini
+  useMobileLayout({
+    includePaths: ['/auth/reset-password/*']
+  });
+
   const router = useRouter();
   const { showError, showSuccess } = useToastHandler();
   const params = useParams<{ token: string }>();

@@ -21,8 +21,14 @@ import { useToast } from '@/components/ui/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { use } from 'react';
 import useToastHandler from '@/hooks/useToastHandler';
+import { useMobileLayout } from '@/hooks/useMobileLayout';
 
 export default function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  // Mengaktifkan bottom navigation di halaman ini
+  useMobileLayout({
+    includePaths: ['/histories/*']
+  });
+
   const router = useRouter();
   const { toast } = useToast();
   const { id } = use(params);
@@ -50,7 +56,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         }
 
       } catch (error) {
-        showError('Gagal memuat detail booking. Silakan coba lagi nanti.');
+        showError(error, 'Gagal memuat detail booking. Silakan coba lagi nanti.');
       } finally {
         setLoading(false);
       }

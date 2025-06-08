@@ -6,8 +6,13 @@ import { useAuth } from '@/context/auth/auth.context';
 import { Button } from '@/components/ui/button';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import useToastHandler from '@/hooks/useToastHandler';
+import { useMobileLayout } from '@/hooks/useMobileLayout';
 
 export default function LogoutPage() {
+  useMobileLayout({
+    includePaths: ['/auth/logout']
+  });
+
   const { logout } = useAuth();
   const router = useRouter();
   const { showLoading, hideLoading } = useGlobalLoading();

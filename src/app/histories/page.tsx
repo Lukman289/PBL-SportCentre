@@ -11,8 +11,13 @@ import { Badge } from '@/components/ui/badge';
 import { PaymentStatus, BookingWithPayment } from '@/types';
 import { useAuth } from '@/context/auth/auth.context';
 import useToastHandler from '@/hooks/useToastHandler';
+import { useMobileLayout } from '@/hooks/useMobileLayout';
 
 export default function HistoriesPage() {
+  useMobileLayout({
+    includePaths: ['/histories', '/histories/*']
+  });
+
   const [bookings, setBookings] = useState<BookingWithPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

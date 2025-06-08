@@ -20,6 +20,7 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog';
 import useToastHandler from '@/hooks/useToastHandler';
+import { useMobileLayout } from '@/hooks/useMobileLayout';
 
 interface ProfileFormData {
   name: string;
@@ -34,6 +35,11 @@ interface PasswordFormData {
 }
 
 export default function ProfilePage() {
+  // Mengaktifkan bottom navigation di halaman ini
+  useMobileLayout({
+    includePaths: ['/profile']
+  });
+  
   const router = useRouter();
   const { user, updateUserProfile, logout } = useAuth();
   const { showSuccess, showError } = useToastHandler();

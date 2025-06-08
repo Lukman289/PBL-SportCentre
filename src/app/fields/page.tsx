@@ -13,8 +13,14 @@ import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import Image from 'next/image';
 import useToastHandler from '@/hooks/useToastHandler';
 import { motion } from 'framer-motion';
+import { useMobileLayout } from '@/hooks/useMobileLayout';
 
 export default function FieldPage() {
+  // Mengaktifkan bottom navigation di halaman ini
+  useMobileLayout({
+    includePaths: ['/fields', '/fields/*']
+  });
+  
   const [fields, setFields] = useState<Field[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const { showError } = useToastHandler();

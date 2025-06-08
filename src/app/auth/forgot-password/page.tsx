@@ -19,8 +19,14 @@ import { ForgotPasswordRequest } from "@/types";
 import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import useToastHandler from "@/hooks/useToastHandler";
+import { useMobileLayout } from "@/hooks/useMobileLayout";
 
 export default function ForgotPasswordPage() {
+  // Mengaktifkan bottom navigation di halaman ini
+  useMobileLayout({
+    includePaths: ['/auth/forgot-password']
+  });
+
   const { showError, showSuccess } = useToastHandler();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);

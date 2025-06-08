@@ -1,11 +1,12 @@
 'use client';
 
-import { MainLayout } from '@/components/layout/MainLayout';
+import { ReactNode } from 'react';
+import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 
-export default function ProfileLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return <MainLayout>{children}</MainLayout>;
+interface ProfileLayoutProps {
+  children: ReactNode;
+}
+
+export default function ProfileLayout({ children }: ProfileLayoutProps) {
+  return <ResponsiveLayout>{children}</ResponsiveLayout>;
 } 

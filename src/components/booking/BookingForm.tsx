@@ -4,26 +4,34 @@ import { Button } from "@/components/ui/button";
 import { useBookingContext } from "@/context/booking/booking.context";
 import { useAdminBooking } from "@/hooks/bookings/useAdminBooking.hook";
 import { useDurationCalculator } from "@/hooks/useDurationCalculator.hook";
-import { PaymentMethod, PaymentStatus } from "@/types";
+import { PaymentMethod, PaymentStatus, User } from "@/types";
 import { BookingFormValues } from "@/context/booking/booking.context";
 import { useState } from "react";
 import useToastHandler from "@/hooks/useToastHandler";
+
 interface BookingFormProps {
   isAdminBooking?: boolean;
   onSuccess?: (paymentMethod: PaymentMethod) => void;
+  selectedUser?: User | null;
+  initialPaymentMethod?: PaymentMethod;
+  initialPaymentStatus?: PaymentStatus;
 }
 
-export default function BookingForm({ isAdminBooking = false, onSuccess }: BookingFormProps) {
-  // Selalu gunakan BookingContext untuk data umum booking
-  const bookingContext = useBookingContext();
-  // Admin booking hook hanya untuk fungsi createManualBooking
-  const adminHook = useAdminBooking();
+export default function BookingForm({ 
+  isAdminBooking = false, 
+  onSuccess, 
+  selectedUser,
+  initialPaymentMethod = PaymentMethod.CASH,
+  initialPaymentStatus = PaymentStatus.PAID
+}: BookingFormProps) {
+  // Menggunakan hook context sesuai dengan jenis user
+  const regularBooking = useBookingContext();
+  const adminBooking = useAdminBooking();
   const { showError } = useToastHandler();
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(initialPaymentMethod);
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(initialPaymentStatus);
   
-  // State untuk metode pembayaran (hanya untuk admin booking)
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(PaymentStatus.PAID);
-  
+  // Pilih context berdasarkan jenis booking
   const {
     selectedFieldName,
     selectedBranchName,
@@ -34,7 +42,7 @@ export default function BookingForm({ isAdminBooking = false, onSuccess }: Booki
     form,
     onSubmit,
     loading
-  } = bookingContext;
+  } = isAdminBooking ? adminBooking : regularBooking;
 
   // Menggunakan custom hook untuk menghitung durasi
   const { durationInHours } = useDurationCalculator();
@@ -46,19 +54,20 @@ export default function BookingForm({ isAdminBooking = false, onSuccess }: Booki
   // Fungsi untuk menangani submit form
   const handleSubmit = async (data: BookingFormValues) => {
     if (isAdminBooking) {
+      // Untuk admin cabang, gunakan createManualBooking dengan status yang dipilih
       try {
         const bookingData = {
           fieldId: selectedField,
-          userId: adminHook.user?.id || 0,
-          bookingDate: selectedDate || "",
-          startTime: selectedStartTime || "",
-          endTime: selectedEndTime || "",
+          userId: selectedUser?.id || adminBooking.user?.id || 0,
+          bookingDate: selectedDate,
+          startTime: selectedStartTime,
+          endTime: selectedEndTime,
           paymentMethod: paymentMethod,
           paymentStatus: paymentStatus,
-          branchId: adminHook.selectedBranch || 0
+          branchId: adminBooking.selectedBranch || 0
         };
         
-        const result = await adminHook.createManualBooking(bookingData);
+        const result = await adminBooking.createManualBooking(bookingData);
         if (result) {
           // Jika ada paymentUrl dan menggunakan metode online, redirect ke halaman pembayaran
           if (result.payment?.paymentUrl && paymentMethod !== PaymentMethod.CASH) {
@@ -97,12 +106,12 @@ export default function BookingForm({ isAdminBooking = false, onSuccess }: Booki
         <div className="space-y-2 sm:space-y-3 bg-gray-50 p-3 sm:p-4 rounded-lg w-full">
           <div className="flex items-center justify-between text-xs sm:text-sm">
             <span className="text-gray-600">Lapangan:</span>
-            <span className="font-medium truncate max-w-[200px]">{selectedFieldName === "Lapangan" ? "-" : selectedFieldName}</span>
+            <span className="font-medium truncate max-w-[200px]">{selectedFieldName}</span>
           </div>
           
           <div className="flex items-center justify-between text-xs sm:text-sm">
             <span className="text-gray-600">Cabang:</span>
-            <span className="font-medium truncate max-w-[200px]">{selectedBranchName === "Cabang" ? "-" : selectedBranchName}</span>
+            <span className="font-medium truncate max-w-[200px]">{selectedBranchName}</span>
           </div>
           
           <hr className="my-2 sm:my-3 border-gray-200" />

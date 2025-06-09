@@ -142,11 +142,13 @@ export default function FieldTypesPage() {
     }
 
     return (
-        <div className="container max-w-7xl mx-auto px-4 space-y-6">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+        <div className="container mx-auto">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Manajemen Tipe Field</h1>
-                    <p className="text-muted-foreground">Kelola semua tipe field dalam sistem</p>
+                    <h1 className="text-2xl font-bold">Manajemen Tipe Lapangan</h1>
+                    <p className="text-muted-foreground">
+                        Kelola semua tipe lapangan
+                    </p>
                 </div>
                 <div className="flex gap-2 items-center justify-between">
                     <Button variant="outline" onClick={handleRefresh} disabled={isLoading}>

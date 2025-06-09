@@ -82,8 +82,11 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Profil Saya</h1>
+    <div className="container mx-auto">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Profil Pengguna</h1>
+        <p className="text-muted-foreground">Kelola informasi profil Anda</p>
+      </div>
 
       <Card className="mb-6">
         <CardHeader>

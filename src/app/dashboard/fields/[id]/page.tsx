@@ -200,8 +200,7 @@ export default function FieldDetailPage({ params }: { params: Promise<{ id: stri
         router.push('/dashboard/fields');
         
     } catch (err) {
-        console.error('Error updating field:', err);
-        // Error handling tetap sama
+        showError(err, 'Gagal menyimpan perubahan. Silakan coba lagi.');
     } finally {
         setIsSubmitting(false);
     }
@@ -217,8 +216,7 @@ export default function FieldDetailPage({ params }: { params: Promise<{ id: stri
     router.push('/dashboard/fields');
     router.refresh();
   } catch (err) {
-    console.error('Error deleting field:', err);
-    setError('Gagal menghapus lapangan. Silakan coba lagi.');
+    showError(err, 'Gagal menghapus lapangan. Silakan coba lagi.');
   } finally {
     setIsDeleting(false);
     setShowDeleteDialog(false);
@@ -237,9 +235,17 @@ export default function FieldDetailPage({ params }: { params: Promise<{ id: stri
     }
 
     return (
-        <div className="container mx-auto py-8 px-4">
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold">Detail & Edit Lapangan</h1>
+        <div className="container mx-auto">
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold">Detail Lapangan</h1>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => router.back()}
+                    >
+                        Kembali
+                    </Button>
+                </div>
             </div>
 
             {!isLoading && (

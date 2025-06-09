@@ -110,7 +110,13 @@ export default function EditFieldTypePage() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="container mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Edit Tipe Lapangan</h1>
+        <Button variant="outline" onClick={() => router.back()}>
+          Kembali
+        </Button>
+      </div>
       <Card className="w-full">
         <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-indigo-50">
           <CardTitle className="text-2xl font-bold text-gray-800">

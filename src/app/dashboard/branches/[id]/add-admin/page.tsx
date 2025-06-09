@@ -118,7 +118,7 @@ export default function AddAdminPage() {
   }
 
   return (
-    <div>
+    <div className="container mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Tambah Admin untuk {branch?.name}</h1>
       </div>

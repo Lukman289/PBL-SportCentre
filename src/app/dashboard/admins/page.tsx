@@ -162,7 +162,7 @@ export default function AdminsPage() {
   }
 
   return (
-    <div>
+    <div className="container mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Manajemen Admin Cabang</h1>
         {(user?.role === Role.SUPER_ADMIN || user?.role === Role.OWNER_CABANG) && (

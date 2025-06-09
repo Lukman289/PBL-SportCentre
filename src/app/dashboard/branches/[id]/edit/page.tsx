@@ -267,7 +267,7 @@ export default function EditBranchPage() {
   // Loading state
   if (loadingBranch) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto">
         <div className="flex justify-center items-center h-64">
           <div className="flex items-center space-x-2">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -281,7 +281,7 @@ export default function EditBranchPage() {
   // Error state
   if (error && !form.getValues('name')) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto">
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -298,7 +298,7 @@ export default function EditBranchPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Edit Cabang</h1>
         <p className="text-muted-foreground">Perbarui informasi cabang berikut</p>

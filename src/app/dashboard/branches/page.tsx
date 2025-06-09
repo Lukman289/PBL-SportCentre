@@ -122,7 +122,7 @@ export default function BranchesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto space-y-6">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Manajemen Cabang</h1>

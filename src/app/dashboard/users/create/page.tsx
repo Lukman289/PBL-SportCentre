@@ -153,8 +153,11 @@ export default function CreateUserPage() {
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Tambah Pengguna</h1>
+    <div className="container mx-auto">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Tambah Pengguna</h1>
+        <p className="text-muted-foreground">Tambahkan pengguna baru ke sistem</p>
+      </div>
 
       <Card>
         <CardHeader>

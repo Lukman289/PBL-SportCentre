@@ -250,8 +250,18 @@ export default function MyBookingDetailPage() {
   }
 
   return (
-    <div className="container py-6 px-4">
+    <div className="container mx-auto">
       <div className="max-w-5xl mx-auto">
+        <div className="mb-6">
+          <Button 
+            variant="outline" 
+            onClick={() => router.push('/dashboard/my-bookings')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft size={16} />
+            Kembali ke Daftar Booking
+          </Button>
+        </div>
         <BookingDetailHeader
           bookingId={booking.id}
           createdAt={booking.createdAt}

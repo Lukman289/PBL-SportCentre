@@ -216,7 +216,11 @@
 //   }
 
 //   return (
-//     <div className="p-6 max-w-2xl mx-auto">
+//     <div className="container mx-auto">
+//       <div className="mb-6">
+//         <h1 className="text-2xl font-bold">Edit Pengguna</h1>
+//         <p className="text-muted-foreground">Edit informasi pengguna</p>
+//       </div>
 //       <Card>
 //         <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-indigo-50">
 //           <CardTitle className="text-2xl font-bold text-gray-800">

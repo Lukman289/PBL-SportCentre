@@ -251,7 +251,7 @@ export default function BookingDetailPage() {
     booking.payment?.status === PaymentStatus.DP_PAID;
 
   return (
-    <div className="container py-6 px-4">
+    <div className="container mx-auto">
       <div className="max-w-5xl mx-auto">
         <BookingDetailHeader bookingId={booking.id} createdAt={booking.createdAt} url="/dashboard/bookings"/>
         

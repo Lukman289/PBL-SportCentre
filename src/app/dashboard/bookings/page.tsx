@@ -122,7 +122,7 @@ export default function BookingsPage() {
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto">
       <div className="flex flex-row justify-between items-start md:items-center mb-6 gap-4">
         <PageTitle title="Daftar Booking" />
         

@@ -53,7 +53,10 @@ export default function CreateFieldTypePage() {
   };
 
   return (
-    <div className="container max-w-7xl mx-auto px-4 py-6">
+    <div className="container mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Tambah Tipe Lapangan</h1>
+      </div>
       <div className="flex flex-col space-y-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Tambah Tipe Field Baru</h1>

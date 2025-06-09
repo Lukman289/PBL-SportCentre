@@ -157,7 +157,7 @@ export default function FieldDetailPage() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="container mx-auto">
       <Card className="w-full">
         <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-indigo-50">
           <CardTitle className="text-2xl font-bold text-gray-800">

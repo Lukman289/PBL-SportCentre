@@ -95,9 +95,14 @@ export default function MyBranchesPage() {
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Cabang Saya</h1>
+    <div className="container mx-auto">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Cabang Saya</h1>
+          <p className="text-muted-foreground">
+            Kelola cabang yang Anda miliki
+          </p>
+        </div>
         {/* {user?.role === Role.OWNER_CABANG && (
           <Button onClick={handleAddBranch}>Tambah Cabang</Button>
         )} */}

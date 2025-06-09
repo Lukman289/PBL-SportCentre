@@ -166,7 +166,7 @@ export default function CreateBranchPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Tambah Cabang Baru</h1>
         <p className="text-muted-foreground">Isi form berikut untuk menambahkan cabang baru</p>

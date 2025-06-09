@@ -226,7 +226,7 @@ function CreateFieldContent() {
   }
 
   return (
-    <div>
+    <div className="container mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Tambah Lapangan Baru</h1>
       </div>

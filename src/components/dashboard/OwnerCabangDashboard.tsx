@@ -1,5 +1,5 @@
 import { useDashboardStats, OwnerCabangStats } from '@/hooks/useDashboardStats.hook';
-import { Role, BranchAdminView, BranchView } from '@/types';
+import { Role, BranchView, BranchStatus } from '@/types';
 import { StatCard } from './StatCard';
 import { Icons } from './DashboardIcons';
 import { RevenueChart } from './charts/RevenueChart';
@@ -83,25 +83,31 @@ export const OwnerCabangDashboard = () => {
       id: branch.id,
       name: branch.name,
       location: branch.location,
-      // Mengkonversi status string menjadi "active" | "inactive"
-      status: branch.status?.toLowerCase() === 'active' ? 'active' : 'inactive',
+      // Mengkonversi status string menjadi BranchStatus enum
+      status: branch.status?.toLowerCase() === 'active' ? BranchStatus.ACTIVE : BranchStatus.INACTIVE,
       adminCount: branch.adminCount,
       fieldCount: branch.fieldCount
     }));
   };
 
   // Fungsi untuk mengkonversi data admin dari API ke format yang diharapkan oleh komponen
-  const formatAdmins = (admins: OwnerCabangStats['admins'] = []): BranchAdminView[] => {
-    return admins.map((admin, index) => ({
-      id: `${admin.id}-${index}`, // Menambahkan index untuk memastikan keunikan
-      name: admin.name,
-      email: admin.email,
-      phone: admin.phone,
-      branch: admin.branch,
-      role: admin.role,
-      lastActive: admin.lastActive,
-      // Mengkonversi status string menjadi "active" | "inactive"
-      status: admin.status.toLowerCase() === 'active' ? 'active' : 'inactive'
+  const formatAdmins = (admins: OwnerCabangStats['admins'] = []): unknown[] => {
+    return admins.map(admin => ({
+      userId: parseInt(admin.id),
+      branchId: 0, // Default value
+      user: {
+        id: parseInt(admin.id),
+        name: admin.name,
+        email: admin.email,
+        phone: admin.phone || '',
+        role: Role.ADMIN_CABANG
+      },
+      branch: {
+        id: 0, // Default value
+        name: admin.branch || '',
+        location: '',
+        status: admin.status.toLowerCase() === 'active' ? BranchStatus.ACTIVE : BranchStatus.INACTIVE
+      }
     }));
   };
   
@@ -110,7 +116,7 @@ export const OwnerCabangDashboard = () => {
   }
 
   return (
-    <div className="animate-fade-in-up">
+    <div className="container mx-auto">
       <div className="flex flex-col md:flex-row items-center justify-between mb-6">
         <div className="mb-4 md:mb-0">
           <h1 className="text-2xl font-bold">Dashboard Owner Cabang</h1>

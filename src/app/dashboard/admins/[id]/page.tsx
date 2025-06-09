@@ -156,7 +156,7 @@ export default function AdminDetailPage() {
   }
 
   return (
-    <div>
+    <div className="container mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">
           Detail Admin: {admin.name || 'Tidak Diketahui'}

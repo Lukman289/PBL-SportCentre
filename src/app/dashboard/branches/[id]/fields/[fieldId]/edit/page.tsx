@@ -230,7 +230,7 @@ export default function FieldEditPage() {
 
     if (error && !field) {
         return (
-            <div className="container mx-auto py-8 px-4">
+            <div className="container mx-auto">
                 <div className="p-4 mb-4 text-red-700 bg-red-100 rounded-lg">
                     <p>{error}</p>
                 </div>
@@ -240,7 +240,7 @@ export default function FieldEditPage() {
     }
 
     return (
-        <div className="container mx-auto py-8 px-4">
+        <div className="container mx-auto">
             <div className="mb-6">
                 <h1 className="text-2xl font-bold">Detail & Edit Lapangan</h1>
                 <p className="text-gray-600 mt-2">

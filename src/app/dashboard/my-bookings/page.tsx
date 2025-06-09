@@ -104,29 +104,29 @@ export default function MyBookingsPage() {
   }));
 
   return (
-    <div>
+    <div className="container mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Histori Reservasi</h1>
+        <h1 className="text-2xl font-bold">Booking Saya</h1>
+        <div className="flex items-center gap-2">
+          <select
+            value={statusFilter}
+            onChange={handleFilterChange}
+            className="border rounded px-3 py-1 text-sm"
+          >
+            <option value="all">Semua Status</option>
+            {paymentStatusOptions.map(status => (
+              <option key={status.value} value={status.value}>
+                {status.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <Card>
         <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>Histori Booking</CardTitle>
-              <div className="flex flex-col sm:flex-row gap-3 w-auto">
-                <select
-                  value={statusFilter}
-                  onChange={handleFilterChange}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="all">Semua Status</option>
-                  {paymentStatusOptions.map(status => (
-                    <option key={status.value} value={status.value}>
-                      {status.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </div>
         </CardHeader>
         <CardContent>

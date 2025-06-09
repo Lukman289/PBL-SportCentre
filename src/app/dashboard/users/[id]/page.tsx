@@ -112,7 +112,29 @@ export default function UserDetailPage() {
         user.role === 'user'));
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="container mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">
+          Detail Pengguna: {user.name || 'Tidak Diketahui'}
+        </h1>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => router.push(`/dashboard/users/${userId}/edit`)}
+          >
+            Edit
+          </Button>
+          {canDelete && (
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting ? 'Menghapus...' : 'Hapus'}
+            </Button>
+          )}
+        </div>
+      </div>
       <Card className="w-full">
         <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-indigo-50">
           <CardTitle className="text-2xl font-bold text-gray-800">
@@ -174,14 +196,6 @@ export default function UserDetailPage() {
             </div>
 
             <div className="flex flex-wrap gap-4 pt-6 border-t bg-gray-50 -mx-8 -mb-8 px-8 py-6 rounded-b-lg">
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-                className="px-6 py-2"
-                disabled={!canDelete || deleting}
-              >
-                {deleting ? 'Menghapus...' : 'Hapus Pengguna'}
-              </Button>
               <Button
                 variant="outline"
                 onClick={() => router.push('/dashboard/users')}

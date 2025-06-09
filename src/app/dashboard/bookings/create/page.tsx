@@ -169,7 +169,7 @@ export default function AdminBookingPage() {
   // Main render
   return (
     <motion.div 
-      className="max-w-[1400px] mx-auto py-4 px-3 sm:py-6 sm:px-4 lg:px-6 overflow-hidden"
+      className="max-w-[1400px] mx-auto overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}

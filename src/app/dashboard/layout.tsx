@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect } from 'react';
 import { useAuth } from '@/context/auth/auth.context';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import DashboardLayout from '@/components/layout/dashboard/DashboardLayout';
 import { redirect } from 'next/navigation';
 import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 

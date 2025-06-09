@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 interface SidebarProps {
   isOpen: boolean;
   role: Role;
+  onLinkClick?: () => void;
 }
 
 // Menu konfigurasi berdasarkan role
@@ -37,7 +38,7 @@ const menuItemsByRole = {
   ],
 };
 
-export default function Sidebar({ isOpen, role }: SidebarProps) {
+export default function Sidebar({ isOpen, role, onLinkClick }: SidebarProps) {
   const pathname = usePathname();
   const menuItems = menuItemsByRole[role] || menuItemsByRole[Role.USER];
   const activeItem = getActiveItem(pathname, menuItems);
@@ -63,7 +64,7 @@ export default function Sidebar({ isOpen, role }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-20 w-64 transform bg-background border-r border-border transition-all duration-300 ease-in-out",
+        "fixed inset-y-0 left-0 z-20 w-64 transform bg-background border-r border-border transition-all duration-300 ease-in-out shadow-sm",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}
     >
@@ -98,6 +99,7 @@ export default function Sidebar({ isOpen, role }: SidebarProps) {
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
+                  onClick={onLinkClick}
                 >
                   <SidebarIcon name={item.icon} className="mr-3 h-5 w-5" />
                   {item.label}
@@ -112,6 +114,7 @@ export default function Sidebar({ isOpen, role }: SidebarProps) {
         <Link
           href="/profile"
           className="flex items-center px-4 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground rounded-md transition-colors"
+          onClick={onLinkClick}
         >
           <SidebarIcon name="user-circle" className="mr-3 h-5 w-5" />
           Profil Saya
@@ -119,6 +122,7 @@ export default function Sidebar({ isOpen, role }: SidebarProps) {
         <Link
           href="/auth/logout"
           className="flex items-center px-4 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground rounded-md transition-colors mt-2"
+          onClick={onLinkClick}
         >
           <SidebarIcon name="log-out" className="mr-3 h-5 w-5" />
           Keluar

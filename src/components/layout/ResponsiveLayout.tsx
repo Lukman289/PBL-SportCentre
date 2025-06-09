@@ -12,6 +12,7 @@ interface ResponsiveLayoutProps {
   hideHeader?: boolean;
   hideFooter?: boolean;
   customLayout?: boolean;
+  isDashboard?: boolean;
 }
 
 /**
@@ -22,13 +23,15 @@ interface ResponsiveLayoutProps {
  * @param hideHeader - Apakah menyembunyikan header
  * @param hideFooter - Apakah menyembunyikan footer
  * @param customLayout - Jika true, tidak menambahkan struktur layout tambahan
+ * @param isDashboard - Jika true, menggunakan layout khusus untuk dashboard
  */
 export function ResponsiveLayout({ 
   children, 
   showBottomNav = false,
   hideHeader = false,
   hideFooter = false,
-  customLayout = false
+  customLayout = false,
+  isDashboard = false
 }: ResponsiveLayoutProps) {
   const { isMobile, setShowBottomNav } = useMobile();
 
@@ -40,7 +43,7 @@ export function ResponsiveLayout({
   }, [isMobile, setShowBottomNav, showBottomNav]);
 
   // Jika menggunakan custom layout, hanya render children dan bottom navigation jika diperlukan
-  if (customLayout) {
+  if (customLayout || isDashboard) {
     return (
       <>
         {children}
@@ -65,7 +68,7 @@ export function ResponsiveLayout({
   // Untuk perangkat desktop
   if (hideHeader && hideFooter) {
     // Jika header dan footer disembunyikan, render hanya konten
-    return <div className="flex-1 container mx-auto py-8">{children}</div>;
+    return <div className="flex-1">{children}</div>;
   }
 
   // Gunakan MainLayout untuk desktop dengan header dan footer

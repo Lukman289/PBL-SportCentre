@@ -12,7 +12,7 @@ import useGlobalLoading from '@/hooks/useGlobalLoading.hook';
 import useToastHandler from '@/hooks/useToastHandler';
 import { motion } from 'framer-motion';
 import { useMobileLayout } from '@/hooks/useMobileLayout';
-
+import Image from 'next/image';
 export default function BranchesPage() {
   useMobileLayout({
     includePaths: ['/branches', '/branches/*']
@@ -202,7 +202,7 @@ export default function BranchesPage() {
           initial="hidden"
           animate="visible"
         >
-          <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <motion.div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
             {branches.map((branch) => (
               <motion.div 
                 key={branch.id}
@@ -210,26 +210,32 @@ export default function BranchesPage() {
                 whileHover={{ y: -5 }}
                 transition={{ type: "spring", stiffness: 300, damping: 10 }}
               >
-                <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                  <div className="relative h-48 bg-muted">
-                    <img
-                      src={branch.imageUrl || "images/img_not_found.png"}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.onerror = null;
-                        target.src = "images/img_not_found.png";
-                        target.className = "h-full w-full object-contain";
-                      }}
-                      alt={branch.name}
-                      className="h-full w-full object-cover"
-                    />
+                <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 scale-95 sm:scale-100 h-full flex flex-col">
+                  <div className="relative aspect-[16/9] bg-muted overflow-hidden flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                      <Image
+                        src={branch.imageUrl || "images/img_not_found.png"}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = "images/img_not_found.png";
+                        }}
+                        alt={branch.name}
+                        className="w-full h-full object-cover"
+                        width={500}
+                        height={300}
+                        style={{ objectFit: "cover", objectPosition: "center" }}
+                      />
+                    </div>
                   </div>
-                  <CardContent className="p-4">
-                    <h2 className="text-xl font-bold mb-2">{branch.name}</h2>
-                    <p className="text-gray-700 mb-2 line-clamp-2" title={branch.location}>{branch.location}</p>
-                    <div className="mb-2">
+                  <CardContent className="p-3 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h2 className="text-xs sm:text-base font-bold mb-1 line-clamp-1" title={branch.name}>{branch.name}</h2>
+                      <p className="text-xs sm:text-sm text-gray-700 mb-2 line-clamp-2" title={branch.location}>{branch.location}</p>
+                    </div>
+                    <div>
                       <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                           branch.status === 'active'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
@@ -238,14 +244,9 @@ export default function BranchesPage() {
                         {branch.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
                       </span>
                     </div>
-                    {branch.owner && (
-                      <p className="text-sm text-gray-500">
-                        Pemilik: {branch.owner.name}
-                      </p>
-                    )}
                   </CardContent>
-                  <CardFooter className="pt-0 pb-4 px-4">
-                    <Button asChild className="w-full">
+                  <CardFooter className="pt-0 pb-3 px-3 mt-auto">
+                    <Button asChild className="w-full text-xs sm:text-sm py-1">
                       <Link href={`/branches/${branch.id}`}>Lihat Detail</Link>
                     </Button>
                   </CardFooter>

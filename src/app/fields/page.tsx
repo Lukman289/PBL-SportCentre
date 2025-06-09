@@ -282,7 +282,7 @@ export default function FieldPage() {
           initial="hidden"
           animate="visible"
         >
-          <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <motion.div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
             {fields.map((field) => (
               <motion.div 
                 key={field.id}
@@ -290,49 +290,45 @@ export default function FieldPage() {
                 whileHover={{ y: -5 }}
                 transition={{ type: "spring", stiffness: 300, damping: 10 }}
               >
-                <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                  <div className="relative h-48 bg-muted">
-                    <Image 
-                      src={field.imageUrl || "/images/field-placeholder.jpg"}
-                      alt={field.name}
-                      width={500}
-                      height={300}
-                      className="h-full w-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.onerror = null;
-                        target.src = "/images/field-placeholder.jpg";
-                      }}
-                    />
+                <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 scale-95 sm:scale-100 h-full flex flex-col">
+                  <div className="relative aspect-[16/9] bg-muted overflow-hidden flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                      <Image 
+                        src={field.imageUrl || "/images/field-placeholder.jpg"}
+                        alt={field.name}
+                        width={500}
+                        height={300}
+                        className="w-full h-full object-cover"
+                        style={{ objectFit: "cover", objectPosition: "center" }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = "/images/field-placeholder.jpg";
+                        }}
+                      />
+                    </div>
                   </div>
                   
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <h2 className="text-xl font-bold mb-1">{field.name}</h2>
-                      <span className="text-xl font-semibold text-primary">
+                  <CardContent className="p-3 flex-1 flex flex-col">
+                    <div className="flex justify-between items-start mb-1">
+                      <h2 className="text-xs sm:text-base font-bold line-clamp-1" title={field.name}>{field.name}</h2>
+                      <span className="text-xs sm:text-sm font-semibold text-primary whitespace-nowrap ml-1">
                         {field.priceDay.toLocaleString('id-ID', {
                           style: 'currency',
                           currency: 'IDR',
                           minimumFractionDigits: 0,
                           maximumFractionDigits: 0,
                         })}
-                        <span className="text-sm text-gray-500">/jam</span>
                       </span>
                     </div>
                     
-                    <p className="text-sm text-gray-600 mb-2">
+                    <p className="text-xs text-gray-600 mb-1 line-clamp-1" title={field.branch?.name}>
                       {field.branch?.name}
                     </p>
                     
-                    {field.type?.name && (
-                      <p className="text-gray-700 mt-2 line-clamp-3">
-                        {field.type?.name}
-                      </p>
-                    )}
-                    
-                    <div className="flex items-center mt-3 gap-2 flex-wrap">
+                    <div className="flex items-center mt-auto gap-1 flex-wrap">
                       <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                           field.status === 'available'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
@@ -341,21 +337,21 @@ export default function FieldPage() {
                         {field.status === 'available' ? 'Tersedia' : 'Tidak Tersedia'}
                       </span>
                       
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 truncate max-w-[100px]" title={field.type?.name || '-'}>
                         {field.type?.name || '-'}
                       </span>
                     </div>
                   </CardContent>
                   
-                  <CardFooter className="pt-0 px-4 pb-4">
-                    <div className="flex flex-col sm:flex-row gap-2 w-full">
-                      <Button asChild className="flex-1">
+                  <CardFooter className="pt-0 px-3 pb-3">
+                    <div className="grid grid-cols-2 gap-2 w-full">
+                      <Button asChild className="text-xs sm:text-sm py-1">
                         <Link href="/bookings">
-                          Booking Sekarang
+                          Booking
                         </Link>
                       </Button>
                       
-                      <Button asChild variant="outline" className="flex-1">
+                      <Button asChild variant="outline" className="text-xs sm:text-sm py-1">
                         <Link href={`/fields/${field.id}`}>
                           Detail
                         </Link>

@@ -2,7 +2,7 @@
 
 import { HomeLayout } from "@/components/layout/HomeLayout";
 import { useEffect, useState } from "react";
-import { branchApi, fieldApi } from "@/api";
+import { branchApi } from "@/api";
 import { Branch } from "@/types";
 import {
   HeroSection,
@@ -28,15 +28,12 @@ export default function HomePage() {
 
   const [featuredBranches, setFeaturedBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [totalBranches, setTotalBranches] = useState(0);
-  const [totalFields, setTotalFields] = useState(0);
 
   useEffect(() => {
     const fetchBranches = async () => {
       try {
         const response = await branchApi.getBranches();
         const branches = response.data || [];
-        setTotalBranches(response.meta?.totalItems || 0);
         if (Array.isArray(branches)) {
           setFeaturedBranches(branches.slice(0, 4));
         } else {
@@ -48,17 +45,7 @@ export default function HomePage() {
         setIsLoading(false);
       }
     };
-
-    const fetchTotalFields = async () => {
-      try {
-        const response = await fieldApi.getAllFields();
-        setTotalFields(response.meta?.totalItems || 0);
-      } catch {
-        setTotalFields(0);
-      }
-    }
     
-    fetchTotalFields();
     fetchBranches();
   }, []);
 
@@ -153,9 +140,9 @@ export default function HomePage() {
   return (
     <HomeLayout>
       <HeroSection />
-      <StatsSection totalBranches={totalBranches} totalFields={totalFields} />
       <FeaturesSection />
       <OwnerBenefitsSection />
+      <StatsSection />
       
       {/* Testimoni Pemilik Sport Center */}
       <TestimonialsSection 

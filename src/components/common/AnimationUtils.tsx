@@ -26,4 +26,15 @@ export const scaleIn = {
     opacity: 1,
     transition: { duration: 0.5 }
   }
+};
+
+// Animasi untuk elemen yang mengambang
+export const floatingAnimation = {
+  y: [0, -10, 0],
+  opacity: [0.3, 0.8, 0.3],
+  transition: {
+    duration: 4,
+    repeat: Infinity,
+    ease: "easeInOut"
+  }
 }; 

@@ -33,7 +33,7 @@ export function JoinStepsSection() {
 
   return (
     <motion.section 
-      className="py-16 sm:py-24 relative overflow-hidden"
+      className="py-10 sm:py-24 relative overflow-hidden"
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
@@ -44,11 +44,11 @@ export function JoinStepsSection() {
       
       <div className="container mx-auto relative z-10 px-4 sm:px-6 md:px-8">
         <motion.div 
-          className="text-center mb-8 sm:mb-16"
+          className="text-center mb-6 sm:mb-16"
           variants={fadeInUp}
         >
-          <h2 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4">Cara Bergabung</h2>
-          <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto">
+          <h2 className="text-xl sm:text-4xl font-bold mb-2 sm:mb-4">Cara Bergabung</h2>
+          <p className="text-sm sm:text-xl text-muted-foreground max-w-2xl mx-auto">
             Tiga langkah mudah untuk memulai dengan platform kami
           </p>
         </motion.div>
@@ -58,7 +58,7 @@ export function JoinStepsSection() {
           <div className="absolute left-1/2 top-12 bottom-12 w-0.5 bg-gradient-to-b from-primary/80 via-primary/50 to-primary/20 hidden md:block"></div>
           
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-12 max-w-6xl mx-auto relative z-10"
+            className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-12 max-w-6xl mx-auto relative z-10"
             variants={staggerContainer}
           >
             {steps.map((step, index) => (
@@ -76,25 +76,25 @@ export function JoinStepsSection() {
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
               >
                 {/* Step number */}
-                <div className="relative mb-4 sm:mb-6">
+                <div className="relative mb-3 sm:mb-6">
                   <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl transform scale-150 animate-pulse"></div>
-                  <div className="bg-gradient-to-br from-primary to-primary/80 text-white w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-2xl sm:text-3xl font-bold relative z-10 shadow-lg shadow-primary/20">
+                  <div className="bg-gradient-to-br from-primary to-primary/80 text-white w-12 h-12 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-xl sm:text-3xl font-bold relative z-10 shadow-lg shadow-primary/20">
                     {step.number}
                   </div>
                 </div>
                 
                 {/* Content */}
-                <div className="bg-white/50 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-sm border border-white/20 hover:shadow-md transition-all w-full">
-                  <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3">{step.title}</h3>
-                  <p className="text-sm sm:text-base text-muted-foreground">
+                <div className="bg-white/50 backdrop-blur-sm p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-white/20 hover:shadow-md transition-all w-full">
+                  <h3 className="text-base sm:text-xl font-bold mb-1 sm:mb-3">{step.title}</h3>
+                  <p className="text-xs sm:text-base text-muted-foreground">
                     {step.description}
                   </p>
                 </div>
                 
                 {/* Connector arrow for mobile */}
                 {index < steps.length - 1 && (
-                  <div className="flex justify-center my-3 sm:my-4 md:hidden">
-                    <ArrowRight className="text-primary/50 animate-pulse" />
+                  <div className="flex justify-center my-2 sm:my-4 md:hidden">
+                    <ArrowRight className="text-primary/50 animate-pulse w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                 )}
               </motion.div>
@@ -103,11 +103,11 @@ export function JoinStepsSection() {
         </div>
         
         <motion.div 
-          className="flex justify-center mt-8 sm:mt-16"
+          className="flex justify-center mt-6 sm:mt-16"
           variants={fadeInUp}
         >
-          <Link href="/auth/register?role=owner">
-            <Button size="lg" className="gap-1 sm:gap-2 text-sm sm:text-base px-4 sm:px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all">
+          <Link href="/auth/register?role=owner" className="w-full sm:w-auto">
+            <Button size="lg" className="w-full sm:w-auto gap-1 sm:gap-2 text-sm sm:text-base px-4 sm:px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all">
               Mulai Sekarang <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 animate-pulse" />
             </Button>
           </Link>

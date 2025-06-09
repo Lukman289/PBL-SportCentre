@@ -63,40 +63,40 @@ export function FeatureComparisonSection() {
         </motion.div>
         
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-12 max-w-6xl mx-auto"
+          className="grid grid-cols-2 gap-3 sm:gap-6 max-w-6xl mx-auto"
           variants={staggerContainer}
         >
           {/* Member Card */}
           <motion.div 
-            className="relative bg-white rounded-2xl shadow-md hover:shadow-lg transition-all border border-primary/10 overflow-hidden"
+            className="relative bg-white rounded-2xl shadow-md hover:shadow-lg transition-all border border-primary/10 overflow-hidden h-full"
             variants={scaleIn}
             whileHover={{ y: -10, transition: { duration: 0.2 } }}
           >
             {/* Top gradient bar */}
             <div className="h-2 bg-gradient-to-r from-blue-400 to-blue-600"></div>
             
-            <div className="p-6 sm:p-10">
-              <div className="bg-blue-100 w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full mx-auto mb-4 sm:mb-6">
-                <Users className="h-8 w-8 sm:h-10 sm:w-10 text-blue-600" />
+            <div className="p-4 sm:p-6 md:p-10 flex flex-col h-full">
+              <div className="bg-blue-100 w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 flex items-center justify-center rounded-full mx-auto mb-3 sm:mb-4 md:mb-6">
+                <Users className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-blue-600" />
               </div>
               
-              <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-center">Untuk Member</h3>
+              <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 md:mb-4 text-center">Untuk Member</h3>
               
-              <div className="mb-6 sm:mb-8 py-3 sm:py-4 px-4 sm:px-6 bg-blue-50 rounded-xl">
-                <ul className="space-y-2 sm:space-y-4">
+              <div className="mb-4 sm:mb-6 md:mb-8 py-2 sm:py-3 md:py-4 px-3 sm:px-4 md:px-6 bg-blue-50 rounded-xl flex-grow">
+                <ul className="space-y-1 sm:space-y-2 md:space-y-4">
                   {memberBenefits.map((benefit, index) => (
                     <li key={index} className="flex items-start gap-2 sm:gap-3">
-                      <div className="bg-blue-100 p-1 rounded-full mt-1">
+                      <div className="bg-blue-100 p-1 rounded-full mt-1 flex-shrink-0">
                         <Star className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
                       </div>
-                      <span className="text-sm sm:text-base">{benefit}</span>
+                      <span className="text-xs sm:text-sm md:text-base">{benefit}</span>
                     </li>
                   ))}
                 </ul>
               </div>
               
-              <Link href="/auth/register" className="block">
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-sm sm:text-base py-1.5 sm:py-2" size="lg">
+              <Link href="/auth/register" className="block mt-auto">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm md:text-base py-1 sm:py-1.5 md:py-2" size="lg">
                   Daftar Sebagai Member
                 </Button>
               </Link>
@@ -105,35 +105,35 @@ export function FeatureComparisonSection() {
           
           {/* Owner Card */}
           <motion.div 
-            className="relative bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl shadow-md hover:shadow-lg transition-all border border-primary/20 overflow-hidden"
+            className="relative bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl shadow-md hover:shadow-lg transition-all border border-primary/20 overflow-hidden h-full"
             variants={scaleIn}
             whileHover={{ y: -10, transition: { duration: 0.2 } }}
           >
             {/* Top gradient bar */}
             <div className="h-2 bg-gradient-to-r from-primary to-primary/80"></div>
             
-            <div className="p-6 sm:p-10">
-              <div className="bg-primary/20 w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full mx-auto mb-4 sm:mb-6">
-                <Shield className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
+            <div className="p-4 sm:p-6 md:p-10 flex flex-col h-full">
+              <div className="bg-primary/20 w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 flex items-center justify-center rounded-full mx-auto mb-3 sm:mb-4 md:mb-6">
+                <Shield className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-primary" />
               </div>
               
-              <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-center">Untuk Pemilik Sport Center</h3>
+              <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 md:mb-4 text-center">Untuk Pemilik Sport Center</h3>
               
-              <div className="mb-6 sm:mb-8 py-3 sm:py-4 px-4 sm:px-6 bg-primary/5 rounded-xl">
-                <ul className="space-y-2 sm:space-y-4">
+              <div className="mb-4 sm:mb-6 md:mb-8 py-2 sm:py-3 md:py-4 px-3 sm:px-4 md:px-6 bg-primary/5 rounded-xl flex-grow">
+                <ul className="space-y-1 sm:space-y-2 md:space-y-4">
                   {ownerBenefits.map((benefit, index) => (
                     <li key={index} className="flex items-start gap-2 sm:gap-3">
-                      <div className="bg-primary/10 p-1 rounded-full mt-1">
+                      <div className="bg-primary/10 p-1 rounded-full mt-1 flex-shrink-0">
                         <Star className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                       </div>
-                      <span className="text-sm sm:text-base">{benefit}</span>
+                      <span className="text-xs sm:text-sm md:text-base">{benefit}</span>
                     </li>
                   ))}
                 </ul>
               </div>
               
-              <Link href="/auth/register?role=owner" className="block">
-                <Button className="w-full bg-primary/90 hover:bg-primary text-sm sm:text-base py-1.5 sm:py-2" size="lg">
+              <Link href="/auth/register?role=owner" className="block mt-auto">
+                <Button className="w-full bg-primary/90 hover:bg-primary text-xs sm:text-sm md:text-base py-1 sm:py-1.5 md:py-2" size="lg">
                   Daftar Sebagai Pemilik
                 </Button>
               </Link>

@@ -7,22 +7,22 @@ export function FeaturesSection() {
   // Data untuk fitur-fitur
   const features = [
     {
-      icon: <Calendar className="h-10 w-10 text-primary" />,
+      icon: <Calendar className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />,
       title: "Reservasi Mudah",
       description: "Pesan lapangan kapan saja dan di mana saja dengan beberapa klik"
     },
     {
-      icon: <CreditCard className="h-10 w-10 text-primary" />,
+      icon: <CreditCard className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />,
       title: "Pembayaran Aman",
       description: "Berbagai metode pembayaran yang aman dan terpercaya"
     },
     {
-      icon: <Shield className="h-10 w-10 text-primary" />,
+      icon: <Shield className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />,
       title: "Jaminan Kualitas",
       description: "Semua lapangan dijamin berkualitas dan terawat dengan baik"
     },
     {
-      icon: <Users className="h-10 w-10 text-primary" />,
+      icon: <Users className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />,
       title: "Komunitas Olahraga",
       description: "Bergabunglah dengan komunitas olahraga lokal di sekitar Anda"
     }
@@ -58,7 +58,7 @@ export function FeaturesSection() {
 
   return (
     <motion.section 
-      className="py-16 sm:py-20 bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl sm:rounded-3xl my-10 sm:my-16 mx-4 sm:mx-6 md:mx-8"
+      className="py-10 sm:py-20 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl sm:rounded-3xl my-8 sm:my-16 mx-3 sm:mx-6 md:mx-8"
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
@@ -66,31 +66,31 @@ export function FeaturesSection() {
     >
       <div className="container mx-auto px-4 sm:px-6">
         <motion.div 
-          className="text-center mb-10 sm:mb-16"
+          className="text-center mb-8 sm:mb-16"
           variants={fadeInUp}
         >
-          <h2 className="text-3xl sm:text-4xl font-bold mb-3 sm:mb-4">Kenapa Memilih Kami?</h2>
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
+          <h2 className="text-xl sm:text-4xl font-bold mb-2 sm:mb-4">Kenapa Memilih Kami?</h2>
+          <p className="text-sm sm:text-xl text-muted-foreground max-w-2xl mx-auto">
             Platform reservasi lapangan olahraga terbaik dengan berbagai fitur unggulan
           </p>
         </motion.div>
         
         <motion.div 
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8"
+          className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-8"
           variants={staggerContainer}
         >
           {features.map((feature, index) => (
             <motion.div 
               key={index}
-              className="bg-white p-6 sm:p-8 rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col items-center text-center"
+              className="bg-white p-3 sm:p-8 rounded-lg shadow-sm hover:shadow-md transition-all flex flex-col items-center text-center"
               variants={scaleIn}
               whileHover={{ y: -5, transition: { duration: 0.2 } }}
             >
-              <div className="mb-3 sm:mb-4">
+              <div className="mb-2 sm:mb-4">
                 {feature.icon}
               </div>
-              <h3 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">{feature.title}</h3>
-              <p className="text-sm sm:text-base text-muted-foreground">{feature.description}</p>
+              <h3 className="text-base sm:text-xl font-bold mb-1 sm:mb-2">{feature.title}</h3>
+              <p className="text-xs sm:text-base text-muted-foreground">{feature.description}</p>
             </motion.div>
           ))}
         </motion.div>

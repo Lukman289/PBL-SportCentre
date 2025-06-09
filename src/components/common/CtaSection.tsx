@@ -32,7 +32,7 @@ export function CtaSection({
 
   return (
     <motion.section 
-      className="py-12 sm:py-20 bg-primary my-8 sm:my-16"
+      className="py-10 sm:py-20 bg-primary my-6 sm:my-16 mx-3 sm:mx-0 rounded-xl sm:rounded-none"
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
@@ -40,8 +40,8 @@ export function CtaSection({
     >
       <div className="container mx-auto text-center px-4 sm:px-6 md:px-8">
         <motion.div variants={fadeInUp}>
-          <h2 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4 text-white">{title}</h2>
-          <p className="text-base sm:text-xl text-white/90 mb-6 sm:mb-8 max-w-2xl mx-auto">
+          <h2 className="text-xl sm:text-4xl font-bold mb-2 sm:mb-4 text-white">{title}</h2>
+          <p className="text-sm sm:text-xl text-white/90 mb-5 sm:mb-8 max-w-2xl mx-auto">
             {subtitle}
           </p>
         </motion.div>
@@ -50,19 +50,19 @@ export function CtaSection({
           variants={fadeInUp}
           className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center"
         >
-          <Link href={primaryButtonLink}>
+          <Link href={primaryButtonLink} className="w-full sm:w-auto">
             <Button
               size="lg"
-              className="bg-white text-primary hover:bg-white/90 hover:text-primary transition-colors text-sm sm:text-base py-1.5 sm:py-2"
+              className="w-full sm:w-auto bg-white text-primary hover:bg-white/90 hover:text-primary transition-colors text-sm sm:text-base py-1.5 sm:py-2"
             >
               {primaryButtonText}
             </Button>
           </Link>
-          <Link href={secondaryButtonLink}>
+          <Link href={secondaryButtonLink} className="w-full sm:w-auto">
             <Button
               size="lg"
               variant="outline"
-              className="bg-transparent text-white border-white hover:bg-white/20 hover:text-white text-sm sm:text-base py-1.5 sm:py-2"
+              className="w-full sm:w-auto bg-transparent text-white border-white hover:bg-white/20 hover:text-white text-sm sm:text-base py-1.5 sm:py-2"
             >
               {secondaryButtonText}
             </Button>

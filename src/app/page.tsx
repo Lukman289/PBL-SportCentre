@@ -176,7 +176,7 @@ export default function HomePage() {
         title="FAQ Untuk Pemilik Sport Center"
         subtitle="Jawaban untuk pertanyaan umum dari pemilik sport center"
         faqs={ownerFaqs}
-        bgClass="bg-gradient-to-br from-primary/5 to-primary/10 rounded-3xl my-16"
+        bgClass="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl sm:rounded-3xl mx-3 sm:mx-0 my-6 sm:my-16"
       />
 
       <BranchesSection branches={featuredBranches} isLoading={isLoading} />

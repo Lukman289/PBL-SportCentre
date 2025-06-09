@@ -41,36 +41,36 @@ export function FaqSection({
 
   return (
     <motion.section 
-      className={`py-20 ${bgClass}`}
+      className={`py-12 sm:py-20 ${bgClass}`}
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
       variants={fadeInUp}
     >
-      <div className="container mx-auto">
+      <div className="container mx-auto px-4 sm:px-6 md:px-8">
         <motion.div 
-          className="text-center mb-16"
+          className="text-center mb-8 sm:mb-16"
           variants={fadeInUp}
         >
-          <h2 className="text-4xl font-bold mb-4">{title}</h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <h2 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4">{title}</h2>
+          <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto">
             {subtitle}
           </p>
         </motion.div>
         
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto"
+          className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 max-w-4xl mx-auto"
           variants={staggerContainer}
         >
           {faqs.map((faq, index) => (
             <motion.div 
               key={index}
-              className="bg-muted/30 p-6 rounded-xl"
+              className="bg-muted/30 p-4 sm:p-6 rounded-xl"
               variants={fadeInUp}
               whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
             >
-              <h3 className="text-xl font-bold mb-2">{faq.question}</h3>
-              <p className="text-muted-foreground">{faq.answer}</p>
+              <h3 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">{faq.question}</h3>
+              <p className="text-sm sm:text-base text-muted-foreground">{faq.answer}</p>
             </motion.div>
           ))}
         </motion.div>

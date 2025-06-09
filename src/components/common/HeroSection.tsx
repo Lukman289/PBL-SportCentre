@@ -74,13 +74,13 @@ export function HeroSection() {
       </div>
       
       {/* Content */}
-      <div className="container mx-auto text-center relative z-20">
+      <div className="w-full max-w-7xl mx-auto text-center relative z-20 px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6 text-white drop-shadow-md">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold leading-tight mb-4 sm:mb-6 text-white drop-shadow-md">
             <span className="relative inline-block">
               Reservasi Lapangan
               <motion.span 
@@ -102,7 +102,7 @@ export function HeroSection() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.8 }}
         >
-          <p className="text-xl text-white/90 mb-8 max-w-3xl mx-auto drop-shadow backdrop-blur-sm bg-black/5 p-4 rounded-lg">
+          <p className="text-base sm:text-lg md:text-xl text-white/90 mb-6 sm:mb-8 max-w-3xl mx-auto drop-shadow backdrop-blur-sm bg-black/5 p-3 sm:p-4 rounded-lg">
             Temukan dan pesan lapangan olahraga favorit Anda dengan cepat dan
             mudah. Bayar online dan dapatkan konfirmasi instan.
           </p>

@@ -32,28 +32,28 @@ export function CtaSection({
 
   return (
     <motion.section 
-      className="py-20 bg-primary my-16"
+      className="py-12 sm:py-20 bg-primary my-8 sm:my-16"
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
       variants={fadeInUp}
     >
-      <div className="container mx-auto text-center">
+      <div className="container mx-auto text-center px-4 sm:px-6 md:px-8">
         <motion.div variants={fadeInUp}>
-          <h2 className="text-4xl font-bold mb-4 text-white">{title}</h2>
-          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+          <h2 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4 text-white">{title}</h2>
+          <p className="text-base sm:text-xl text-white/90 mb-6 sm:mb-8 max-w-2xl mx-auto">
             {subtitle}
           </p>
         </motion.div>
         
         <motion.div 
           variants={fadeInUp}
-          className="flex flex-col sm:flex-row gap-4 justify-center"
+          className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center"
         >
           <Link href={primaryButtonLink}>
             <Button
               size="lg"
-              className="bg-white text-primary hover:bg-white/90 hover:text-primary transition-colors"
+              className="bg-white text-primary hover:bg-white/90 hover:text-primary transition-colors text-sm sm:text-base py-1.5 sm:py-2"
             >
               {primaryButtonText}
             </Button>
@@ -62,7 +62,7 @@ export function CtaSection({
             <Button
               size="lg"
               variant="outline"
-              className="bg-transparent text-white border-white hover:bg-white/20 hover:text-white"
+              className="bg-transparent text-white border-white hover:bg-white/20 hover:text-white text-sm sm:text-base py-1.5 sm:py-2"
             >
               {secondaryButtonText}
             </Button>

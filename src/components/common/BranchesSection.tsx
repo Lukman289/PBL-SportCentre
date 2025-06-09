@@ -43,37 +43,37 @@ export function BranchesSection({ branches, isLoading }: BranchesSectionProps) {
 
   return (
     <motion.section 
-      className="py-20"
+      className="py-12 sm:py-20"
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
       variants={fadeInUp}
     >
-      <div className="container mx-auto">
+      <div className="container mx-auto px-4 sm:px-6 md:px-8">
         <motion.div 
-          className="flex justify-between items-center mb-12"
+          className="flex justify-between items-center mb-8 sm:mb-12"
           variants={fadeInUp}
         >
-          <h2 className="text-3xl font-bold">Cabang Populer</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold">Cabang Populer</h2>
           <Link href="/branches">
-            <Button variant="ghost" className="gap-2">
-              Lihat Semua <ArrowRight className="w-4 h-4" />
+            <Button variant="ghost" className="gap-1 sm:gap-2 text-sm sm:text-base">
+              Lihat Semua <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
             </Button>
           </Link>
         </motion.div>
         
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 animate-pulse">
             {[...Array(4)].map((_, index) => (
               <div
                 key={index}
-                className="h-[300px] rounded-xl bg-muted"
+                className="h-[200px] sm:h-[300px] rounded-xl bg-muted"
               ></div>
             ))}
           </div>
         ) : branches.length > 0 ? (
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6"
             variants={staggerContainer}
           >
             {branches.map((branch) => (
@@ -83,7 +83,7 @@ export function BranchesSection({ branches, isLoading }: BranchesSectionProps) {
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
               >
                 <Card className="h-full overflow-hidden group hover:shadow-md transition-all">
-                  <div className="relative h-48 overflow-hidden">
+                  <div className="relative h-32 sm:h-48 overflow-hidden">
                     <div className="h-full w-full bg-muted group-hover:scale-105 transition-transform duration-300">
                       <img
                         src={branch.imageUrl || "images/img_not_found.png"}
@@ -97,9 +97,9 @@ export function BranchesSection({ branches, isLoading }: BranchesSectionProps) {
                         className="h-full w-full object-cover"
                       />
                     </div>
-                    <div className="absolute top-3 right-3">
+                    <div className="absolute top-2 sm:top-3 right-2 sm:right-3">
                       <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        className={`inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium ${
                           branch.status === "active"
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
@@ -109,16 +109,16 @@ export function BranchesSection({ branches, isLoading }: BranchesSectionProps) {
                       </span>
                     </div>
                   </div>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-xl">{branch.name}</CardTitle>
-                    <CardDescription className="flex items-start gap-1">
-                      <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground" />
-                      {branch.location}
+                  <CardHeader className="p-3 sm:pb-2 sm:pt-4 sm:px-6">
+                    <CardTitle className="text-sm sm:text-xl line-clamp-1">{branch.name}</CardTitle>
+                    <CardDescription className="flex items-start gap-1 text-xs sm:text-sm">
+                      <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mt-0.5 text-muted-foreground" />
+                      <span className="line-clamp-2">{branch.location}</span>
                     </CardDescription>
                   </CardHeader>
-                  <CardFooter>
+                  <CardFooter className="p-3 sm:p-6 pt-0">
                     <Link href={`/branches/${branch.id}`} className="w-full">
-                      <Button variant="default" className="w-full">
+                      <Button variant="default" className="w-full text-xs sm:text-sm py-1 sm:py-2">
                         Lihat Detail
                       </Button>
                     </Link>
@@ -128,7 +128,7 @@ export function BranchesSection({ branches, isLoading }: BranchesSectionProps) {
             ))}
           </motion.div>
         ) : (
-          <div className="text-center p-10 border border-dashed rounded-lg">
+          <div className="text-center p-6 sm:p-10 border border-dashed rounded-lg">
             <p className="text-muted-foreground">Belum ada cabang tersedia</p>
           </div>
         )}

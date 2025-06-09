@@ -41,7 +41,7 @@ export function FeatureComparisonSection() {
 
   return (
     <motion.section 
-      className="py-24 relative overflow-hidden"
+      className="py-16 sm:py-24 relative overflow-hidden"
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
@@ -51,19 +51,19 @@ export function FeatureComparisonSection() {
       <div className="absolute top-40 left-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl"></div>
       <div className="absolute bottom-20 right-0 w-80 h-80 bg-primary/10 rounded-full blur-3xl"></div>
       
-      <div className="container mx-auto relative z-10">
+      <div className="container mx-auto relative z-10 px-4 sm:px-6 md:px-8">
         <motion.div 
-          className="text-center mb-16"
+          className="text-center mb-8 sm:mb-16"
           variants={fadeInUp}
         >
-          <h2 className="text-4xl font-bold mb-4">Bergabung Bersama Kami</h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <h2 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4">Bergabung Bersama Kami</h2>
+          <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto">
             Pilih peran Anda dalam ekosistem Sport Center kami
           </p>
         </motion.div>
         
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto"
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-12 max-w-6xl mx-auto"
           variants={staggerContainer}
         >
           {/* Member Card */}
@@ -75,28 +75,28 @@ export function FeatureComparisonSection() {
             {/* Top gradient bar */}
             <div className="h-2 bg-gradient-to-r from-blue-400 to-blue-600"></div>
             
-            <div className="p-10">
-              <div className="bg-blue-100 w-20 h-20 flex items-center justify-center rounded-full mx-auto mb-6">
-                <Users className="h-10 w-10 text-blue-600" />
+            <div className="p-6 sm:p-10">
+              <div className="bg-blue-100 w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full mx-auto mb-4 sm:mb-6">
+                <Users className="h-8 w-8 sm:h-10 sm:w-10 text-blue-600" />
               </div>
               
-              <h3 className="text-2xl font-bold mb-4 text-center">Untuk Member</h3>
+              <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-center">Untuk Member</h3>
               
-              <div className="mb-8 py-4 px-6 bg-blue-50 rounded-xl">
-                <ul className="space-y-4">
+              <div className="mb-6 sm:mb-8 py-3 sm:py-4 px-4 sm:px-6 bg-blue-50 rounded-xl">
+                <ul className="space-y-2 sm:space-y-4">
                   {memberBenefits.map((benefit, index) => (
-                    <li key={index} className="flex items-start gap-3">
+                    <li key={index} className="flex items-start gap-2 sm:gap-3">
                       <div className="bg-blue-100 p-1 rounded-full mt-1">
-                        <Star className="h-4 w-4 text-blue-600" />
+                        <Star className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
                       </div>
-                      <span>{benefit}</span>
+                      <span className="text-sm sm:text-base">{benefit}</span>
                     </li>
                   ))}
                 </ul>
               </div>
               
               <Link href="/auth/register" className="block">
-                <Button className="w-full bg-blue-600 hover:bg-blue-700" size="lg">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-sm sm:text-base py-1.5 sm:py-2" size="lg">
                   Daftar Sebagai Member
                 </Button>
               </Link>
@@ -112,28 +112,28 @@ export function FeatureComparisonSection() {
             {/* Top gradient bar */}
             <div className="h-2 bg-gradient-to-r from-primary to-primary/80"></div>
             
-            <div className="p-10">
-              <div className="bg-primary/20 w-20 h-20 flex items-center justify-center rounded-full mx-auto mb-6">
-                <Shield className="h-10 w-10 text-primary" />
+            <div className="p-6 sm:p-10">
+              <div className="bg-primary/20 w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full mx-auto mb-4 sm:mb-6">
+                <Shield className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
               </div>
               
-              <h3 className="text-2xl font-bold mb-4 text-center">Untuk Pemilik Sport Center</h3>
+              <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-center">Untuk Pemilik Sport Center</h3>
               
-              <div className="mb-8 py-4 px-6 bg-primary/5 rounded-xl">
-                <ul className="space-y-4">
+              <div className="mb-6 sm:mb-8 py-3 sm:py-4 px-4 sm:px-6 bg-primary/5 rounded-xl">
+                <ul className="space-y-2 sm:space-y-4">
                   {ownerBenefits.map((benefit, index) => (
-                    <li key={index} className="flex items-start gap-3">
+                    <li key={index} className="flex items-start gap-2 sm:gap-3">
                       <div className="bg-primary/10 p-1 rounded-full mt-1">
-                        <Star className="h-4 w-4 text-primary" />
+                        <Star className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                       </div>
-                      <span>{benefit}</span>
+                      <span className="text-sm sm:text-base">{benefit}</span>
                     </li>
                   ))}
                 </ul>
               </div>
               
               <Link href="/auth/register?role=owner" className="block">
-                <Button className="w-full bg-primary/90 hover:bg-primary" size="lg">
+                <Button className="w-full bg-primary/90 hover:bg-primary text-sm sm:text-base py-1.5 sm:py-2" size="lg">
                   Daftar Sebagai Pemilik
                 </Button>
               </Link>
@@ -143,38 +143,38 @@ export function FeatureComparisonSection() {
         
         {/* Feature comparison table */}
         <motion.div 
-          className="mt-20 max-w-4xl mx-auto overflow-hidden rounded-xl shadow-lg border border-primary/10"
+          className="mt-12 sm:mt-20 max-w-4xl mx-auto overflow-hidden rounded-xl shadow-lg border border-primary/10"
           variants={fadeInUp}
         >
-          <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-6 text-center">
-            <h3 className="text-xl font-bold">Perbandingan Fitur</h3>
+          <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-4 sm:p-6 text-center">
+            <h3 className="text-lg sm:text-xl font-bold">Perbandingan Fitur</h3>
           </div>
           
-          <div className="bg-white">
+          <div className="bg-white overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b">
-                  <th className="py-4 px-6 text-left">Fitur</th>
-                  <th className="py-4 px-6 text-center">Member</th>
-                  <th className="py-4 px-6 text-center">Pemilik</th>
+                  <th className="py-3 sm:py-4 px-3 sm:px-6 text-left text-sm sm:text-base">Fitur</th>
+                  <th className="py-3 sm:py-4 px-3 sm:px-6 text-center text-sm sm:text-base">Member</th>
+                  <th className="py-3 sm:py-4 px-3 sm:px-6 text-center text-sm sm:text-base">Pemilik</th>
                 </tr>
               </thead>
               <tbody>
                 {features.map((feature, index) => (
                   <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                    <td className="py-3 px-6">{feature.name}</td>
-                    <td className="py-3 px-6 text-center">
+                    <td className="py-2 sm:py-3 px-3 sm:px-6 text-sm sm:text-base">{feature.name}</td>
+                    <td className="py-2 sm:py-3 px-3 sm:px-6 text-center">
                       {feature.member ? (
-                        <Check className="h-5 w-5 text-green-500 mx-auto" />
+                        <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mx-auto" />
                       ) : (
-                        <X className="h-5 w-5 text-red-400 mx-auto" />
+                        <X className="h-4 w-4 sm:h-5 sm:w-5 text-red-400 mx-auto" />
                       )}
                     </td>
-                    <td className="py-3 px-6 text-center">
+                    <td className="py-2 sm:py-3 px-3 sm:px-6 text-center">
                       {feature.owner ? (
-                        <Check className="h-5 w-5 text-green-500 mx-auto" />
+                        <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mx-auto" />
                       ) : (
-                        <X className="h-5 w-5 text-red-400 mx-auto" />
+                        <X className="h-4 w-4 sm:h-5 sm:w-5 text-red-400 mx-auto" />
                       )}
                     </td>
                   </tr>

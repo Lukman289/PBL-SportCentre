@@ -15,13 +15,14 @@ import {
   CardTitle 
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { BookingWithPayment, Field, PaymentStatus } from '@/types';
+import { BookingWithPayment, Field, PaymentStatus, PaymentMethod } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { use } from 'react';
 import useToastHandler from '@/hooks/useToastHandler';
 import { useMobileLayout } from '@/hooks/useMobileLayout';
+import { PaymentFlow } from '@/components/ui/payment-flow';
+import { PaymentStatusBadge } from '@/components/ui/payment-status-badge';
 
 export default function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   // Mengaktifkan bottom navigation di halaman ini
@@ -33,12 +34,13 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const { toast } = useToast();
   const { id } = use(params);
   const bookingId = Number(id);
-  const { showError } = useToastHandler();
+  const { showError, showSuccess } = useToastHandler();
   const [booking, setBooking] = useState<BookingWithPayment | null>(null);
   const [field, setField] = useState<Field | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processingCancel, setProcessingCancel] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   useEffect(() => {
     const fetchBookingDetails = async () => {
@@ -65,40 +67,6 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
     fetchBookingDetails();
   }, [bookingId]);
 
-  // const handleProcessPayment = async () => {
-  //   if (!booking) return;
-
-  //   setProcessingPayment(true);
-  //   try {
-  //     // const payment = await paymentApi.createPayment({
-  //     //   bookingId: booking.id,
-  //     //   paymentMethod,
-  //     // });
-      
-  //     // toast({
-  //     //   title: 'Sukses',
-  //     //   description: 'Pembayaran berhasil diproses.',
-  //     // });
-      
-  //     // const updatedBooking = await bookingApi.getBookingById(bookingId);
-  //     // setBooking(updatedBooking);
-      
-  //     // if (payment.paymentUrl) {
-  //     //   window.open(payment.paymentUrl, '_blank');
-  //     // }
-  //     router.push(`${booking.payment?.paymentUrl || ''}`);
-  //   } catch (error) {
-  //     console.error('Error processing payment:', error);
-  //     toast({
-  //       title: 'Error',
-  //       description: 'Gagal memproses pembayaran. Silakan coba lagi.',
-  //       variant: 'destructive',
-  //     });
-  //   } finally {
-  //     setProcessingPayment(false);
-  //   }
-  // };
-
   const handleCancelBooking = async () => {
     if (!booking) return;
 
@@ -120,46 +88,52 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
     }
   };
 
-  const getStatusColor = (status?: PaymentStatus) => {
-    switch (status) {
-      case PaymentStatus.PAID:
-        return 'bg-green-100 text-green-800';
-      case PaymentStatus.DP_PAID:
-        return 'bg-blue-100 text-blue-800';
-      case PaymentStatus.PENDING:
-        return 'bg-yellow-100 text-yellow-800';
-      case PaymentStatus.FAILED:
-        return 'bg-red-100 text-red-800';
-      case PaymentStatus.REFUNDED:
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  // Mendapatkan status pembayaran, mendukung format baru (payments) dan lama (payment)
+  const paymentStatus = booking?.payments && booking.payments.length > 0 
+    ? booking.payments[0].status 
+    : booking?.payment?.status;
 
-  const getStatusText = (status?: PaymentStatus) => {
-    switch (status) {
-      case PaymentStatus.PAID:
-        return 'Lunas';
-      case PaymentStatus.DP_PAID:
-        return 'DP Terbayar';
-      case PaymentStatus.PENDING:
-        return 'Menunggu Pembayaran';
-      case PaymentStatus.FAILED:
-        return 'Pembayaran Gagal';
-      case PaymentStatus.REFUNDED:
-        return 'Dana Dikembalikan';
-      default:
-        return 'Belum Dibayar';
-    }
-  };
+  // Mendapatkan URL pembayaran, mendukung format baru (payments) dan lama (payment)
+  const paymentUrl = booking?.payments && booking.payments.length > 0 
+    ? booking.payments[0].paymentUrl 
+    : booking?.payment?.paymentUrl;
 
-  // Check if payment is needed
-  // const needsPayment = !booking?.payment || booking.payment.status === PaymentStatus.PENDING;
+  // Mendapatkan informasi pembayaran, mendukung format baru (payments) dan lama (payment)
+  const paymentInfo = booking?.payments && booking.payments.length > 0 
+    ? booking.payments[0] 
+    : booking?.payment;
 
   // Check if booking can be cancelled 
   // Only allow cancellation for pending payments or when there's no payment
-  const canBeCancelled = !booking?.payment || booking.payment.status === PaymentStatus.PENDING;
+  const canBeCancelled = !paymentInfo || paymentStatus === PaymentStatus.PENDING;
+
+  // Check if payment completion is needed
+  const showCompletionButton = paymentStatus === PaymentStatus.DP_PAID;
+
+  const handlePaymentCompletion = async () => {
+    if (!booking) return;
+    
+    setPaymentLoading(true);
+    try {
+      // Gunakan metode pembayaran default (CREDIT_CARD)
+      const result = await bookingApi.createUserPaymentCompletion(booking.id, PaymentMethod.CREDIT_CARD);
+      
+      if (result.paymentUrl) {
+        // Buka URL pembayaran di tab baru
+        window.open(result.paymentUrl, "_blank");
+      }
+      
+      showSuccess("Link pembayaran pelunasan berhasil dibuat");
+      
+      // Reload data booking setelah berhasil membuat pelunasan
+      const updatedBooking = await bookingApi.getBookingById(bookingId);
+      setBooking(updatedBooking);
+    } catch (error) {
+      showError(error, "Terjadi kesalahan saat membuat pelunasan");
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -190,9 +164,12 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
     <div className="container mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-2">Detail Booking #{booking.id}</h1>
       <div className="mb-8">
-        <Badge className={`${getStatusColor(booking.payment?.status)} pointer-events-none`}>
-          {getStatusText(booking.payment?.status)}
-        </Badge>
+        <PaymentStatusBadge
+          status={paymentStatus}
+          payments={booking.payments}
+          totalPrice={booking.payment?.amount || booking.payments?.[0]?.amount}
+          variant="custom"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -247,47 +224,62 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </CardContent>
           </Card>
 
-          {booking.payment && (
+          {paymentInfo && (
             <Card>
               <CardHeader>
                 <CardTitle>Informasi Pembayaran</CardTitle>
                 <CardDescription>
-                  ID Pembayaran: #{booking.payment.id}
+                  ID Pembayaran: #{paymentInfo.id}
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">Status Pembayaran</h3>
+                  <PaymentFlow 
+                    status={paymentStatus} 
+                    payments={booking.payments || []} 
+                    totalPaid={booking.payments?.reduce((sum, p) => 
+                      (p.status === PaymentStatus.PAID || p.status === PaymentStatus.DP_PAID) ? 
+                      sum + (p.amount || 0) : sum, 0) || 0}
+                    totalPrice={booking.payment?.amount || booking.payments?.[0]?.amount || 0}
+                  />
+                </div>
+                
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <h3 className="text-sm font-medium text-gray-500">Metode Pembayaran</h3>
-                      <p className="text-base capitalize">{booking.payment.paymentMethod.replace('_', ' ')}</p>
+                      <p className="text-base capitalize">{paymentInfo.paymentMethod?.replace('_', ' ') || 'Tidak tersedia'}</p>
                     </div>
                     <div>
                       <h3 className="text-sm font-medium text-gray-500">Status</h3>
-                      <Badge className={`${getStatusColor(booking.payment?.status)} pointer-events-none`}>
-                        {getStatusText(booking.payment.status)}
-                      </Badge>
+                      <PaymentStatusBadge
+                        status={paymentStatus}
+                        payments={booking.payments}
+                        totalPrice={booking.payment?.amount || booking.payments?.[0]?.amount}
+                        variant="default"
+                      />
                     </div>
                   </div>
 
                   <div>
                     <h3 className="text-sm font-medium text-gray-500">Total Pembayaran</h3>
-                    <p className="text-xl font-bold">Rp{booking.payment.amount.toLocaleString()}</p>
+                    <p className="text-xl font-bold">Rp{paymentInfo.amount.toLocaleString()}</p>
                   </div>
 
-                  {booking.payment.expiresDate && (
+                  {paymentInfo.expiresDate && (
                     <div>
                       <h3 className="text-sm font-medium text-gray-500">Tenggat Waktu</h3>
                       <p>
-                        {format(new Date(booking.payment.expiresDate), 'dd MMMM yyyy, HH:mm')}
+                        {format(new Date(paymentInfo.expiresDate), 'dd MMMM yyyy, HH:mm')}
                       </p>
                     </div>
                   )}
 
-                  {booking.payment.status === PaymentStatus.PENDING && (
+                  {paymentStatus === PaymentStatus.PENDING && paymentUrl && (
                     <div className="mt-4">
                       <Button asChild className="w-full">
-                        <a href={booking.payment.paymentUrl} target="_blank" rel="noopener noreferrer">
+                        <a href={paymentUrl} target="_blank" rel="noopener noreferrer">
                           Lanjutkan Pembayaran
                         </a>
                       </Button>
@@ -305,34 +297,6 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               <CardTitle>Aksi</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* {needsPayment && (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium mb-2">Metode Pembayaran</h3>
-                    <Select
-                      value={paymentMethod}
-                      onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih metode pembayaran" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={PaymentMethod.MIDTRANS}>Payment Gateway</SelectItem>
-                        <SelectItem value={PaymentMethod.TRANSFER}>Transfer Bank</SelectItem>
-                        <SelectItem value={PaymentMethod.EWALLET}>E-Wallet</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button 
-                    onClick={handleProcessPayment} 
-                    className="w-full"
-                    disabled={processingPayment}
-                  >
-                    {processingPayment ? 'Memproses...' : 'Bayar Sekarang'}
-                  </Button>
-                </div>
-              )} */}
-
               {canBeCancelled && (
                 <Button 
                   variant="destructive" 
@@ -341,6 +305,17 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   disabled={processingCancel}
                 >
                   {processingCancel ? 'Memproses...' : 'Batalkan Booking'}
+                </Button>
+              )}
+
+              {showCompletionButton && (
+                <Button 
+                  className="w-full" 
+                  onClick={handlePaymentCompletion}
+                  disabled={paymentLoading}
+                  variant="outline"
+                >
+                  {paymentLoading ? "Memproses..." : "Pelunasan DP"}
                 </Button>
               )}
 

@@ -2,7 +2,6 @@ export { BookingDetailHeader } from './BookingDetailHeader';
 export { FieldInfoCard } from './FieldInfoCard';
 export { BookingTimeCard } from './BookingTimeCard';
 export { UserInfoCard } from './UserInfoCard';
-export { PaymentStatusBadge } from './PaymentStatusBadge';
 export { PaymentInfoCard } from './PaymentInfoCard';
 export { BookingActions } from './BookingActions';
 

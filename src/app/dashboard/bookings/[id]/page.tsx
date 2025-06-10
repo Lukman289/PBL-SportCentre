@@ -225,6 +225,29 @@ export default function BookingDetailPage() {
     }
   };
 
+  const handlePaymentCompletion = async (paymentMethod: PaymentMethod) => {
+    if (!booking) return;
+    
+    setActionLoading(true);
+    try {
+      const result = await withLoading(bookingApi.createAdminPaymentCompletion(booking.id, paymentMethod));
+      
+      // Jika ada URL pembayaran dan bukan metode CASH, buka di tab baru
+      if (result.paymentUrl && paymentMethod !== PaymentMethod.CASH) {
+        window.open(result.paymentUrl, "_blank");
+      }
+      
+      showSuccess("Pelunasan berhasil dibuat");
+      
+      // Refresh data booking
+      await fetchBookingDetails();
+    } catch (error) {
+      showError(error, "Gagal melakukan pelunasan");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (loading) {
     return null; // GlobalLoading akan otomatis ditampilkan
   }
@@ -275,6 +298,7 @@ export default function BookingDetailPage() {
               openConfirmDialog={openConfirmDialog}
               setOpenCancelDialog={setOpenCancelDialog}
               canCancel={canCancel}
+              onPaymentCompletion={handlePaymentCompletion}
             />
           </div>
         </div>

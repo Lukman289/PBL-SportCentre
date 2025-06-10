@@ -56,7 +56,7 @@ class BookingApi {
       
       // Jika format tidak dikenali, kembalikan array kosong
       return [];
-    } catch (error) {
+    } catch {
       return [];
     }
   }
@@ -85,7 +85,7 @@ class BookingApi {
         `/bookings/admin/bookings${queryParams}`
       );
       return response.data;
-    } catch (error) {
+    } catch {
       return { data: [], meta: { page: 1, limit: 10, totalItems: 0, totalPages: 1, hasNextPage: false, hasPrevPage: false } };
     }
   }
@@ -117,7 +117,7 @@ class BookingApi {
         `/bookings/branches/${branchId}/bookings${queryParams}`
       );
       return response.data;
-    } catch (error) {
+    } catch {
       return { data: [], meta: { page: 1, limit: 10, totalItems: 0, totalPages: 1, hasNextPage: false, hasPrevPage: false } };
     }
   }
@@ -361,6 +361,58 @@ class BookingApi {
       else {
         return response.data as Booking & { payment?: Payment & { paymentUrl?: string } };
       }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Membuat pelunasan pembayaran DP untuk user
+   * @param bookingId - ID booking
+   * @param paymentMethod - Metode pembayaran
+   * @returns Promise dengan data pembayaran yang dibuat
+   */
+  async createUserPaymentCompletion(bookingId: number, paymentMethod: PaymentMethod): Promise<Payment & { paymentUrl?: string }> {
+    try {
+      const response = await axiosInstance.post<{ 
+        status: boolean; 
+        message: string; 
+        data: { 
+          payment: Payment; 
+          paymentUrl: string | null; 
+        } 
+      }>(`/bookings/user/bookings/${bookingId}/payment-completion`, { paymentMethod });
+      
+      return {
+        ...response.data.data.payment,
+        paymentUrl: response.data.data.paymentUrl || undefined
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Membuat pelunasan pembayaran DP untuk admin
+   * @param bookingId - ID booking
+   * @param paymentMethod - Metode pembayaran (default: CASH)
+   * @returns Promise dengan data pembayaran yang dibuat
+   */
+  async createAdminPaymentCompletion(bookingId: number, paymentMethod: PaymentMethod = PaymentMethod.CASH): Promise<Payment & { paymentUrl?: string }> {
+    try {
+      const response = await axiosInstance.post<{ 
+        status: boolean; 
+        message: string; 
+        data: { 
+          payment: Payment; 
+          paymentUrl: string | null; 
+        } 
+      }>(`/bookings/bookings/${bookingId}/payment-completion`, { paymentMethod });
+      
+      return {
+        ...response.data.data.payment,
+        paymentUrl: response.data.data.paymentUrl || undefined
+      };
     } catch (error) {
       throw error;
     }

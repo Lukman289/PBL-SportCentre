@@ -4,7 +4,8 @@ import { DollarSign, CreditCard, Tag, Clock, Info } from "lucide-react";
 import { Booking, PaymentStatus } from "@/types/booking.types";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { PaymentStatusBadge } from "./PaymentStatusBadge";
+import { PaymentFlow } from "@/components/ui/payment-flow";
+import { PaymentStatusBadge } from "@/components/ui/payment-status-badge";
 
 interface PaymentInfoCardProps {
   booking: Booking;
@@ -15,7 +16,7 @@ interface PaymentInfoCardProps {
 /**
  * Format payment method menjadi nama yang lebih mudah dibaca
  */
-const formatPaymentMethod = (method: string | undefined): string => {
+const formatPaymentMethod = (method: string | undefined | null): string => {
   if (!method) return "Tidak diketahui";
   
   // Ganti underscore dengan spasi dan capitalize setiap kata
@@ -42,6 +43,14 @@ export const PaymentInfoCard = ({
 }: PaymentInfoCardProps) => {
   if (!booking.payment) return <Card className="shadow-sm"><CardContent className="pt-6"><p className="text-muted-foreground">Data pembayaran tidak tersedia</p></CardContent></Card>;
 
+  // Hitung total pembayaran yang sudah dibayar (DP_PAID atau PAID)
+  const totalPaid = booking.payments?.reduce((sum, p) => 
+    (p.status === PaymentStatus.PAID || p.status === PaymentStatus.DP_PAID) ? 
+    sum + (p.amount || 0) : sum, 0) || 0;
+
+  // Total harga yang harus dibayar
+  const totalPrice = booking.payment?.amount || 0;
+
   return (
     <Card className="shadow-sm hover:shadow-md transition-shadow duration-300">
       <CardHeader className="pb-2">
@@ -50,10 +59,24 @@ export const PaymentInfoCard = ({
             <DollarSign className="h-5 w-5 mr-2 text-primary" />
             Informasi Pembayaran
           </div>
-          <PaymentStatusBadge status={booking.payment.status} />
+          <PaymentStatusBadge 
+            status={booking.payment.status} 
+            payments={booking.payments}
+            totalPrice={booking.payment.amount}
+          />
         </CardTitle>
       </CardHeader>
       <CardContent>
+        <div className="mb-4">
+          <h3 className="text-sm font-medium text-gray-500 mb-2">Status Pembayaran</h3>
+          <PaymentFlow 
+            status={booking.payment.status} 
+            payments={booking.payments || []} 
+            totalPaid={totalPaid}
+            totalPrice={totalPrice}
+          />
+        </div>
+
         <div className="grid gap-3">
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground flex items-center">

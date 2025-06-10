@@ -33,13 +33,25 @@ import Link from "next/link";
 import { bookingApi } from "@/api/booking.api";
 import EmptyState from "@/components/ui/EmptyState";
 import { Role } from "@/types";
-import { getDetailLink, getPaymentStatusBadge } from "./BookingTableUtils";
 import { formatTimeRange } from "@/utils/timezone.utils";
 import useToastHandler from "@/hooks/useToastHandler";
+import { PaymentStatusBadge } from "@/components/ui/payment-status-badge";
+
 interface BookingsTableProps {
   bookings: Booking[];
   userRole?: string;
 }
+
+// Fungsi untuk mendapatkan link detail booking berdasarkan role user
+const getDetailLink = (booking: Booking, userRole?: string) => {
+  if (userRole === Role.SUPER_ADMIN) {
+    return `/dashboard/bookings/${booking.id}`;
+  } else if (userRole === Role.ADMIN_CABANG) {
+    return `/dashboard/bookings/${booking.id}`;
+  } else {
+    return `/bookings/${booking.id}`;
+  }
+};
 
 export default function BookingsTable({ bookings, userRole }: BookingsTableProps) {
   const [openAlertId, setOpenAlertId] = useState<number | null>(null);
@@ -117,7 +129,12 @@ export default function BookingsTable({ bookings, userRole }: BookingsTableProps
                   {formatTimeRange(booking.startTime, booking.endTime)}
                 </TableCell>
                 <TableCell>
-                  {getPaymentStatusBadge(booking.payment?.status)}
+                  <PaymentStatusBadge 
+                    status={booking.payment?.status}
+                    payments={booking.payments}
+                    totalPrice={booking.payment?.amount}
+                    variant="default"
+                  />
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>

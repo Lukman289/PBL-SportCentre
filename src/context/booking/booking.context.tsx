@@ -342,14 +342,21 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       // Cari URL pembayaran dari backend
       let paymentUrl = '';
       
-      if (result.payment?.paymentUrl) {
+      // Cek apakah ada payments dalam respons (format baru)
+      if (result.payments && result.payments.length > 0) {
+        paymentUrl = result.payments[0].paymentUrl || '';
+      } 
+      // Fallback ke format lama jika payments tidak ada
+      else if (result.payment?.paymentUrl) {
         paymentUrl = result.payment.paymentUrl;
       }
       
       if (paymentUrl) {
+        // Redirect ke halaman pembayaran Midtrans
         window.location.href = paymentUrl;
       } else {
-        showError("Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi.");
+        // Jika tidak ada URL pembayaran, mungkin pembayaran tunai atau error
+        router.push(`/bookings/${result.id}`);
       }
     } catch (error) {
       showError(error, "Gagal membuat booking. Silakan coba lagi nanti.");

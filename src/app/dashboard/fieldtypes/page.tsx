@@ -57,7 +57,7 @@ export default function FieldTypesPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [showError]);
+    }, []);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -255,7 +255,7 @@ export default function FieldTypesPage() {
 
                             {totalPages > 1 && (
                                 <div className="flex flex-col md:flex-row items-center justify-between px-6 py-4 border-t gap-4">
-                                    <div className="text-sm text-muted-foreground">
+                                    <div className="text-sm text-muted-foreground hidden md:block">
                                         Menampilkan{' '}
                                         <span className="font-medium">
                                             {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredFieldTypes.length)}

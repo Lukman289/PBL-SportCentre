@@ -118,15 +118,10 @@ export default function UserDetailPage() {
           Detail Pengguna: {user.name || 'Tidak Diketahui'}
         </h1>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => router.push(`/dashboard/users/${userId}/edit`)}
-          >
-            Edit
-          </Button>
           {canDelete && (
             <Button
               variant="destructive"
+              className='text-white'
               onClick={handleDelete}
               disabled={deleting}
             >

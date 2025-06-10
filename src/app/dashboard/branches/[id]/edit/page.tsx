@@ -223,46 +223,54 @@ export default function EditBranchPage() {
     form.setValue('removeImage', false);
   };
 
-  const onSubmit = async (data: EditBranchFormValues) => {
-    setIsSubmitting(true);
-    setError(null);
+ const onSubmit = async (data: EditBranchFormValues) => {
+  setIsSubmitting(true);
+  setError(null);
 
-    try {
-      const formData = new FormData();
-      formData.append('name', data.name);
-      formData.append('location', data.location);
-      formData.append('status', data.status);
-
-      // Tambahkan ownerId jika ada dan user adalah super admin
-      if (data.ownerId && isSuperAdmin) {
-        formData.append('ownerId', data.ownerId.toString());
-      }
-
-      // Handle gambar
-      if (removeImage) {
-        // Kirim flag untuk menghapus gambar
-        formData.append('removeImage', 'true');
-      } else if (selectedFile) {
-        // Kirim file baru
-        formData.append('imageUrl', selectedFile);
-      } else if (currentImageUrl) {
-        // Pertahankan gambar lama
-        formData.append('keepCurrentImage', 'true');
-      }
-
-
-      router.push(isSuperAdmin ? '/dashboard/branches' : '/dashboard/my-branches');
-    } catch (err) {
-      const error = err as { response?: { data?: { message?: string } } };
-      if (error.response?.data?.message) {
-        showError(error.response.data.message, 'Error Cabang');
-      } else {
-        showError('Gagal memperbarui cabang. Silakan coba lagi.', 'Error Cabang');
-      }
-    } finally {
-      setIsSubmitting(false);
+  try {
+    const branchId = Number(id);
+    if (isNaN(branchId)) {
+      showError('ID cabang tidak valid', 'Error ID Cabang');
+      return;
     }
-  };
+
+    const formData = new FormData();
+    formData.append('name', data.name);
+    formData.append('location', data.location);
+    formData.append('status', data.status);
+
+    // Tambahkan ownerId jika ada dan user adalah super admin
+    if (data.ownerId && isSuperAdmin) {
+      formData.append('ownerId', data.ownerId.toString());
+    }
+
+    // Handle gambar
+    if (removeImage) {
+      formData.append('removeImage', 'true');
+    } else if (selectedFile) {
+      formData.append('imageUrl', selectedFile);
+    } else if (currentImageUrl) {
+      formData.append('keepCurrentImage', 'true');
+    }
+
+    // Panggil API untuk update
+    await branchApi.updateBranch(branchId, formData);
+
+    // Redirect setelah berhasil
+    router.push(isSuperAdmin ? '/dashboard/branches' : '/dashboard/my-branches');
+    // Optional: Tampilkan toast sukses
+    // showSuccess('Cabang berhasil diperbarui', 'Sukses');
+  } catch (err) {
+    const error = err as { response?: { data?: { message?: string } } };
+    if (error.response?.data?.message) {
+      showError(error.response.data.message, 'Error Cabang');
+    } else {
+      showError('Gagal memperbarui cabang. Silakan coba lagi.', 'Error Cabang');
+    }
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // Loading state
   if (loadingBranch) {
@@ -435,12 +443,14 @@ export default function EditBranchPage() {
                               src={imagePreview}
                               alt="Preview"
                               className="w-40 h-32 object-cover rounded border"
+                              width={160}
+                              height={128}
                             />
                             <Button
                               type="button"
                               variant="destructive"
                               size="sm"
-                              className="absolute -top-2 -right-2 h-6 w-6 p-0"
+                              className="absolute -top-2 -right-2 h-6 w-6 p-0 text-white"
                               onClick={handleRemoveImage}
                             >
                               <X className="h-3 w-3" />
@@ -520,6 +530,6 @@ export default function EditBranchPage() {
           </Form>
         </CardContent>
       </Card>
-    </div>
-  );
+ </div>
+);
 }

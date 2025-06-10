@@ -47,7 +47,7 @@ export default function EditFieldTypePage() {
     if (authUser) {
       fetchFieldType();
     }
-  }, [fieldTypeId, router, authUser, showError]);
+  }, [fieldTypeId, router, authUser]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

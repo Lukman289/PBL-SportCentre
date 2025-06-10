@@ -44,6 +44,7 @@ export default function FieldPage() {
 
   useEffect(() => {
     fetchBranches();
+    fetchFields(maxData, currentPage);
   }, []);
 
   useEffect(() => {
@@ -96,7 +97,7 @@ export default function FieldPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await withLoading(branchApi.getBranches());
+      const response = await branchApi.getBranches();
       if (response && response.data) {
         setBranches(response.data);
       } else {

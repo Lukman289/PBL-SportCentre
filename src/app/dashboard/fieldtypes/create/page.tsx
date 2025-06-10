@@ -54,12 +54,9 @@ export default function CreateFieldTypePage() {
 
   return (
     <div className="container mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Tambah Tipe Lapangan</h1>
-      </div>
       <div className="flex flex-col space-y-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tambah Tipe Field Baru</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Tambah Tipe Lapangan Baru</h1>
           <p className="text-muted-foreground">
             Isi form berikut untuk menambahkan tipe field baru
           </p>

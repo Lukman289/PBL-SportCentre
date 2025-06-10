@@ -284,7 +284,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                     </div>
                   )}
 
-                  {booking.payment.paymentUrl && booking.payment.status === PaymentStatus.PENDING && (
+                  {booking.payment.status === PaymentStatus.PENDING && (
                     <div className="mt-4">
                       <Button asChild className="w-full">
                         <a href={booking.payment.paymentUrl} target="_blank" rel="noopener noreferrer">

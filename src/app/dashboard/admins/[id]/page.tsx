@@ -71,7 +71,7 @@ export default function AdminDetailPage() {
         fetchData();
         fetchBranchesAdmin();
     }
-  }, [adminId, showError]);
+  }, [adminId]);
 
   const fetchBranchesAdmin = async () => {
     setIsLoading(true);
@@ -277,7 +277,7 @@ export default function AdminDetailPage() {
             <Button type="button" onClick={() => setShowConfirmDialog(false)} variant="secondary">
               Batal
             </Button>
-            <Button type="button" onClick={handleRemoveAdmin} variant="destructive">
+            <Button type="button" onClick={handleRemoveAdmin} variant="destructive" className='text-white'>
               Hapus
             </Button>
           </DialogFooter>

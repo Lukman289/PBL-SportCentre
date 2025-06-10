@@ -431,9 +431,6 @@ export default function BranchDetailPage() {
           <Button variant="outline" onClick={handleEdit}>
             Edit
           </Button>
-          <Button variant="destructive" className="text-white" onClick={handleDelete}>
-            Hapus
-          </Button>
         </div>
       </div>
 

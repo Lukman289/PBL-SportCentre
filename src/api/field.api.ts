@@ -143,7 +143,17 @@ class FieldApi {
   async deleteField(fieldId: number): Promise<{ message: string }> {
     const response = await axiosInstance.delete<{ message: string }>(`/fields/${fieldId}`);
     return response.data;
-}
+  }
+  
+  /**
+   * Hapus tipe lapangan
+   * @param id - ID tipe lapangan
+   * @returns Promise dengan pesan sukses
+   */
+  async deleteFieldTypes(fieldTypeId: number): Promise<{ message: string }> {
+    const response = await axiosInstance.delete<{ message: string }>(`/field-types/${fieldTypeId}`);
+    return response.data;
+  }
 
   /**
    * Upload gambar untuk lapangan

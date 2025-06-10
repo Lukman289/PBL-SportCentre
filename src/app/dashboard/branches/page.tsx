@@ -55,7 +55,7 @@ export default function BranchesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, showError]);
+  }, [searchQuery]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

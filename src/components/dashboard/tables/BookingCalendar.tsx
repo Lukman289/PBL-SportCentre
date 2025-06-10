@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { formatTimeRange } from "@/utils/timezone.utils";
 import Link from "next/link";
-import { getDetailLink } from "./BookingTableUtils";
+import { getDetailLink } from "@/components/dashboard/tables/BookingTableUtils";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";

@@ -79,11 +79,19 @@ export default function BookingDetailPage() {
       if (user.role === Role.SUPER_ADMIN) {
         // Super admin tidak membutuhkan branchId
         data = await withLoading(bookingApi.getBookingById(bookingId, roleParam));
+
+        if (data.payments && data.payments?.length > 0) {
+          data.payment = data.payments[data.payments.length - 1];
+        }
       } else if (user.role === Role.ADMIN_CABANG && user.branches && user.branches.length > 0) {
         // Admin cabang membutuhkan branchId
         // Ambil branchId dari cabang pertama yang dimiliki admin
         const branchId = user.branches[0].branchId;
         data = await withLoading(bookingApi.getBookingById(bookingId, roleParam, branchId));
+
+        if (data.payments && data.payments?.length > 0) {
+          data.payment = data.payments[data.payments.length - 1];
+        }
       } else {
         showError("Data cabang tidak ditemukan untuk admin cabang", "Error Data Cabang");
         return;
@@ -206,10 +214,16 @@ export default function BookingDetailPage() {
         let updatedBooking;
         if (user.role === Role.SUPER_ADMIN) {
           updatedBooking = await withLoading(bookingApi.getBookingById(bookingId, roleParam));
+          if (updatedBooking.payments && updatedBooking.payments?.length > 0) {
+            updatedBooking.payment = updatedBooking.payments[updatedBooking.payments.length - 1];
+          }
         } else if (user.role === Role.ADMIN_CABANG && user.branches && user.branches.length > 0) {
           // Admin cabang membutuhkan branchId
           const branchId = user.branches[0].branchId;
           updatedBooking = await withLoading(bookingApi.getBookingById(bookingId, roleParam, branchId));
+          if (updatedBooking.payments && updatedBooking.payments?.length > 0) {
+            updatedBooking.payment = updatedBooking.payments[updatedBooking.payments.length - 1];
+          }
         }
         
         if (updatedBooking) {

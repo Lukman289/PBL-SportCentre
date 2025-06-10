@@ -32,7 +32,20 @@ export default function HistoriesPage() {
       setError(null);
       try {
         const data = await bookingApi.getUserBookings(userId);
-        setBookings(Array.isArray(data) ? data : []);
+
+        const bookingsLatestPayment = data.map((booking) => {
+        const payments = booking.payments || [];
+        const lastPayment = payments.length > 0
+          ? payments.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())[payments.length - 1]
+          : undefined;
+
+        return {
+          ...booking,
+          payment: lastPayment,
+        };
+      });
+
+        setBookings(Array.isArray(bookingsLatestPayment) ? bookingsLatestPayment : []);
       } catch (error) {
         showError(error, 'Gagal memuat daftar booking. Silakan coba lagi nanti.');
       } finally {
@@ -93,7 +106,13 @@ export default function HistoriesPage() {
           const paymentInfo = booking.payments && booking.payments.length > 0 
             ? booking.payments[0] 
             : booking.payment;
-            
+
+          const lastPaymentInfo = booking?.payments && booking.payments.length > 0 
+            ? booking.payments[booking.payments.length - 1] 
+            : booking?.payment;
+
+          const totalAmount = (Number(paymentInfo?.amount) ?? 0) + (Number(lastPaymentInfo?.amount) ?? 0);
+
           return (
             <Card key={booking.id} className="overflow-hidden">
               <CardHeader className="pb-2">
@@ -122,7 +141,7 @@ export default function HistoriesPage() {
                   {paymentInfo && (
                     <div>
                       <span className="text-sm text-gray-500">Total Pembayaran:</span>
-                      <p className="font-bold">Rp{paymentInfo.amount.toLocaleString()}</p>
+                      <p className="font-bold">Rp{totalAmount.toLocaleString()}</p>
                     </div>
                   )}
                 </div>

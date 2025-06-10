@@ -151,42 +151,6 @@ export default function MyBookingDetailPage() {
       setConfirmDialog({ ...confirmDialog, open: false });
     }
   };
-
-  const openConfirmDialog = (
-    action: "approve" | "reject" | "cancel" | "complete" | "pay"
-  ) => {
-    const dialogConfig = {
-      approve: {
-        title: "Konfirmasi Pembayaran",
-        description: "Anda yakin ingin mengkonfirmasi pembayaran booking ini?",
-      },
-      reject: {
-        title: "Tolak Pembayaran",
-        description: "Anda yakin ingin menolak pembayaran booking ini?",
-      },
-      cancel: {
-        title: "Batalkan Booking",
-        description:
-          "Anda yakin ingin membatalkan booking ini? Tindakan ini tidak dapat dibatalkan.",
-      },
-      complete: {
-        title: "Selesaikan Booking",
-        description: "Anda yakin ingin menandai booking ini sebagai selesai?",
-      },
-      pay: {
-        title: "Lunasi Pembayaran",
-        description: "Anda yakin ingin menandai pembayaran ini sebagai lunas?",
-      },
-    };
-
-    setConfirmDialog({
-      open: true,
-      action,
-      title: dialogConfig[action].title,
-      description: dialogConfig[action].description,
-    });
-  };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",

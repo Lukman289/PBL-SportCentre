@@ -7,11 +7,11 @@ import { id } from 'date-fns/locale';
 import { bookingApi } from '@/api/booking.api';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { PaymentStatus, BookingWithPayment } from '@/types';
 import { useAuth } from '@/context/auth/auth.context';
 import useToastHandler from '@/hooks/useToastHandler';
 import { useMobileLayout } from '@/hooks/useMobileLayout';
+import { PaymentStatusBadge } from '@/components/ui/payment-status-badge';
+import { BookingWithPayment } from '@/types';
 
 export default function HistoriesPage() {
   useMobileLayout({
@@ -43,39 +43,7 @@ export default function HistoriesPage() {
     fetchBookings();
   }, [userId]);
 
-  const getStatusColor = (status?: PaymentStatus) => {
-    switch (status) {
-      case PaymentStatus.PAID:
-        return 'bg-green-100 text-green-800';
-      case PaymentStatus.DP_PAID:
-        return 'bg-blue-100 text-blue-800';
-      case PaymentStatus.PENDING:
-        return 'bg-yellow-100 text-yellow-800';
-      case PaymentStatus.FAILED:
-        return 'bg-red-100 text-red-800';
-      case PaymentStatus.REFUNDED:
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
 
-  const getStatusText = (status?: PaymentStatus) => {
-    switch (status) {
-      case PaymentStatus.PAID:
-        return 'Lunas';
-      case PaymentStatus.DP_PAID:
-        return 'DP Terbayar';
-      case PaymentStatus.PENDING:
-        return 'Menunggu Pembayaran';
-      case PaymentStatus.FAILED:
-        return 'Pembayaran Gagal';
-      case PaymentStatus.REFUNDED:
-        return 'Dana Dikembalikan';
-      default:
-        return 'Belum Dibayar';
-    }
-  };
 
   if (loading) {
     return (
@@ -115,45 +83,60 @@ export default function HistoriesPage() {
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {bookings.map((booking) => (
-          <Card key={booking.id} className="overflow-hidden">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex justify-between items-center">
-                <span>Booking #{booking.id}</span>
-                <Badge className={`${getStatusColor(booking.payment?.status)} pointer-events-none`}>
-                  {getStatusText(booking.payment?.status)}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pb-2">
-              <div className="space-y-2">
-                <div>
-                  <span className="text-sm text-gray-500">Tanggal:</span>
-                  <p>{format(new Date(booking.bookingDate), 'dd MMMM yyyy', { locale: id })}</p>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-500">Waktu:</span>
-                  <p>
-                    {format(new Date(booking.startTime), 'HH:mm')} - {format(new Date(booking.endTime), 'HH:mm')}
-                  </p>
-                </div>
-                {booking.payment && (
+        {bookings.map((booking) => {
+          // Mendapatkan status pembayaran, mendukung format baru (payments) dan lama (payment)
+          const paymentStatus = booking.payments && booking.payments.length > 0 
+            ? booking.payments[0].status 
+            : booking.payment?.status;
+          
+          // Mendapatkan informasi pembayaran, mendukung format baru (payments) dan lama (payment)
+          const paymentInfo = booking.payments && booking.payments.length > 0 
+            ? booking.payments[0] 
+            : booking.payment;
+            
+          return (
+            <Card key={booking.id} className="overflow-hidden">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex justify-between items-center">
+                  <span>Booking #{booking.id}</span>
+                  <PaymentStatusBadge 
+                    status={paymentStatus} 
+                    payments={booking.payments}
+                    totalPrice={booking.payment?.amount}
+                    bookingId={booking.id}
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-2">
+                <div className="space-y-2">
                   <div>
-                    <span className="text-sm text-gray-500">Total Pembayaran:</span>
-                    <p className="font-bold">Rp{booking.payment.amount.toLocaleString()}</p>
+                    <span className="text-sm text-gray-500">Tanggal:</span>
+                    <p>{format(new Date(booking.bookingDate), 'dd MMMM yyyy', { locale: id })}</p>
                   </div>
-                )}
-              </div>
-            </CardContent>
-            <CardFooter className="pt-2">
-              <Button asChild className="w-full">
-                <Link href={`/histories/${booking.id}`}>
-                  Lihat Detail
-                </Link>
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
+                  <div>
+                    <span className="text-sm text-gray-500">Waktu:</span>
+                    <p>
+                      {format(new Date(booking.startTime), 'HH:mm')} - {format(new Date(booking.endTime), 'HH:mm')}
+                    </p>
+                  </div>
+                  {paymentInfo && (
+                    <div>
+                      <span className="text-sm text-gray-500">Total Pembayaran:</span>
+                      <p className="font-bold">Rp{paymentInfo.amount.toLocaleString()}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+              <CardFooter className="pt-2">
+                <Button asChild className="w-full">
+                  <Link href={`/histories/${booking.id}`}>
+                    Lihat Detail
+                  </Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          );
+        })}
       </div>
     );
   };

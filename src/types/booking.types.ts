@@ -12,6 +12,7 @@ export interface Booking {
   field?: Field;
   user?: User;
   payment?: Payment & { paymentUrl?: string };
+  payments?: (Payment & { paymentUrl?: string })[];
 }
 
 export interface BookingMeta {
@@ -58,7 +59,7 @@ export interface Payment {
   bookingId: number;
   userId: number;
   amount: number;
-  paymentMethod: PaymentMethod;
+  paymentMethod: PaymentMethod | null;
   status: PaymentStatus;
   createdAt: string;
   expiresDate?: string;

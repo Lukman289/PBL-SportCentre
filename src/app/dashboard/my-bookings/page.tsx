@@ -20,6 +20,8 @@ import {
 import { Button } from "@/components/ui/button";
 import useToastHandler from "@/hooks/useToastHandler";
 import Link from "next/link";
+import { PaymentStatusBadge } from "@/components/ui/payment-status-badge";
+import { getPaymentStatusText } from "@/utils/payment/paymentStatus.utils";
 
 export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<BookingWithPayment[]>([]);
@@ -64,42 +66,8 @@ export default function MyBookingsPage() {
     setStatusFilter(status);
   }
 
-  const getStatusColor = (status?: PaymentStatus) => {
-    switch (status) {
-      case PaymentStatus.PAID:
-        return "bg-green-100 text-green-800";
-      case PaymentStatus.DP_PAID:
-        return "bg-blue-100 text-blue-800";
-      case PaymentStatus.PENDING:
-        return "bg-yellow-100 text-yellow-800";
-      case PaymentStatus.FAILED:
-        return "bg-red-100 text-red-800";
-      case PaymentStatus.REFUNDED:
-        return "bg-purple-100 text-purple-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusText = (status?: PaymentStatus | string) => {
-    switch (status) {
-      case PaymentStatus.PAID:
-        return "Lunas";
-      case PaymentStatus.DP_PAID:
-        return "DP Terbayar";
-      case PaymentStatus.PENDING:
-        return "Menunggu Pembayaran";
-      case PaymentStatus.FAILED:
-        return "Pembayaran Gagal";
-      case PaymentStatus.REFUNDED:
-        return "Dana Dikembalikan";
-      default:
-        return "Belum Dibayar";
-    }
-  };
-
-  const paymentStatusOptions = Object.entries(PaymentStatus).map(([_, value]) => ({
-    label: getStatusText(value),
+  const paymentStatusOptions = Object.entries(PaymentStatus).map(([, value]) => ({
+    label: getPaymentStatusText(value),
     value: value,
   }));
 
@@ -162,11 +130,12 @@ export default function MyBookingsPage() {
                       })}
                     </TableCell>
                     <TableCell>
-                      <span
-                        className={`${getStatusColor(booking.payment?.status)}`}
-                      >
-                        {getStatusText(booking.payment?.status)}
-                      </span>
+                      <PaymentStatusBadge
+                        status={booking.payment?.status}
+                        payments={booking.payments}
+                        totalPrice={booking.payment?.amount}
+                        variant="default"
+                      />
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">

@@ -69,9 +69,14 @@ export default function BookingForm({
         
         const result = await adminBooking.createManualBooking(bookingData);
         if (result) {
+          // Cek payments (format baru) terlebih dahulu
+          const paymentUrl = result.payments && result.payments.length > 0 
+            ? result.payments[0].paymentUrl 
+            : result.payment?.paymentUrl;
+            
           // Jika ada paymentUrl dan menggunakan metode online, redirect ke halaman pembayaran
-          if (result.payment?.paymentUrl && paymentMethod !== PaymentMethod.CASH) {
-            window.open(result.payment.paymentUrl, "_blank");
+          if (paymentUrl && paymentMethod !== PaymentMethod.CASH) {
+            window.open(paymentUrl, "_blank");
           }
           
           if (onSuccess) {

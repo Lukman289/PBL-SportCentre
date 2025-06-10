@@ -4,7 +4,9 @@ import { DollarSign, CreditCard, Tag, Clock, Info } from "lucide-react";
 import { Booking, PaymentStatus } from "@/types/booking.types";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { PaymentStatusBadge } from "./PaymentStatusBadge";
+import { PaymentFlow } from "@/components/ui/payment-flow";
+import { PaymentStatusBadge } from "@/components/ui/payment-status-badge";
+import { getLatestPayment } from "@/utils/payment/paymentStatus.utils";
 
 interface PaymentInfoCardProps {
   booking: Booking;
@@ -15,7 +17,7 @@ interface PaymentInfoCardProps {
 /**
  * Format payment method menjadi nama yang lebih mudah dibaca
  */
-const formatPaymentMethod = (method: string | undefined): string => {
+const formatPaymentMethod = (method: string | undefined | null): string => {
   if (!method) return "Tidak diketahui";
   
   // Ganti underscore dengan spasi dan capitalize setiap kata
@@ -42,6 +44,20 @@ export const PaymentInfoCard = ({
 }: PaymentInfoCardProps) => {
   if (!booking.payment) return <Card className="shadow-sm"><CardContent className="pt-6"><p className="text-muted-foreground">Data pembayaran tidak tersedia</p></CardContent></Card>;
 
+  // Ambil pembayaran terakhir jika ada
+  const latestPayment = getLatestPayment(booking.payments, booking.id);
+  
+  // Gunakan pembayaran terakhir atau payment default
+  const paymentToShow = latestPayment || booking.payment;
+
+  // Hitung total pembayaran yang sudah dibayar (DP_PAID atau PAID)
+  const totalPaid = booking.payments?.reduce((sum, p) => 
+    (p.status === PaymentStatus.PAID || p.status === PaymentStatus.DP_PAID) ? 
+    sum + (p.amount || 0) : sum, 0) || 0;
+
+  // Total harga yang harus dibayar
+  const totalPrice = booking.payment?.amount || 0;
+
   return (
     <Card className="shadow-sm hover:shadow-md transition-shadow duration-300">
       <CardHeader className="pb-2">
@@ -50,17 +66,33 @@ export const PaymentInfoCard = ({
             <DollarSign className="h-5 w-5 mr-2 text-primary" />
             Informasi Pembayaran
           </div>
-          <PaymentStatusBadge status={booking.payment.status} />
+          <PaymentStatusBadge 
+            status={paymentToShow.status} 
+            payments={booking.payments}
+            totalPrice={totalPrice}
+            bookingId={booking.id}
+          />
         </CardTitle>
       </CardHeader>
       <CardContent>
+        <div className="mb-4">
+          <h3 className="text-sm font-medium text-gray-500 mb-2">Status Pembayaran</h3>
+          <PaymentFlow 
+            status={paymentToShow.status} 
+            payments={booking.payments || []} 
+            totalPaid={totalPaid}
+            totalPrice={totalPrice}
+            bookingId={booking.id}
+          />
+        </div>
+
         <div className="grid gap-3">
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground flex items-center">
               <DollarSign className="h-4 w-4 mr-2" />
               Total
             </span>
-            <span className="font-medium">{formatCurrency(booking.payment.amount)}</span>
+            <span className="font-medium">{formatCurrency(totalPrice)}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground flex items-center">
@@ -68,37 +100,37 @@ export const PaymentInfoCard = ({
               Metode
             </span>
             <span className="font-medium">
-              {formatPaymentMethod(booking.payment.paymentMethod)}
+              {formatPaymentMethod(paymentToShow.paymentMethod)}
               {isManualBooking && " (Booking Manual)"}
             </span>
           </div>
-          {booking.payment.transactionId && (
+          {paymentToShow.transactionId && (
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground flex items-center">
                 <Tag className="h-4 w-4 mr-2" />
                 ID Transaksi
               </span>
-              <span className="font-medium">{booking.payment.transactionId}</span>
+              <span className="font-medium">{paymentToShow.transactionId}</span>
             </div>
           )}
-          {booking.payment.expiresDate && booking.payment.status === PaymentStatus.PENDING && (
+          {paymentToShow.expiresDate && paymentToShow.status === PaymentStatus.PENDING && (
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground flex items-center">
                 <Clock className="h-4 w-4 mr-2" />
                 Batas Waktu
               </span>
               <span className="font-medium">
-                {format(new Date(booking.payment.expiresDate), "dd MMM yyyy, HH:mm", { locale: id })}
+                {format(new Date(paymentToShow.expiresDate), "dd MMM yyyy, HH:mm", { locale: id })}
               </span>
             </div>
           )}
         </div>
 
-        {booking.payment.paymentUrl && booking.payment.status === PaymentStatus.PENDING && (
+        {paymentToShow.paymentUrl && paymentToShow.status === PaymentStatus.PENDING && (
           <div className="mt-4">
             <Button asChild className="w-full" variant="default">
               <a
-                href={booking.payment.paymentUrl}
+                href={paymentToShow.paymentUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center"

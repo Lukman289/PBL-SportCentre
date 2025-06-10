@@ -61,7 +61,7 @@ export default function BookingDetailPage() {
     };
 
     fetchBookingData();
-  }, [bookingId, showError]);
+  }, [bookingId]);
 
   const handleCancelBooking = async () => {
     if (!booking) return;

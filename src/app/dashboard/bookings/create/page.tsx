@@ -65,7 +65,7 @@ export default function AdminBookingPage() {
     if (!hasAuthCookie() || !currentUser) {
       showError("Anda harus login untuk mengakses halaman ini", "Akses Ditolak");
     }
-  }, [currentUser, showError]);
+  }, [currentUser]);
 
   // Render states
   if (loading) {

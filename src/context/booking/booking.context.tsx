@@ -138,7 +138,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setRefreshing(false);
     }
-  }, [selectedBranch, selectedDate, fields, times, showError]);
+  }, [selectedBranch, selectedDate, fields, times]);
 
   // Fungsi untuk mengambil data ketersediaan awal
   const fetchInitialAvailability = useCallback(async () => {

@@ -66,7 +66,7 @@ function UsersContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.role, currentPage, showSuccess, showError]);
+  }, [user?.role, currentPage]);
 
   // Handle refresh parameter dari URL
   useEffect(() => {

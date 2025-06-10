@@ -38,7 +38,7 @@ export default function FieldTypeDetailPage() {
         if (authUser) {
             fetchFieldType();
         }
-    }, [fieldTypeId, router, authUser, showError]);
+    }, [fieldTypeId, router, authUser]);
 
     const handleDelete = async () => {
         if (!authUser || !fieldType) return;
@@ -50,7 +50,7 @@ export default function FieldTypeDetailPage() {
         if (confirmDelete) {
             setDeleting(true);
             try {
-                await axiosInstance.delete(`/fieldtypes/${fieldTypeId}`);
+                await fieldApi.deleteFieldTypes(fieldTypeId);
 
                 showSuccess(`Jenis lapangan "${fieldType.name}" berhasil dihapus`);
 
@@ -115,6 +115,7 @@ export default function FieldTypeDetailPage() {
                     {canDelete && (
                         <Button
                             variant="destructive"
+                            className='text-white'
                             onClick={handleDelete}
                             disabled={deleting}
                         >
@@ -134,20 +135,20 @@ export default function FieldTypeDetailPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <DetailItem label="ID" value={fieldType.id} />
                             <DetailItem label="Name" value={fieldType.name} />
-                            {/* <DetailItem
-                label="Created At"
-                value={new Date(fieldType.createdAt).toLocaleDateString('id-ID', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              /> */}
                         </div>
                     </div>
                 </CardContent>
             </Card>
+            <div className="flex items-center mt-6">
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => router.push(`/dashboard/fieldtypes/`)}
+                    >
+                        Kembali
+                    </Button>
+                </div>
+            </div>
         </div>
     );
 }

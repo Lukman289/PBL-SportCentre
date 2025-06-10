@@ -409,26 +409,7 @@ export default function FieldDetailPage({ params }: { params: Promise<{ id: stri
                                                     type="button"
                                                     variant="destructive"
                                                     size="sm"
-                                                    className="absolute top-2 right-2"
-                                                    onClick={handleRemoveImage}
-                                                >
-                                                    Hapus
-                                                </Button>
-                                            </div>
-                                        ) : previewUrl ? (
-                                            <div className="relative w-full max-w-xs">
-                                                <Image
-                                                    src={previewUrl}
-                                                    alt="Preview"
-                                                    className="w-full h-auto rounded-md"
-                                                    width={500}
-                                                    height={300}
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="destructive"
-                                                    size="sm"
-                                                    className="absolute top-2 right-2"
+                                                    className="absolute top-2 right-2 text-white"
                                                     onClick={handleRemoveImage}
                                                 >
                                                     Hapus
@@ -490,6 +471,7 @@ export default function FieldDetailPage({ params }: { params: Promise<{ id: stri
                                     <Button
                                         type="button"
                                         variant="destructive"
+                                        className='text-white'
                                         onClick={() => setShowDeleteDialog(true)}
                                         disabled={isDeleting}
                                     >
@@ -520,6 +502,7 @@ export default function FieldDetailPage({ params }: { params: Promise<{ id: stri
                                 </Button>
                                 <Button
                                     variant="destructive"
+                                    className='text-white'
                                     onClick={handleDelete}
                                     disabled={isDeleting}
                                 >

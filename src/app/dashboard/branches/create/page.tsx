@@ -97,7 +97,7 @@ export default function CreateBranchPage() {
     };
 
     loadOwners();
-  }, [user, form, showLoading, hideLoading, showError]);
+  }, [user, form, showLoading, hideLoading]);
 
   // Redirect jika bukan super admin atau owner cabang
   if (user && user.role !== Role.SUPER_ADMIN && user.role !== Role.OWNER_CABANG) {

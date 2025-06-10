@@ -134,10 +134,6 @@ export const OwnerCabangDashboard = () => {
             <RefreshCw className="h-4 w-4" />
             <span className="hidden md:inline">Refresh</span>
           </Button>
-          <Button variant="outline" size="sm" className="gap-1">
-            <Download className="h-4 w-4" />
-            <span className="hidden md:inline">Ekspor</span>
-          </Button>
         </div>
       </div>
       

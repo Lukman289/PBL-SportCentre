@@ -85,6 +85,10 @@ export default function MyBookingDetailPage() {
         bookingApi.getBookingById(bookingId)
       );
 
+      if (bookingData.payments && bookingData.payments?.length > 0) {
+        bookingData.payment = bookingData.payments[bookingData.payments.length - 1];
+      }
+
       setBooking(bookingData);
     } catch (error) {
       showError(error, "Gagal memuat detail booking");
@@ -159,6 +163,16 @@ export default function MyBookingDetailPage() {
     }).format(amount);
   };
 
+  const paymentInfo = booking?.payments && booking.payments.length > 0 
+    ? booking.payments[0] 
+    : booking?.payment;
+  
+  const lastPaymentInfo = booking?.payments && booking.payments.length > 0 
+    ? booking.payments[booking.payments.length - 1] 
+    : booking?.payment;
+
+  const totalAmount = (Number(paymentInfo?.amount) ?? 0) + (Number(lastPaymentInfo?.amount) ?? 0);
+  
   // Tentukan apakah booking adalah booking manual (cash)
   const isManualBooking =
     booking?.payment?.paymentMethod === PaymentMethod.CASH &&

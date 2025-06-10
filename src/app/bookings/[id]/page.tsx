@@ -63,6 +63,9 @@ export default function BookingDetailPage() {
       try {
         setLoading(true);
         const data = await bookingApi.getBookingById(bookingId, Role.USER);
+        if (data.payments && data.payments?.length > 0) {
+          data.payment = data.payments[data.payments.length - 1];
+        }
         setBooking(data);
       } catch (error) {
         showError(error, "Terjadi kesalahan saat memuat data booking");
@@ -85,6 +88,9 @@ export default function BookingDetailPage() {
       
       // Reload data booking setelah berhasil dibatalkan
       const updatedBooking = await bookingApi.getBookingById(bookingId, Role.USER);
+      if (updatedBooking.payments && updatedBooking.payments?.length > 0) {
+          updatedBooking.payment = updatedBooking.payments[updatedBooking.payments.length - 1];
+        }
       setBooking(updatedBooking);
       
       setOpenCancelDialog(false);
@@ -111,6 +117,9 @@ export default function BookingDetailPage() {
       
       // Reload data booking setelah berhasil membuat pelunasan
       const updatedBooking = await bookingApi.getBookingById(bookingId, Role.USER);
+      if (updatedBooking.payments && updatedBooking.payments?.length > 0) {
+        updatedBooking.payment = updatedBooking.payments[updatedBooking.payments.length - 1];
+      }
       setBooking(updatedBooking);
       
       setOpenPaymentDialog(false);

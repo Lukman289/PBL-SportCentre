@@ -68,8 +68,20 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
         } else if (user?.role === Role.USER && user.id) {
           let data = await bookingApi.getUserBookings(user.id);
           
+          const bookingsLatestPayment = data.map((booking) => {
+            const payments = booking.payments || [];
+            const lastPayment = payments.length > 0
+              ? payments.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())[payments.length - 1]
+              : undefined;
+
+            return {
+              ...booking,
+              payment: lastPayment,
+            };
+          });
+          
           // Untuk user reguler, tetap lakukan filter di frontend
-          data = applyFilters(data, filters);
+          data = applyFilters(bookingsLatestPayment, filters);
           setBookings(data);
         }
       } catch (error) {

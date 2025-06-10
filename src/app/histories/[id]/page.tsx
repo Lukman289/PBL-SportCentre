@@ -92,6 +92,10 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const paymentStatus = booking?.payments && booking.payments.length > 0 
     ? booking.payments[0].status 
     : booking?.payment?.status;
+  
+    const lastPaymentStatus = booking?.payments && booking.payments.length > 0 
+    ? booking.payments[booking.payments.length - 1].status 
+    : booking?.payment?.status;
 
   // Mendapatkan URL pembayaran, mendukung format baru (payments) dan lama (payment)
   const paymentUrl = booking?.payments && booking.payments.length > 0 
@@ -102,13 +106,20 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const paymentInfo = booking?.payments && booking.payments.length > 0 
     ? booking.payments[0] 
     : booking?.payment;
+  
+  const lastPaymentInfo = booking?.payments && booking.payments.length > 0 
+    ? booking.payments[booking.payments.length - 1] 
+    : booking?.payment;
 
   // Check if booking can be cancelled 
   // Only allow cancellation for pending payments or when there's no payment
   const canBeCancelled = !paymentInfo || paymentStatus === PaymentStatus.PENDING;
 
   // Check if payment completion is needed
-  const showCompletionButton = paymentStatus === PaymentStatus.DP_PAID;
+  const showCompletionButton = lastPaymentStatus === PaymentStatus.DP_PAID || lastPaymentStatus === PaymentStatus.PENDING;
+
+  // Total amount to be paid, including last payment if available
+  const totalAmount = (Number(paymentInfo?.amount) ?? 0) + (Number(lastPaymentInfo?.amount) ?? 0);
 
   const handlePaymentCompletion = async () => {
     if (!booking) return;
@@ -165,7 +176,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
       <h1 className="text-3xl font-bold mb-2">Detail Booking #{booking.id}</h1>
       <div className="mb-8">
         <PaymentStatusBadge
-          status={paymentStatus}
+          status={lastPaymentStatus || paymentStatus}
           payments={booking.payments}
           totalPrice={booking.payment?.amount || booking.payments?.[0]?.amount}
           variant="custom"
@@ -264,7 +275,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
                   <div>
                     <h3 className="text-sm font-medium text-gray-500">Total Pembayaran</h3>
-                    <p className="text-xl font-bold">Rp{paymentInfo.amount.toLocaleString()}</p>
+                    <p className="text-xl font-bold">Rp{totalAmount.toLocaleString()}</p>
                   </div>
 
                   {paymentInfo.expiresDate && (

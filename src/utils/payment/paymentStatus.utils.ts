@@ -45,6 +45,35 @@ export const getPaymentStatusColor = (status?: PaymentStatus): string => {
 };
 
 /**
+ * Mendapatkan pembayaran terakhir dari array pembayaran untuk booking tertentu
+ * @param payments Array pembayaran
+ * @param bookingId ID booking yang ingin dicari (opsional)
+ * @returns Pembayaran terakhir atau undefined jika tidak ada
+ */
+export const getLatestPayment = (payments?: Payment[], bookingId?: number): Payment | undefined => {
+  if (!payments || payments.length === 0) {
+    return undefined;
+  }
+  
+  // Filter payments berdasarkan bookingId jika disediakan
+  const relevantPayments = bookingId 
+    ? payments.filter(p => p.bookingId === bookingId)
+    : payments;
+  
+  if (relevantPayments.length === 0) {
+    return undefined;
+  }
+  
+  // Urutkan berdasarkan createdAt atau id
+  return [...relevantPayments].sort((a, b) => {
+    if (a.createdAt && b.createdAt) {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+    return b.id - a.id;
+  })[0];
+};
+
+/**
  * Menentukan status pembayaran berdasarkan total pembayaran
  * @param status Status pembayaran saat ini
  * @param payments Array pembayaran

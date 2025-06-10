@@ -3,7 +3,8 @@ import { PaymentStatus, Payment } from "@/types/booking.types";
 import { 
   getPaymentStatusText, 
   getPaymentStatusColor, 
-  determinePaymentStatus 
+  determinePaymentStatus,
+  getLatestPayment
 } from "@/utils/payment/paymentStatus.utils";
 
 interface PaymentStatusBadgeProps {
@@ -11,6 +12,7 @@ interface PaymentStatusBadgeProps {
   payments?: Payment[];
   totalPrice?: number;
   variant?: "default" | "outline" | "custom";
+  bookingId?: number;
 }
 
 /**
@@ -24,10 +26,17 @@ export function PaymentStatusBadge({
   status,
   payments,
   totalPrice,
-  variant = "custom"
+  variant = "custom",
+  bookingId
 }: PaymentStatusBadgeProps) {
+  // Ambil pembayaran terakhir jika ada
+  const latestPayment = getLatestPayment(payments, bookingId);
+  
+  // Gunakan status dari pembayaran terakhir jika ada
+  const paymentStatus = latestPayment?.status || status;
+  
   // Tentukan status yang sebenarnya berdasarkan total pembayaran
-  const effectiveStatus = determinePaymentStatus(status, payments, totalPrice);
+  const effectiveStatus = determinePaymentStatus(paymentStatus, payments, totalPrice);
   
   // Dapatkan teks status
   const statusText = getPaymentStatusText(effectiveStatus);

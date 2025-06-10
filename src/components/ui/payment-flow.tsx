@@ -4,6 +4,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { PaymentStatus, Payment } from "@/types";
 import { StepItem, Steps } from "./steps";
+import { getLatestPayment } from "@/utils/payment/paymentStatus.utils";
 
 interface PaymentFlowProps extends React.HTMLAttributes<HTMLDivElement> {
   status?: PaymentStatus;
@@ -11,6 +12,7 @@ interface PaymentFlowProps extends React.HTMLAttributes<HTMLDivElement> {
   payments?: Payment[];
   totalPaid?: number;
   totalPrice?: number;
+  bookingId?: number;
 }
 
 export function PaymentFlow({
@@ -19,9 +21,16 @@ export function PaymentFlow({
   payments = [],
   totalPaid = 0,
   totalPrice = 0,
+  bookingId,
   className,
   ...props
 }: PaymentFlowProps) {
+  // Ambil pembayaran terakhir jika ada
+  const latestPayment = getLatestPayment(payments, bookingId);
+  
+  // Gunakan status dari pembayaran terakhir jika ada
+  const paymentStatus = latestPayment?.status || status;
+  
   // Tentukan status berdasarkan total pembayaran jika tersedia
   const isFullyPaid = totalPrice > 0 && totalPaid >= totalPrice;
   
@@ -32,7 +41,7 @@ export function PaymentFlow({
   const hasDpPaidPayment = payments.some(p => p.status === PaymentStatus.DP_PAID);
   
   // Tentukan status yang akan digunakan
-  const effectiveStatus = isFullyPaid ? PaymentStatus.PAID : status;
+  const effectiveStatus = isFullyPaid ? PaymentStatus.PAID : paymentStatus;
 
   const steps = React.useMemo(() => {
     const items: StepItem[] = [

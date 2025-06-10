@@ -276,15 +276,15 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                     </div>
                   )}
 
-                  {paymentStatus === PaymentStatus.PENDING && paymentUrl && (
-                    <div className="mt-4">
+                  <div className="mt-4">
+                    {paymentStatus === PaymentStatus.PENDING && paymentUrl && (
                       <Button asChild className="w-full">
                         <a href={paymentUrl} target="_blank" rel="noopener noreferrer">
                           Lanjutkan Pembayaran
                         </a>
                       </Button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -305,6 +305,17 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   disabled={processingCancel}
                 >
                   {processingCancel ? 'Memproses...' : 'Batalkan Booking'}
+                </Button>
+              )}
+
+              {paymentStatus === PaymentStatus.PENDING && paymentUrl && (
+                <Button 
+                  asChild
+                  className="w-full"
+                >
+                  <a href={paymentUrl} target="_blank" rel="noopener noreferrer">
+                    Lanjutkan Pembayaran
+                  </a>
                 </Button>
               )}
 

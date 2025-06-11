@@ -7,8 +7,14 @@ import { id } from "date-fns/locale";
 import { PaymentFlow } from "@/components/ui/payment-flow";
 import { PaymentStatusBadge } from "@/components/ui/payment-status-badge";
 import { getLatestPayment } from "@/utils/payment/paymentStatus.utils";
+import { Role } from "@/types";
+
+interface UserRole {
+  role?: Role;
+}
 
 interface PaymentInfoCardProps {
+  user: UserRole;
   booking: Booking;
   isManualBooking: boolean;
   formatCurrency: (amount: number) => string;
@@ -38,6 +44,7 @@ const formatPaymentMethod = (method: string | undefined | null): string => {
  * Komponen untuk menampilkan informasi pembayaran booking
  */
 export const PaymentInfoCard = ({
+  user,
   booking,
   isManualBooking,
   formatCurrency,
@@ -126,7 +133,7 @@ export const PaymentInfoCard = ({
           )}
         </div>
 
-        {paymentToShow.paymentUrl && paymentToShow.status === PaymentStatus.PENDING && (
+        {user.role === Role.USER && paymentToShow.paymentUrl && paymentToShow.status === PaymentStatus.PENDING && (
           <div className="mt-4">
             <Button asChild className="w-full" variant="default">
               <a

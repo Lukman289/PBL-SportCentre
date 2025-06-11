@@ -68,7 +68,7 @@ export const BookingActions = ({
               <Check className="mr-2 h-4 w-4" />
               Konfirmasi Pembayaran
             </Button>
-            <Button onClick={() => openConfirmDialog("reject")} className="w-full" variant="destructive">
+            <Button onClick={() => openConfirmDialog("reject")} className="w-full text-white" variant="destructive">
               <XCircle className="mr-2 h-4 w-4" />
               Tolak Pembayaran
             </Button>
@@ -95,24 +95,24 @@ export const BookingActions = ({
           </>
         )}
 
-        {user?.role === Role.ADMIN_CABANG && booking.payment?.status === PaymentStatus.PAID && (
+        {/* {user?.role === Role.ADMIN_CABANG && booking.payment?.status !== PaymentStatus.PAID && firstPaymentStatus !== PaymentStatus.DP_PAID && (
           <Button onClick={() => openConfirmDialog("complete")} className="w-full" variant="default">
             <Check className="mr-2 h-4 w-4" />
             Selesaikan Booking
           </Button>
-        )}
+        )} */}
 
-        {(user?.role === Role.SUPER_ADMIN || user?.role === Role.ADMIN_CABANG) &&
+        {/* {(user?.role === Role.SUPER_ADMIN || user?.role === Role.ADMIN_CABANG) &&
           booking.payment?.status !== PaymentStatus.FAILED &&
           booking.payment?.status !== PaymentStatus.REFUNDED && (
-            <Button onClick={() => openConfirmDialog("cancel")} className="w-full" variant="destructive">
+            <Button onClick={() => openConfirmDialog("cancel")} className="w-full text-white" variant="destructive">
               <XCircle className="mr-2 h-4 w-4" />
               Batalkan Booking
             </Button>
-          )}
+          )} */}
 
         {canCancel && (
-          <Button variant="destructive" onClick={() => setOpenCancelDialog(true)} className="w-full mt-2">
+          <Button variant="destructive" onClick={() => setOpenCancelDialog(true)} className="w-full text-white">
             <Ban className="mr-2 h-4 w-4" />
             Batalkan Booking
           </Button>
@@ -126,30 +126,14 @@ export const BookingActions = ({
             <DialogHeader>
               <DialogTitle>Pelunasan Pembayaran</DialogTitle>
               <DialogDescription>
-                Pilih metode pembayaran untuk melunasi DP booking ini.
+                Pelunasan sisa pembayaran akan dilakukan menggunakan metode tunai.
               </DialogDescription>
             </DialogHeader>
             <div className="py-4">
               <p className="text-sm font-medium mb-2">Metode Pembayaran</p>
-              <Select
-                value={selectedPaymentMethod}
-                onValueChange={(value) => setSelectedPaymentMethod(value as PaymentMethod)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih metode pembayaran" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={PaymentMethod.CASH}>Tunai</SelectItem>
-                  <SelectItem value={PaymentMethod.CREDIT_CARD}>Kartu Kredit/Debit</SelectItem>
-                  <SelectItem value={PaymentMethod.GOPAY}>GoPay</SelectItem>
-                  <SelectItem value={PaymentMethod.SHOPEEPAY}>ShopeePay</SelectItem>
-                  <SelectItem value={PaymentMethod.DANA}>DANA</SelectItem>
-                  <SelectItem value={PaymentMethod.BCA_VA}>Transfer BCA</SelectItem>
-                  <SelectItem value={PaymentMethod.BNI_VA}>Transfer BNI</SelectItem>
-                  <SelectItem value={PaymentMethod.BRI_VA}>Transfer BRI</SelectItem>
-                  <SelectItem value={PaymentMethod.MANDIRI_VA}>Transfer Mandiri</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="w-full px-3 py-2 rounded-md border-2 text-sm">
+                Tunai
+              </div>
             </div>
             <DialogFooter className="flex gap-2 justify-end">
               <Button 

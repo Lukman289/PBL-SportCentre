@@ -98,7 +98,7 @@ export default function EditBranchPage() {
         let ownersData: Owner[] = [];
         if (isSuperAdmin) {
           try {
-            const usersData = await branchApi.getUsersByRole('owner_cabang');
+            const usersData = await branchApi.getUsersByRole(Role.OWNER_CABANG);
             ownersData = usersData.map(owner => ({
               id: owner.id,
               name: owner.name || 'Tanpa Nama',

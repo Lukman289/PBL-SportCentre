@@ -93,7 +93,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
     ? booking.payments[0].status 
     : booking?.payment?.status;
   
-    const lastPaymentStatus = booking?.payments && booking.payments.length > 0 
+  const lastPaymentStatus = booking?.payments && booking.payments.length > 0 
     ? booking.payments[booking.payments.length - 1].status 
     : booking?.payment?.status;
 
@@ -116,7 +116,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const canBeCancelled = !paymentInfo || paymentStatus === PaymentStatus.PENDING;
 
   // Check if payment completion is needed
-  const showCompletionButton = lastPaymentStatus === PaymentStatus.DP_PAID || lastPaymentStatus === PaymentStatus.PENDING;
+  const showCompletionButton = paymentStatus === PaymentStatus.DP_PAID && lastPaymentStatus === PaymentStatus.PENDING;
 
   // Total amount to be paid, including last payment if available
   const totalAmount = (Number(paymentInfo?.amount) ?? 0) + (Number(lastPaymentInfo?.amount) ?? 0);

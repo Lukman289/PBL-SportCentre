@@ -96,8 +96,8 @@ export default function BookingDetailPage() {
         showError("Data cabang tidak ditemukan untuk admin cabang", "Error Data Cabang");
         return;
       }
-      
-      setBooking(data);
+
+            setBooking(data);
     } catch (error) {
       showError(error, "Gagal memuat detail booking");
     } finally {
@@ -284,8 +284,7 @@ export default function BookingDetailPage() {
     );
   }
 
-  const canCancel = booking.payment?.status === PaymentStatus.PENDING ||
-    booking.payment?.status === PaymentStatus.DP_PAID;
+  const canCancel = booking.payment?.status === PaymentStatus.DP_PAID;
 
   return (
     <div className="container mx-auto">
@@ -301,6 +300,7 @@ export default function BookingDetailPage() {
           
           <div className="space-y-6">
             <PaymentInfoCard
+              user={user as User}
               booking={booking}
               isManualBooking={isManualBooking}
               formatCurrency={formatCurrency}

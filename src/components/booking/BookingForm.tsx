@@ -169,7 +169,7 @@ export default function BookingForm({
               <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                 Status Pembayaran:
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+              <div className="grid grid-cols-1 gap-2 sm:gap-3">
                 <div 
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer text-center transition-all duration-200 transform hover:scale-105 ${paymentStatus === PaymentStatus.PAID ? 'bg-green-50 border-green-500 shadow-md' : 'bg-white border-gray-300 hover:border-green-300 hover:bg-green-50/30'}`}
                   onClick={() => setPaymentStatus(PaymentStatus.PAID)}
@@ -177,13 +177,13 @@ export default function BookingForm({
                   <div className="font-bold text-green-700 text-xs sm:text-sm">LUNAS (PAID)</div>
                   <div className="text-xs sm:text-sm text-gray-600 mt-1">Pembayaran telah lunas</div>
                 </div>
-                <div 
+                {/* <div 
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer text-center transition-all duration-200 transform hover:scale-105 ${paymentStatus === PaymentStatus.DP_PAID ? 'bg-blue-50 border-blue-500 shadow-md' : 'bg-white border-gray-300 hover:border-blue-300 hover:bg-blue-50/30'}`}
                   onClick={() => setPaymentStatus(PaymentStatus.DP_PAID)}
                 >
                   <div className="font-bold text-blue-700 text-xs sm:text-sm">DP (DP_PAID)</div>
                   <div className="text-xs sm:text-sm text-gray-600 mt-1">Down payment telah dibayar</div>
-                </div>
+                </div> */}
               </div>
             </div>
 

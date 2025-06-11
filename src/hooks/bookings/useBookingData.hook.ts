@@ -58,10 +58,21 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
             page: page,
             limit: limit,
           });
-          
+
+          const bookingsLatestPayment = data.data.map((booking) => {
+            const payments = booking.payments || [];
+            const lastPayment = payments.length > 0
+              ? payments.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())[payments.length - 1]
+              : undefined;
+
+            return {
+              ...booking,
+              payment: lastPayment,
+            };
+          });
           
           // Tidak perlu melakukan filter lagi karena backend sudah menerapkan filter
-          setBookings(data.data);
+          setBookings(bookingsLatestPayment);
           setMeta(data.meta);
         } else if (user?.role === Role.ADMIN_CABANG) {
           await loadAdminCabangBookings(page, limit);
@@ -131,9 +142,20 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
             { page, limit }
           );
           
+          const bookingsLatestPayment = data.data.map((booking) => {
+            const payments = booking.payments || [];
+            const lastPayment = payments.length > 0
+              ? payments.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())[payments.length - 1]
+              : undefined;
+
+            return {
+              ...booking,
+              payment: lastPayment,
+            };
+          });
           
           // Tidak perlu melakukan filter lagi karena backend sudah menerapkan filter
-          setBookings(data.data);
+          setBookings(bookingsLatestPayment);
           setMeta(data.meta);
         } else {
           handleNoBranchError();
@@ -176,9 +198,21 @@ export function useBookingData({ user, filters }: UseBookingDataProps, limit: nu
       apiFilters,
       { page, limit }
     );
+
+    const bookingsLatestPayment = data.data.map((booking) => {
+      const payments = booking.payments || [];
+      const lastPayment = payments.length > 0
+        ? payments.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())[payments.length - 1]
+        : undefined;
+
+      return {
+        ...booking,
+        payment: lastPayment,
+      };
+    });
     
     // Tidak perlu melakukan filter lagi karena backend sudah menerapkan filter
-    setBookings(data.data);
+    setBookings(bookingsLatestPayment);
     setMeta(data.meta);
   };
 

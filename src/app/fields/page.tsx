@@ -43,8 +43,11 @@ export default function FieldPage() {
   }, [loading, showLoading, hideLoading]);
 
   useEffect(() => {
-    fetchBranches();
-    fetchFields(maxData, currentPage);
+    const init = async () => {
+      await fetchBranches();
+      await fetchFields(maxData, 1);
+    };
+    init();
   }, []);
 
   useEffect(() => {

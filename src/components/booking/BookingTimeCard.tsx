@@ -4,6 +4,7 @@ import { Booking } from "@/types/booking.types";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { formatTimeRange } from "@/utils/timezone.utils";
+import { BookingStatusBadge } from "../ui/booking-status-badge";
 
 interface BookingTimeCardProps {
   booking: Booking;
@@ -14,10 +15,13 @@ interface BookingTimeCardProps {
  */
 export const BookingTimeCard = ({ booking }: BookingTimeCardProps) => (
   <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
-    <CardHeader className="pb-2 bg-primary text-primary-foreground">
-      <CardTitle className="text-lg flex items-center">
-        <CheckCircleIcon className="h-5 w-5 mr-2" />
-        Informasi Booking
+    <CardHeader className="py-2 bg-primary text-primary-foreground">
+      <CardTitle className="text-lg flex items-center justify-between">
+        <div className="flex items-center">
+          <CheckCircleIcon className="h-5 w-5 mr-2" />
+          <span> Informasi Booking </span>
+        </div>
+        <BookingStatusBadge status={booking.status} />
       </CardTitle>
     </CardHeader>
     <CardContent className="p-0">

@@ -11,6 +11,7 @@ export interface Booking {
   createdAt: string;
   field?: Field;
   user?: User;
+  status: BookingStatus;
   payment?: Payment & { paymentUrl?: string };
   payments?: (Payment & { paymentUrl?: string })[];
 }
@@ -30,6 +31,12 @@ export enum PaymentStatus {
   DP_PAID = 'dp_paid',
   FAILED = 'failed',
   REFUNDED = 'refunded'
+}
+
+export enum BookingStatus {
+  ACTIVE = 'active',
+  CANCELLED = 'cancelled',
+  COMPLETED = 'completed',
 }
 
 export enum PaymentMethod {

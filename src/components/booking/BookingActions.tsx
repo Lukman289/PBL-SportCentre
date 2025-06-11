@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Check, XCircle, CreditCard, Ban } from "lucide-react";
-import { Booking, PaymentMethod, PaymentStatus } from "@/types/booking.types";
+import { Booking, BookingStatus, PaymentMethod, PaymentStatus } from "@/types/booking.types";
 import { Role } from "@/types";
 import { useState } from "react";
 import {
@@ -11,13 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface UserRole {
   role?: Role;
@@ -46,7 +39,7 @@ export const BookingActions = ({
   const [openCompletionDialog, setOpenCompletionDialog] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
   const [isProcessing, setIsProcessing] = useState(false);
-
+  
   const handlePaymentCompletion = async () => {
     if (!onPaymentCompletion) return;
     
@@ -95,21 +88,22 @@ export const BookingActions = ({
           </>
         )}
 
-        {/* {user?.role === Role.ADMIN_CABANG && booking.payment?.status !== PaymentStatus.PAID && firstPaymentStatus !== PaymentStatus.DP_PAID && (
+        {user?.role === Role.ADMIN_CABANG && booking.payment?.status === PaymentStatus.PAID && booking.status === BookingStatus.ACTIVE && (
           <Button onClick={() => openConfirmDialog("complete")} className="w-full" variant="default">
             <Check className="mr-2 h-4 w-4" />
             Selesaikan Booking
           </Button>
-        )} */}
+        )}
 
-        {/* {(user?.role === Role.SUPER_ADMIN || user?.role === Role.ADMIN_CABANG) &&
+        {(user?.role === Role.SUPER_ADMIN || user?.role === Role.ADMIN_CABANG) &&
           booking.payment?.status !== PaymentStatus.FAILED &&
-          booking.payment?.status !== PaymentStatus.REFUNDED && (
+          booking.payment?.status !== PaymentStatus.REFUNDED && 
+          booking.status === BookingStatus.ACTIVE && (
             <Button onClick={() => openConfirmDialog("cancel")} className="w-full text-white" variant="destructive">
               <XCircle className="mr-2 h-4 w-4" />
               Batalkan Booking
             </Button>
-          )} */}
+          )}
 
         {canCancel && (
           <Button variant="destructive" onClick={() => setOpenCancelDialog(true)} className="w-full text-white">

@@ -28,7 +28,7 @@ import { MoreHorizontal, Eye, CreditCard, Check, X, Ban } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Booking, PaymentStatus } from "@/types/booking.types";
+import { Booking, BookingStatus, PaymentStatus } from "@/types/booking.types";
 import Link from "next/link";
 import { bookingApi } from "@/api/booking.api";
 import EmptyState from "@/components/ui/EmptyState";
@@ -36,6 +36,7 @@ import { Role } from "@/types";
 import { formatTimeRange } from "@/utils/timezone.utils";
 import useToastHandler from "@/hooks/useToastHandler";
 import { PaymentStatusBadge } from "@/components/ui/payment-status-badge";
+import { BookingStatusBadge } from "@/components/ui/booking-status-badge";
 
 interface BookingsTableProps {
   bookings: Booking[];
@@ -111,6 +112,7 @@ export default function BookingsTable({ bookings, userRole }: BookingsTableProps
               <TableHead>Tanggal</TableHead>
               <TableHead>Waktu</TableHead>
               <TableHead>Pembayaran</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -135,6 +137,9 @@ export default function BookingsTable({ bookings, userRole }: BookingsTableProps
                     totalPrice={booking.payment?.amount}
                     variant="default"
                   />
+                </TableCell>
+                <TableCell>
+                  <BookingStatusBadge status={booking.status} />
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>

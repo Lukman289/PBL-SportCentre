@@ -1,5 +1,5 @@
 import axiosInstance from '../config/axios.config';
-import { Booking, BookingRequest, Payment, PaymentMethod, PaymentStatus, Role } from '../types';
+import { Booking, BookingRequest, BookingStatus, Payment, PaymentMethod, PaymentStatus, Role } from '../types';
 import { combineDateAndTime } from '../utils/timezone.utils';
 
 // Interface untuk format respons dengan data dan meta
@@ -413,6 +413,20 @@ class BookingApi {
         ...response.data.data.payment,
         paymentUrl: response.data.data.paymentUrl || undefined
       };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateBookingStatus(bookingId: number, status: BookingStatus): Promise<Booking> {
+    try {
+      const response = await axiosInstance.patch<{ data: Booking } | Booking>(`/bookings/${bookingId}/status`, { status });
+      
+      if ('data' in response.data) {
+        return response.data.data;
+      } else {
+        return response.data as Booking;
+      }
     } catch (error) {
       throw error;
     }

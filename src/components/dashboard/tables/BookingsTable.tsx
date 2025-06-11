@@ -44,10 +44,10 @@ interface BookingsTableProps {
 
 // Fungsi untuk mendapatkan link detail booking berdasarkan role user
 const getDetailLink = (booking: Booking, userRole?: string) => {
-  if (userRole === Role.SUPER_ADMIN) {
+  if (userRole === Role.SUPER_ADMIN || userRole === Role.ADMIN_CABANG) {
     return `/dashboard/bookings/${booking.id}`;
-  } else if (userRole === Role.ADMIN_CABANG) {
-    return `/dashboard/bookings/${booking.id}`;
+  // } else if (userRole === Role.ADMIN_CABANG) {
+  //   return `/dashboard/bookings/${booking.id}`;
   } else {
     return `/bookings/${booking.id}`;
   }
@@ -152,41 +152,6 @@ export default function BookingsTable({ bookings, userRole }: BookingsTableProps
                         </Link>
                       </DropdownMenuItem>
 
-                      {userRole === Role.ADMIN_CABANG && booking.payment?.status === PaymentStatus.PENDING && (
-                        <>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setOpenAlertId(booking.id);
-                              setAlertAction("approve");
-                            }}
-                          >
-                            <Check className="mr-2 h-4 w-4" />
-                            Setujui
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setOpenAlertId(booking.id);
-                              setAlertAction("reject");
-                            }}
-                          >
-                            <X className="mr-2 h-4 w-4" />
-                            Tolak
-                          </DropdownMenuItem>
-                        </>
-                      )}
-
-                      {userRole === Role.ADMIN_CABANG && booking.payment?.status === PaymentStatus.PAID && (
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setOpenAlertId(booking.id);
-                            setAlertAction("complete");
-                          }}
-                        >
-                          <Check className="mr-2 h-4 w-4" />
-                          Selesai
-                        </DropdownMenuItem>
-                      )}
-
                       {(userRole === Role.SUPER_ADMIN || userRole === Role.USER) && (
                         <DropdownMenuItem
                           onClick={() => {
@@ -197,18 +162,6 @@ export default function BookingsTable({ bookings, userRole }: BookingsTableProps
                         >
                           <Ban className="mr-2 h-4 w-4" />
                           Batalkan
-                        </DropdownMenuItem>
-                      )}
-
-                      {userRole === Role.ADMIN_CABANG && booking.payment?.status === PaymentStatus.DP_PAID && (
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setOpenAlertId(booking.id);
-                            setAlertAction("paid");
-                          }}
-                        >
-                          <CreditCard className="mr-2 h-4 w-4" />
-                          Lunasi Pembayaran
                         </DropdownMenuItem>
                       )}
                     </DropdownMenuContent>

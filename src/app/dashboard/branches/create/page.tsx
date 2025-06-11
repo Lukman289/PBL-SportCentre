@@ -64,14 +64,29 @@ export default function CreateBranchPage() {
   });
 
   // Load daftar owner saat component mount
+  // Perubahan pada bagian useEffect untuk load owners
   useEffect(() => {
     const loadOwners = async () => {
       try {
         setLoadingOwners(true);
         showLoading();
 
-        const ownersData = await branchApi.getUsersByRole('owner_cabang');
+        // Gunakan enum Role.OWNER_CABANG yang benar
+        const ownersData = await branchApi.getUsersByRole(Role.OWNER_CABANG);
         console.log('Received owners data:', ownersData);
+
+        // DEBUG: Log detailed owner information
+        console.log('Detailed owners data:');
+        ownersData.forEach((owner, index) => {
+          console.log(`Owner #${index + 1}:`, {
+            id: owner.id,
+            name: owner.name,
+            email: owner.email,
+            role: owner.role,
+            hasName: !!owner.name,
+            allFields: owner
+          });
+        });
 
         // Format data owner untuk select dropdown
         const formattedOwners = ownersData.map(owner => ({
@@ -80,11 +95,15 @@ export default function CreateBranchPage() {
           email: owner.email
         }));
 
+        console.log('Formatted owners:', formattedOwners);
         setOwners(formattedOwners);
 
         // Jika user adalah owner cabang, set sebagai pemilik default
         if (user?.role === Role.OWNER_CABANG) {
+          console.log('Current user is owner, setting as default owner:', user.id);
           form.setValue('ownerId', user.id);
+        } else {
+          console.log('Current user is not owner or no user:', user);
         }
       } catch (err) {
         console.error('Error loading owners:', err);
@@ -147,7 +166,7 @@ export default function CreateBranchPage() {
 
       // Gunakan withLoading dengan membungkus promise
       await withLoading(branchApi.createBranch(submitData));
-      
+
       showSuccess('Cabang berhasil dibuat');
 
       // Redirect berdasarkan role user
@@ -222,7 +241,7 @@ export default function CreateBranchPage() {
                       <FormLabel>Pemilik Cabang *</FormLabel>
                       <Select
                         onValueChange={(value) => field.onChange(parseInt(value))}
-                        value={field.value?.toString() || undefined}
+                        value={field.value && field.value !== 0 ? field.value.toString() : ""}
                         disabled={loadingOwners || user?.role === Role.OWNER_CABANG}
                       >
                         <FormControl>
@@ -238,28 +257,13 @@ export default function CreateBranchPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {owners.length === 0 ? (
-                            <SelectItem value="no-data" disabled>
-                              Tidak ada owner tersedia
+                          {owners.map((owner) => (
+                            <SelectItem key={owner.id} value={owner.id.toString()}>
+                              {owner.name} ({owner.email})
                             </SelectItem>
-                          ) : (
-                            owners.map((owner) => (
-                              <SelectItem
-                                key={owner.id}
-                                value={owner.id.toString()}
-                              >
-                                {owner.name} ({owner.email})
-                              </SelectItem>
-                            ))
-                          )}
+                          ))}
                         </SelectContent>
                       </Select>
-                      {user?.role === Role.OWNER_CABANG && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Anda otomatis terdaftar sebagai pemilik cabang ini
-                        </p>
-                      )}
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -334,7 +338,7 @@ export default function CreateBranchPage() {
                   </FormItem>
                 )}
               />
-              
+
               <div className="flex gap-4 pt-4 justify-end">
                 <Button
                   type="button"

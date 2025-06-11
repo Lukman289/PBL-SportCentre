@@ -1,5 +1,5 @@
 import axiosInstance from '../config/axios.config';
-import { Branch, BranchListParams, BranchListResponse, CreateBranchRequest, UpdateBranchRequest, BranchAdmin, User,BranchDetailResponse } from '@/types';
+import { Branch, BranchListParams, BranchListResponse, CreateBranchRequest, UpdateBranchRequest, BranchAdmin, User,BranchDetailResponse, Role} from '@/types';
 
 export interface UserListParams {
   role?: string;
@@ -38,12 +38,12 @@ class BranchApi {
   /**
    * Mendapatkan daftar user berdasarkan role
    */
-  async getUsersByRole(role: string, params?: UserListParams): Promise<User[]> {
-    const response = await axiosInstance.get<UserListResponse>('/users', {
-      params: { ...params, role }
-    });
-    return response.data.data;
-  }
+  async getUsersByRole(role: Role, params?: UserListParams): Promise<User[]> {
+  const response = await axiosInstance.get<UserListResponse>(`/users/by-role/${role}`, {
+    params: params
+  });
+  return response.data.data;
+}
 
   /**
    * Mendapatkan detail cabang berdasarkan ID

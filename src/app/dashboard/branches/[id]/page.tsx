@@ -78,7 +78,7 @@ const Pagination = ({
 }: PaginationProps) => {
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
-  
+
   return (
     <div className="flex items-center justify-between px-2 py-4">
       <div className="text-sm text-muted-foreground hidden md:block">
@@ -380,7 +380,10 @@ export default function BranchDetailPage() {
   const handleDelete = async () => {
     if (window.confirm("Anda yakin ingin menghapus cabang ini?")) {
       try {
+        showLoading();
         await branchApi.deleteBranch(branchId);
+        showSuccess("Cabang berhasil dihapus");
+
         if (user?.role === Role.SUPER_ADMIN) {
           router.push("/dashboard/branches");
         } else {
@@ -388,6 +391,8 @@ export default function BranchDetailPage() {
         }
       } catch (err) {
         showError(err, "Gagal menghapus cabang. Silakan coba lagi.");
+      } finally {
+        hideLoading();
       }
     }
   };
@@ -431,8 +436,14 @@ export default function BranchDetailPage() {
           <Button variant="outline" onClick={handleEdit}>
             Edit
           </Button>
+          {user?.role === Role.SUPER_ADMIN && (
+            <Button variant="destructive" onClick={handleDelete}>
+              Hapus
+            </Button>
+          )}
         </div>
       </div>
+
 
       <Card className="mb-6">
         <CardHeader>
@@ -466,11 +477,10 @@ export default function BranchDetailPage() {
               </p>
               <p>
                 <span
-                  className={`px-2 py-1 rounded text-xs font-medium ${
-                    branch.status === "active"
+                  className={`px-2 py-1 rounded text-xs font-medium ${branch.status === "active"
                       ? "bg-green-100 text-green-800"
                       : "bg-red-100 text-red-800"
-                  }`}
+                    }`}
                 >
                   {branch.status === "active" ? "Aktif" : "Nonaktif"}
                 </span>
@@ -733,23 +743,22 @@ export default function BranchDetailPage() {
                           </TableCell>
                           <TableCell>
                             <span
-                              className={`px-2 py-1 rounded text-xs font-medium ${
-                                field.status === "available"
+                              className={`px-2 py-1 rounded text-xs font-medium ${field.status === "available"
                                   ? "bg-green-100 text-green-800"
                                   : field.status === "booked"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : field.status === "maintenance"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-red-100 text-red-800"
-                              }`}
+                                    ? "bg-blue-100 text-blue-800"
+                                    : field.status === "maintenance"
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : "bg-red-100 text-red-800"
+                                }`}
                             >
                               {field.status === "available"
                                 ? "Tersedia"
                                 : field.status === "booked"
-                                ? "Dibooking"
-                                : field.status === "maintenance"
-                                ? "Pemeliharaan"
-                                : "Tutup"}
+                                  ? "Dibooking"
+                                  : field.status === "maintenance"
+                                    ? "Pemeliharaan"
+                                    : "Tutup"}
                             </span>
                           </TableCell>
                           <TableCell>

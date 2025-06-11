@@ -102,8 +102,8 @@ export default function MyBookingsPage() {
           {bookings.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {searchQuery
-                ? "Tidak ada cabang yang sesuai dengan pencarian"
-                : "Anda belum memiliki cabang"}
+                ? "Tidak ada booking yang sesuai dengan pencarian"
+                : "Anda belum memiliki booking."}
             </div>
           ) : (
             <Table>

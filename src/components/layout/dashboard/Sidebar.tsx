@@ -20,6 +20,7 @@ const menuItemsByRole = {
     { label: 'Cabang', href: '/dashboard/branches', icon: 'building' },
     { label: 'Jenis Lapangan', href: '/dashboard/fieldtypes', icon: 'layout' },
     { label: 'Pengguna', href: '/dashboard/users', icon: 'users' },
+    { label: 'Activity Log', href: '/dashboard/activitylog', icon: 'activity' },
   ],
   [Role.OWNER_CABANG]: [
     { label: 'Dashboard', href: '/dashboard', icon: 'home' },
@@ -204,6 +205,13 @@ function SidebarIcon({ name, className }: { name: string; className?: string }) 
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
         <polyline points="16 17 21 12 16 7"></polyline>
         <line x1="21" y1="12" x2="9" y2="12"></line>
+      </svg>
+    ),
+    activity: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="9" x2="12" y2="15"></line>
+        <line x1="9" y1="12" x2="15" y2="12"></line>
+        <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"></path>
       </svg>
     ),
   };

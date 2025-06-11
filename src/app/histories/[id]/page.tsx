@@ -115,8 +115,11 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   // Only allow cancellation for pending payments or when there's no payment
   const canBeCancelled = !paymentInfo || paymentStatus === PaymentStatus.PENDING;
 
+  console.log("First Payment Status:", paymentStatus);
+  console.log("Last Payment Status:", lastPaymentStatus);
+
   // Check if payment completion is needed
-  const showCompletionButton = paymentStatus === PaymentStatus.DP_PAID && lastPaymentStatus === PaymentStatus.PENDING;
+  const showCompletionButton = (paymentStatus === PaymentStatus.DP_PAID || paymentStatus !== PaymentStatus.PENDING) && lastPaymentStatus !== PaymentStatus.PAID;
 
   // Total amount to be paid, including last payment if available
   const totalAmount = (Number(paymentInfo?.amount) ?? 0) + (Number(lastPaymentInfo?.amount) ?? 0);

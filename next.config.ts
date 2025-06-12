@@ -3,7 +3,7 @@ import TerserPlugin from "terser-webpack-plugin";
 
 const nextConfig: NextConfig = {
   compiler: {
-    removeConsole: true,
+    // removeConsole: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
@@ -16,6 +16,10 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'api.sportcenter.mywire.org',
+      },
+      {
+        protocol: 'https',
+        hostname: 'unggulsportscenter.com',
       },
       {
         protocol: 'https',
@@ -57,7 +61,7 @@ const nextConfig: NextConfig = {
         new TerserPlugin({
           terserOptions: {
             compress: {
-              drop_console: true, // <- ini untuk hapus console.*
+              // drop_console: true, // <- ini untuk hapus console.*
             },
           },
         })

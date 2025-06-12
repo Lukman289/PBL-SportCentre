@@ -125,12 +125,12 @@ export default function TimeSlotSelector() {
   return (
     <div className="flex flex-col">
       {/* Header dengan informasi tanggal - fixed, tidak bisa di-scroll */}
-      <div className="bg-blue-600 text-white p-3 sm:p-4 flex items-center justify-between w-full">
+      <div className="bg-black text-white p-3 sm:p-4 flex items-center justify-between w-full">
         <div className="flex items-center">
           <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" />
           <span className="font-medium text-sm sm:text-base">{formattedDate}</span>
         </div>
-        <div className="flex items-center bg-blue-500/50 px-2 py-1 rounded text-xs sm:text-sm">
+        <div className="flex items-center bg-black-500/50 px-2 py-1 rounded text-xs sm:text-sm">
           <ClockIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" />
           <span>Jadwal ({TIMEZONE})</span>
         </div>

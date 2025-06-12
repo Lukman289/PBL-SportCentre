@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/context/auth/auth.context";
-import { Booking, PaymentMethod, PaymentStatus } from "@/types/booking.types";
+import { Booking, BookingStatus, PaymentMethod, PaymentStatus } from "@/types/booking.types";
 import { bookingApi } from "@/api/booking.api";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -130,11 +130,11 @@ export default function BookingDetailPage() {
           }
           break;
         case "cancel":
-          await withLoading(bookingApi.cancelBooking(booking.id));
+          await withLoading(bookingApi.updateBookingStatus(booking.id, BookingStatus.CANCELLED));
           showSuccess("Booking berhasil dibatalkan");
           break;
         case "complete":
-          // Implementasi completedBooking jika diperlukan
+          await withLoading(bookingApi.updateBookingStatus(booking.id, BookingStatus.COMPLETED));
           showSuccess("Booking berhasil diselesaikan");
           break;
         case "pay":
